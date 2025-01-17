@@ -5,6 +5,7 @@ import { addDays, subDays, startOfWeek, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 interface DiaSemana {
   fecha: string;
@@ -19,13 +20,21 @@ interface DiaSemana {
   templateUrl: './turnos.component.html',
   standalone: true,
   styleUrls: ['./turnos.component.css'],
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
 })
 export default class TurnosComponent implements OnInit {
   colaboradores$: Observable<Colaborador[]>; // Observable de colaboradores
   turnos$: Observable<Turno[]>; // Observable de turnos
   diasSemana$: BehaviorSubject<DiaSemana[]> = new BehaviorSubject<DiaSemana[]>([]); // Semana observable
   semanaActual: Date = new Date();
+  mostrarModal: boolean = false; // Controla la visibilidad del modal
+  turnoActual: Turno = {
+    colaborador: { id: 0, nombre: ''},
+    fecha: '',
+    horaEntrada: '',
+    horaSalida: ''
+  }; // Datos del turno actual
+
 
   constructor(
     private turnoService: TurnoService,
@@ -63,11 +72,38 @@ export default class TurnosComponent implements OnInit {
   }
 
   abrirModal(colaboradorId: number, fecha: string): void {
-
+    this.turnoActual = {
+      colaborador: { id: colaboradorId, nombre: ''},
+      fecha: fecha,
+      horaEntrada: '',
+      horaSalida: ''
+    };
+    this.mostrarModal = true; // Abre el modal
   }
 
   abrirModalEdicion(turno: Turno): void {
+    this.turnoActual = { ...turno }; // Copia los datos del turno existente
+    this.mostrarModal = true; // Abre el modal
+  }
 
+  cerrarModal(): void {
+    this.mostrarModal = false; // Cierra el modal
+  }
+
+  guardarTurno(): void {
+    if (this.turnoActual.id) {
+      // Actualizar turno existente
+      this.turnoService.updateTurno(this.turnoActual.id, this.turnoActual).subscribe(() => {
+        this.turnos$ = this.turnoService.getTurnosPorSemana(this.semanaActual); // Actualizar lista
+        this.cerrarModal();
+      });
+    } else {
+      // Crear nuevo turno
+      this.turnoService.addTurno(this.turnoActual).subscribe(() => {
+        this.turnos$ = this.turnoService.getTurnosPorSemana(this.semanaActual); // Actualizar lista
+        this.cerrarModal();
+      });
+    }
   }
 
   obtenerTurno(turnos: Turno[] | null, colaboradorId: number, fecha: string): Turno | undefined {

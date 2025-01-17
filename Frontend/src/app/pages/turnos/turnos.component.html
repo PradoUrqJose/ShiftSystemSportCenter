@@ -53,15 +53,15 @@
           <!-- Celdas para cada día de la semana -->
           <td *ngFor="let dia of diasSemana$ | async" class=" text-center semana-column">
             <ng-container *ngIf="obtenerTurno(turnos$ | async, colaborador.id, dia.fecha) as turno; else agregarBoton">
-              <div class="containerDiv" (click)="abrirModalEdicion(turno)" title="Editar Turno">
-                <div class="container-green cursor-pointer">
-                  {{ formatearHora(turno.horaEntrada) }} -
-                  {{ formatearHora(turno.horaSalida) }}
-                </div>
+              <div class="container-green cursor-pointer transition"
+                (click)="abrirModalEdicion(turno)" title="Editar Turno">
+                {{ formatearHora(turno.horaEntrada) }} - {{ formatearHora(turno.horaSalida) }}
               </div>
+
             </ng-container>
             <ng-template #agregarBoton>
-              <button class="plus_button" (click)="abrirModal(colaborador.id, dia.fecha)" title="Agregar Turno">
+              <button class="plus_button hover:text-blue-800 transition"
+                (click)="abrirModal(colaborador.id, dia.fecha)" title="Agregar Turno">
                 <i class="fa-regular fa-square-plus"></i>
               </button>
             </ng-template>
@@ -89,4 +89,41 @@
       </ng-template>
     </tbody>
   </table>
+</div>
+
+<!-- Modal Overlay -->
+<div class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50" *ngIf="mostrarModal">
+  <!-- Modal Content -->
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">Gestionar Turno</h3>
+
+    <form (ngSubmit)="guardarTurno()">
+      <!-- Hora de Entrada -->
+      <div class="mb-4">
+        <label for="horaEntrada" class="block text-gray-700 font-medium mb-2">Hora de Entrada</label>
+        <input type="time" id="horaEntrada" [(ngModel)]="turnoActual.horaEntrada" name="horaEntrada"
+          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-400"
+          required />
+      </div>
+
+      <!-- Hora de Salida -->
+      <div class="mb-4">
+        <label for="horaSalida" class="block text-gray-700 font-medium mb-2">Hora de Salida</label>
+        <input type="time" id="horaSalida" [(ngModel)]="turnoActual.horaSalida" name="horaSalida"
+          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-400"
+          required />
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-end space-x-4">
+        <button type="button" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+          (click)="cerrarModal()">
+          Cancelar
+        </button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+          Guardar
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
