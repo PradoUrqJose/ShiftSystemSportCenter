@@ -1,0 +1,47 @@
+# Ignorar archivos y carpetas generales
+.DS_Store
+Thumbs.db
+*.log
+
+# Archivos y carpetas de Git
+.gitattributes
+
+# Ignorar configuraciones de IDEs
+.idea/
+.vscode/
+
+# --- BACKEND (Spring Boot) ---
+# Directorios generados por Maven
+target/
+.mvn/
+factorypath/
+
+# Archivos de configuración específicos de Eclipse/IDE
+.classpath
+.project
+.settings/
+
+# Archivos de ayuda generados automáticamente
+HELP.md
+
+# --- FRONTEND (Angular) ---
+# Node.js y Angular
+node_modules/
+.angular/
+dist/
+public/
+
+# Archivos de configuración temporales
+package-lock.json
+editorconfig
+
+# --- Generales para proyectos ---
+# Archivos de entorno (si usas)
+.env
+.env.local
+.env.*.local
+
+
+# Archivos TypeScript generados automáticamente
+*.tsbuildinfo
+
