@@ -1,10 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { TurnoService, Turno } from '../../services/turno.service';
 import { ColaboradorService, Colaborador } from '../../services/colaborador.service';
-import { MatDialog } from '@angular/material/dialog';
 import { addDays, subDays, startOfWeek, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import TurnoModalComponent from '../turno-modal/turno-modal.component';
 import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 
@@ -32,7 +30,6 @@ export default class TurnosComponent implements OnInit {
   constructor(
     private turnoService: TurnoService,
     private colaboradorService: ColaboradorService,
-    private dialog: MatDialog,
   ) {
     this.colaboradores$ = this.colaboradorService.getColaboradores(); // Obtener colaboradores
     this.turnos$ = this.turnoService.getTurnosPorSemana(this.semanaActual); // Obtener turnos iniciales
@@ -66,29 +63,11 @@ export default class TurnosComponent implements OnInit {
   }
 
   abrirModal(colaboradorId: number, fecha: string): void {
-    const dialogRef = this.dialog.open(TurnoModalComponent, {
-      data: { colaboradorId, fecha }
-    });
 
-    dialogRef.afterClosed().subscribe((resultado) => {
-      if (resultado) {
-        // Recargar turnos y forzar detección
-        this.turnos$ = this.turnoService.getTurnosPorSemana(this.semanaActual);
-      }
-    });
   }
 
   abrirModalEdicion(turno: Turno): void {
-    const dialogRef = this.dialog.open(TurnoModalComponent, {
-      data: { turno, colaboradorId: turno.colaborador.id, fecha: turno.fecha }
-    });
 
-    dialogRef.afterClosed().subscribe((resultado) => {
-      if (resultado) {
-        // Recargar turnos después de eliminar o editar
-        this.turnos$ = this.turnoService.getTurnosPorSemana(this.semanaActual);
-      }
-    });
   }
 
   obtenerTurno(turnos: Turno[] | null, colaboradorId: number, fecha: string): Turno | undefined {
