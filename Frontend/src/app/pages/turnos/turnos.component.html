@@ -53,15 +53,15 @@
           <!-- Celdas para cada día de la semana -->
           <td *ngFor="let dia of diasSemana$ | async" class=" text-center semana-column">
             <ng-container *ngIf="obtenerTurno(turnos$ | async, colaborador.id, dia.fecha) as turno; else agregarBoton">
-              <div class="container-green cursor-pointer transition"
-                (click)="abrirModalEdicion(turno)" title="Editar Turno">
+              <div class="container-green cursor-pointer transition" (click)="abrirModalEdicion(turno)"
+                title="Editar Turno">
                 {{ formatearHora(turno.horaEntrada) }} - {{ formatearHora(turno.horaSalida) }}
               </div>
 
             </ng-container>
             <ng-template #agregarBoton>
-              <button class="plus_button hover:text-blue-800 transition"
-                (click)="abrirModal(colaborador.id, dia.fecha)" title="Agregar Turno">
+              <button class="plus_button hover:text-blue-800 transition" (click)="abrirModal(colaborador.id, dia.fecha)"
+                title="Agregar Turno">
                 <i class="fa-regular fa-square-plus"></i>
               </button>
             </ng-template>
@@ -91,39 +91,73 @@
   </table>
 </div>
 
-<!-- Modal Overlay -->
-<div class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50" *ngIf="mostrarModal">
-  <!-- Modal Content -->
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-    <h3 class="text-xl font-semibold text-gray-800 mb-4">Gestionar Turno</h3>
+<!-- Modal -->
+<div *ngIf="mostrarModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+  (click)="cerrarModal()">
+  <div class="bg-white p-6 rounded-lg shadow-xl transform transition-all duration-300 w-1/4 max-w-lg relative"
+    [ngClass]="{ 'opacity-0 -translate-y-10': !isModalVisible, 'opacity-100 translate-y-0': isModalVisible }"
+    (click)="$event.stopPropagation()">
+    <!-- Botón de cierre -->
+    <button (click)="cerrarModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+      aria-label="Cerrar">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
 
-    <form (ngSubmit)="guardarTurno()">
-      <!-- Hora de Entrada -->
-      <div class="mb-4">
-        <label for="horaEntrada" class="block text-gray-700 font-medium mb-2">Hora de Entrada</label>
-        <input type="time" id="horaEntrada" [(ngModel)]="turnoActual.horaEntrada" name="horaEntrada"
-          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-400"
-          required />
+    <!-- Encabezado -->
+    <div class="text-center pb-4 border-b border-gray-200">
+      <h3 class="text-xl font-semibold text-gray-800 mb-2">
+        {{ turnoActual.id ? 'Editar Turno' : 'Agregar Turno' }}
+      </h3>
+      <p class="text-gray-500 text-sm">
+        {{ turnoActual.id ? 'Modifica los datos del turno seleccionado.' : 'Introduce los datos para registrar un nuevo turno.' }}
+      </p>
+    </div>
+
+    <!-- Formulario -->
+    <form (ngSubmit)="guardarTurno()" class="mt-6">
+      <!-- Sección: Hora de Entrada -->
+      <div class="py-4 bg-gray-50 px-4 rounded-lg mb-4">
+        <label for="horaEntrada" class="block text-sm font-medium text-gray-700 mb-1">Hora de Entrada</label>
+        <input id="horaEntrada" type="time" [(ngModel)]="turnoActual.horaEntrada" name="horaEntrada"
+          class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" required
+          (change)="validarHorarioEntrada()" />
+        <div *ngIf="errorHoraEntrada" class="text-red-500 text-sm mt-1">
+          {{ errorHoraEntrada }}
+        </div>
       </div>
 
-      <!-- Hora de Salida -->
-      <div class="mb-4">
-        <label for="horaSalida" class="block text-gray-700 font-medium mb-2">Hora de Salida</label>
-        <input type="time" id="horaSalida" [(ngModel)]="turnoActual.horaSalida" name="horaSalida"
-          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-400"
-          required />
+      <!-- Línea divisora -->
+      <hr class="border-gray-200 my-4">
+
+      <!-- Sección: Hora de Salida -->
+      <div class="py-4 bg-gray-50 px-4 rounded-lg mb-4">
+        <label for="horaSalida" class="block text-sm font-medium text-gray-700 mb-1">Hora de Salida</label>
+        <input id="horaSalida" type="time" [(ngModel)]="turnoActual.horaSalida" name="horaSalida"
+          class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" required
+          (change)="validarHorarioSalida()" />
+        <div *ngIf="errorHoraSalida" class="text-red-500 text-sm mt-1">
+          {{ errorHoraSalida }}
+        </div>
       </div>
 
-      <!-- Actions -->
-      <div class="flex justify-end space-x-4">
-        <button type="button" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
-          (click)="cerrarModal()">
-          Cancelar
-        </button>
-        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-          Guardar
-        </button>
+      <!-- Botones -->
+      <div class="flex justify-between space-x-4 mt-4 px-2">
+          <button type="submit"
+            class="font-medium bg-gradient-to-r from-blue-500 to-blue-700 text-white py-3 px-4 rounded-lg hover:from-blue-600 hover:to-blue-800 transition text-xs"
+            [disabled]="!seRealizaronCambios() || errorHoraEntrada || errorHoraSalida">
+            {{ turnoActual.id ? 'Actualizar' : 'Agregar' }}
+          </button>
+        <!-- Botón Eliminar -->
+        <div *ngIf="turnoActual.id" class="text-right flex items-center">
+          <button type="button" (click)="eliminarTurno()" class="text-red-600 hover:text-red-800 transition"
+            title="Eliminar Turno">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
       </div>
     </form>
+
   </div>
 </div>
