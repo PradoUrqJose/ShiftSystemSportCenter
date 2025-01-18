@@ -1,5 +1,6 @@
 package com.sportcenter.shift_manager.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -21,6 +22,11 @@ public class Turno {
     private LocalDate fecha;
     private LocalTime horaEntrada;
     private LocalTime horaSalida;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empresa_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Empresa empresa;
 
     @Transient
     private double horasTrabajadas;
