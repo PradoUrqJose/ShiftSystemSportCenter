@@ -26,8 +26,8 @@ public class Empresa {
     @Pattern(regexp = "\\d{11}", message = "El RUC debe tener 11 dígitos")
     private String ruc; // Nuevo atributo para el RUC
 
-    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("empresa") // Evitar recursión infinita
+    @OneToMany(mappedBy = "empresa", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("empresa")
     private List<Colaborador> colaboradores;
 
     // Método calculado: Número de empleados asociados

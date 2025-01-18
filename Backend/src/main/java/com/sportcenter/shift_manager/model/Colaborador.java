@@ -18,7 +18,8 @@ public class Colaborador {
     private String dni;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "empresa_id", nullable = false)
-    @JsonIgnoreProperties("colaboradores") // Evitar recursión infinita
+    @JoinColumn(name = "empresa_id", nullable = true) // Cambiar nullable a true
+    @JsonIgnoreProperties("colaboradores")
     private Empresa empresa;
+
 }

@@ -1,6 +1,9 @@
 package com.sportcenter.shift_manager.service;
 
+import com.sportcenter.shift_manager.dto.EmpresaDTO;
+import com.sportcenter.shift_manager.model.Colaborador;
 import com.sportcenter.shift_manager.model.Empresa;
+import com.sportcenter.shift_manager.repository.ColaboradorRepository;
 import com.sportcenter.shift_manager.repository.EmpresaRepository;
 import org.springframework.stereotype.Service;
 
@@ -10,9 +13,11 @@ import java.util.Optional;
 @Service
 public class EmpresaService {
     private final EmpresaRepository empresaRepository;
+    private final ColaboradorRepository colaboradorRepository;
 
-    public EmpresaService(EmpresaRepository empresaRepository) {
+    public EmpresaService(EmpresaRepository empresaRepository, ColaboradorRepository colaboradorRepository) {
         this.empresaRepository = empresaRepository;
+        this.colaboradorRepository = colaboradorRepository;
     }
 
     // Guardar una nueva empresa
@@ -27,9 +32,17 @@ public class EmpresaService {
     }
 
     // Obtener todas las empresas
-    public List<Empresa> getAllEmpresas() {
-        return empresaRepository.findAll();
+    public List<EmpresaDTO> getAllEmpresas() {
+        return empresaRepository.findAll().stream()
+                .map(empresa -> new EmpresaDTO(
+                        empresa.getId(),
+                        empresa.getNombre(),
+                        empresa.getRuc(),
+                        empresa.getNumeroDeEmpleados() // Método calculado en la entidad
+                ))
+                .toList();
     }
+
 
     // Obtener una empresa por ID
     public Optional<Empresa> getEmpresaById(Long id) {
@@ -67,6 +80,16 @@ public class EmpresaService {
     public void deleteEmpresa(Long id) {
         Empresa empresa = empresaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Empresa con ID " + id + " no encontrada"));
+
+        // Usar la instancia inyectada de colaboradorRepository
+        List<Colaborador> colaboradores = colaboradorRepository.findByEmpresaId(id);
+        for (Colaborador colaborador : colaboradores) {
+            colaborador.setEmpresa(null);
+            colaboradorRepository.save(colaborador); // Usar la instancia inyectada aquí también
+        }
+
         empresaRepository.delete(empresa);
     }
+
+
 }
