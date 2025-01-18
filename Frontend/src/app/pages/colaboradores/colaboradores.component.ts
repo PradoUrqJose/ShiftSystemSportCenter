@@ -45,14 +45,39 @@ export default class ColaboradoresComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.getColaboradores();
-    this.getEmpresas();
+    this.getEmpresasAndColaboradores();
+  }
+
+  getEmpresasAndColaboradores(): void {
+    this.empresaService.getEmpresas().subscribe({
+      next: (empresas) => {
+        this.empresas = empresas;
+        // Cargar colaboradores después de cargar las empresas
+        this.getColaboradores();
+      },
+      error: () => {
+        this.errorMessage = 'Error al obtener las empresas.';
+      },
+    });
   }
 
   getColaboradores(): void {
     this.colaboradorService.getColaboradores().subscribe({
+      next: (data) => {
+        this.colaboradores = data; // Usa directamente los datos proporcionados por el backend
+      },
+      error: () => {
+        this.errorMessage = 'Error al obtener los colaboradores.';
+      },
+    });
+  }
+
+
+  getColaboradoresByEmpresa(empresaId: number): void {
+    this.colaboradorService.getColaboradoresByEmpresa(empresaId).subscribe({
       next: (data) => (this.colaboradores = data),
-      error: () => (this.errorMessage = 'Error al obtener los colaboradores.'),
+      error: () =>
+        (this.errorMessage = 'Error al obtener colaboradores por empresa.'),
     });
   }
 
@@ -65,20 +90,18 @@ export default class ColaboradoresComponent implements OnInit {
 
   addColaborador(): void {
     if (this.colaboradorForm.valid) {
-      this.colaboradorService
-        .addColaborador(this.colaboradorForm.value)
-        .subscribe({
-          next: () => {
-            this.getColaboradores();
-            this.closeModal();
-          },
-          error: (err) => {
-            this.errorMessage =
-              err.error?.message || 'Error al agregar colaborador.';
-          },
-        });
-    } else {
-      this.errorMessage = 'Por favor, complete todos los campos correctamente.';
+      const colaboradorData = this.colaboradorForm.value as Colaborador;
+      this.colaboradorService.addColaborador(colaboradorData).subscribe({
+        next: () => {
+          this.getColaboradores(); // Actualizar la lista de colaboradores
+          this.colaboradorForm.reset(); // Limpiar el formulario
+          this.closeModal(); // Cerrar el modal solo si se agrega correctamente
+        },
+        error: (err) => {
+          this.errorMessage =
+            err.error?.message || 'Error al agregar colaborador.';
+        },
+      });
     }
   }
 
@@ -89,29 +112,22 @@ export default class ColaboradoresComponent implements OnInit {
     this.colaboradorForm.patchValue({
       nombre: colaborador.nombre,
       dni: colaborador.dni,
-      empresaId: colaborador.empresa?.id,
+      empresaId: colaborador.empresaId,
     });
   }
 
   updateColaborador(): void {
     if (this.colaboradorForm.valid && this.selectedColaboradorId) {
+      const colaboradorData = this.colaboradorForm.value as Colaborador;
       this.colaboradorService
-        .updateColaborador(
-          this.selectedColaboradorId,
-          this.colaboradorForm.value
-        )
+        .updateColaborador(this.selectedColaboradorId, colaboradorData)
         .subscribe({
-          next: () => {
-            this.getColaboradores();
-            this.closeModal();
-          },
+          next: () => this.getColaboradores(),
           error: (err) => {
             this.errorMessage =
               err.error?.message || 'Error al actualizar colaborador.';
           },
         });
-    } else {
-      this.errorMessage = 'Por favor, complete todos los campos correctamente.';
     }
   }
 
@@ -126,6 +142,12 @@ export default class ColaboradoresComponent implements OnInit {
     this.isModalOpen = true;
     this.isModalVisible = false;
     this.errorMessage = null;
+
+    // Restablecer el formulario con un valor predeterminado para "empresaId"
+    this.colaboradorForm.reset({
+      empresaId: '', // Asegúrate de que el placeholder funcione
+    });
+
     setTimeout(() => (this.isModalVisible = true), 10);
   }
 

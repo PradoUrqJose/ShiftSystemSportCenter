@@ -1,12 +1,10 @@
+import { TurnoPayload } from './../../services/turno.service';
 import { Component, OnInit } from '@angular/core';
 import { TurnoService, Turno } from '../../services/turno.service';
-import {
-  ColaboradorService,
-  Colaborador,
-} from '../../services/colaborador.service';
+import { ColaboradorService, Colaborador } from '../../services/colaborador.service';
 import { addDays, subDays, startOfWeek, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable, of, switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Notiflix from 'notiflix';
@@ -28,10 +26,8 @@ interface DiaSemana {
 })
 export default class TurnosComponent implements OnInit {
   colaboradores$: Observable<Colaborador[]>; // Observable de colaboradores
-  turnos$: Observable<Turno[]>; // Observable de turnos
-  diasSemana$: BehaviorSubject<DiaSemana[]> = new BehaviorSubject<DiaSemana[]>(
-    []
-  ); // Semana observable
+  turnos$: Observable<Turno[]> = of([]); // Observable de turnos
+  diasSemana$: BehaviorSubject<DiaSemana[]> = new BehaviorSubject<DiaSemana[]>([]);
   semanaActual: Date = new Date();
 
   //? Manejo de MODAL
@@ -43,18 +39,22 @@ export default class TurnosComponent implements OnInit {
   turnoOriginal: Turno | null = null; // Almacena los datos originales del turno para comparar si se ha editado o no
 
   turnoActual: Turno = {
-    colaborador: { id: 0, nombre: '' },
-    fecha: '',
-    horaEntrada: '',
-    horaSalida: '',
-  }; // Datos del turno actual
+    id: 0, // Si no hay ID al inicio, puedes omitirlo o ponerlo como opcional
+    nombreColaborador: '', // Nombre del colaborador
+    dniColaborador: '', // DNI del colaborador
+    nombreEmpresa: '', // Nombre de la empresa
+    fecha: '', // Fecha del turno
+    horaEntrada: '', // Hora de entrada
+    horaSalida: '', // Hora de salida
+    horasTrabajadas: 0, // Opcional, se calcula automáticamente
+  };
 
   constructor(
     private turnoService: TurnoService,
     private colaboradorService: ColaboradorService
   ) {
     this.colaboradores$ = this.colaboradorService.getColaboradores(); // Obtener colaboradores
-    this.turnos$ = this.turnoService.getTurnosPorSemana(this.semanaActual); // Obtener turnos iniciales
+
   }
 
   ngOnInit(): void {
@@ -73,7 +73,17 @@ export default class TurnosComponent implements OnInit {
         yearName: format(fecha, 'yyyy'),
       };
     });
-    this.diasSemana$.next(dias); // Actualizamos los días de la semana
+
+    this.diasSemana$.next(dias);
+
+    // Usar switchMap para evitar múltiples suscripciones
+    this.turnos$ = this.diasSemana$.pipe(
+      switchMap(() => this.turnoService.getTurnosPorSemana(this.semanaActual))
+    );
+
+    this.turnos$.subscribe(turnos => {
+      console.log('Turnos obtenidos:', turnos);
+    });
   }
 
   cambiarSemana(direccion: 'anterior' | 'siguiente'): void {
@@ -81,8 +91,8 @@ export default class TurnosComponent implements OnInit {
       direccion === 'anterior'
         ? subDays(this.semanaActual, 7)
         : addDays(this.semanaActual, 7);
-    this.cargarSemana();
-    this.turnos$ = this.turnoService.getTurnosPorSemana(this.semanaActual); // Actualizamos los turnos
+
+    this.cargarSemana(); // Esto ya actualizará los turnos$
   }
 
   //? MODAL <-----------------------------
@@ -92,24 +102,43 @@ export default class TurnosComponent implements OnInit {
     this.errorHoraSalida = null; // Limpiar error de hora de salida
     this.turnoOriginal = null; // Resetear turno original
     this.turnoActual = {
-      colaborador: { id: 0, nombre: '' },
-      fecha: '',
-      horaEntrada: '',
-      horaSalida: '',
+      id: 0, // ID del turno, inicializado en 0
+      nombreColaborador: '', // Nombre del colaborador
+      dniColaborador: '', // DNI del colaborador
+      nombreEmpresa: '', // Nombre de la empresa
+      fecha: '', // Fecha del turno
+      horaEntrada: '', // Hora de entrada
+      horaSalida: '', // Hora de salida
+      horasTrabajadas: 0, // Horas trabajadas calculadas (opcional)
     }; // Resetear turno actual
   }
 
   abrirModal(colaboradorId: number, fecha: string): void {
-    this.resetearEstadoModal(); // Resetear estado del modal
-    this.turnoActual = {
-      colaborador: { id: colaboradorId, nombre: '' },
-      fecha: fecha,
-      horaEntrada: '',
-      horaSalida: '',
-    };
+    this.resetearEstadoModal(); // Limpiar estado anterior
+    const colaborador = this.colaboradores$.pipe(
+      map((colaboradores) => colaboradores.find((c) => c.id === colaboradorId))
+    );
+
+    colaborador.subscribe((col) => {
+      if (col) {
+        this.turnoActual = {
+          id: 0, // Para agregar un nuevo turno, no hay ID todavía
+          nombreColaborador: col.nombre, // Nombre del colaborador
+          dniColaborador: col.dni, // DNI del colaborador
+          nombreEmpresa: col.empresaNombre, // Nombre de la empresa
+          empresaId: col.empresaId, // ID de la empresa asociada
+          colaboradorId: col.id, // ID del colaborador
+          fecha: fecha, // Fecha seleccionada
+          horaEntrada: '', // Inicialmente vacío
+          horaSalida: '', // Inicialmente vacío
+          horasTrabajadas: 0, // Inicialmente 0
+        };
+      }
+    });
+
     this.mostrarModal = true;
     setTimeout(() => {
-      this.isModalVisible = true; // Activar la animación
+      this.isModalVisible = true;
     }, 50);
   }
 
@@ -138,18 +167,21 @@ export default class TurnosComponent implements OnInit {
       return; // Si hay errores, no continúa
     }
 
-    // Formatear hora de entrada y salida para incluir solo HH:mm
-    this.turnoActual.horaEntrada = this.formatearHora(
-      this.turnoActual.horaEntrada
-    );
-    this.turnoActual.horaSalida = this.formatearHora(
-      this.turnoActual.horaSalida
-    );
+    // Preparar datos para enviar al backend
+    const turnoParaGuardar: TurnoPayload = {
+      colaborador: { id: this.turnoActual.colaboradorId }, // Usar el ID del colaborador
+      fecha: this.turnoActual.fecha,
+      horaEntrada: this.turnoActual.horaEntrada,
+      horaSalida: this.turnoActual.horaSalida,
+      empresa: { id: this.turnoActual.empresaId! }, // Usar el ID de la empresa
+    };
+
+    console.log('Datos enviados al backend:', turnoParaGuardar);
 
     if (this.turnoActual.id) {
       // Actualizar turno existente
       this.turnoService
-        .updateTurno(this.turnoActual.id, this.turnoActual)
+        .updateTurno(this.turnoActual.id, turnoParaGuardar)
         .subscribe(() => {
           this.turnos$ = this.turnoService.getTurnosPorSemana(
             this.semanaActual
@@ -158,7 +190,7 @@ export default class TurnosComponent implements OnInit {
         });
     } else {
       // Crear nuevo turno
-      this.turnoService.addTurno(this.turnoActual).subscribe(() => {
+      this.turnoService.addTurno(turnoParaGuardar).subscribe(() => {
         this.turnos$ = this.turnoService.getTurnosPorSemana(this.semanaActual);
         this.cerrarModal();
       });
@@ -175,7 +207,9 @@ export default class TurnosComponent implements OnInit {
         () => {
           // Acción al confirmar
           this.turnoService.deleteTurno(this.turnoActual.id!).subscribe(() => {
-            this.turnos$ = this.turnoService.getTurnosPorSemana(this.semanaActual); // Actualizar lista
+            this.turnos$ = this.turnoService.getTurnosPorSemana(
+              this.semanaActual
+            ); // Actualizar lista
             this.cerrarModal(); // Cerrar el modal
           });
         },
@@ -238,7 +272,6 @@ export default class TurnosComponent implements OnInit {
   }
   //* ------------------------->
 
-  //? --- --- --- --- --- ---
   obtenerTurno(
     turnos: Turno[] | null,
     colaboradorId: number,
@@ -246,27 +279,30 @@ export default class TurnosComponent implements OnInit {
   ): Turno | undefined {
     if (!turnos) return undefined; // Manejo de null
     return turnos.find(
-      (turno) => turno.colaborador.id === colaboradorId && turno.fecha === fecha
-    );
+      (turno) => turno.colaboradorId === colaboradorId && turno.fecha === fecha
+    ); // Cambiar las llaves {} por paréntesis ()
   }
 
   sumarHoras(turnos: Turno[] | null, colaboradorId: number): string {
-    if (!turnos) return '00:00'; // Manejo de null
+    if (!turnos) return '00:00';
+
+    // Filtrar los turnos del colaborador
     const turnosColaborador = turnos.filter(
-      (t) => t.colaborador.id === colaboradorId
+      (turno) => turno.colaboradorId === colaboradorId
     );
+
+    // Sumar las horas trabajadas
     const totalHoras = turnosColaborador.reduce(
       (total, turno) => total + (turno.horasTrabajadas ?? 0),
       0
     );
+
     const horas = Math.floor(totalHoras);
     const minutos = Math.round((totalHoras - horas) * 60);
 
-    // Formatear horas y minutos a dos dígitos
-    const horasFormateadas = horas.toString().padStart(2, '0');
-    const minutosFormateados = minutos.toString().padStart(2, '0');
-
-    return `${horasFormateadas}:${minutosFormateados}`;
+    return `${horas.toString().padStart(2, '0')}:${minutos
+      .toString()
+      .padStart(2, '0')}`;
   }
 
   formatearHora(hora: string): string {
