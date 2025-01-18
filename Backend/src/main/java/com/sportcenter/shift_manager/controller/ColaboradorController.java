@@ -23,12 +23,12 @@ public class ColaboradorController {
     }
 
     @GetMapping
-    public List<Colaborador> getAllColaboradores() {
+    public List<ColaboradorDTO> getAllColaboradores() {
         return colaboradorService.getAllColaboradores();
     }
 
     @GetMapping("/empresa/{empresaId}")
-    public List<Colaborador> getColaboradoresByEmpresa(@PathVariable Long empresaId) {
+    public List<ColaboradorDTO> getColaboradoresByEmpresa(@PathVariable Long empresaId) {
         return colaboradorService.getColaboradoresByEmpresa(empresaId);
     }
 

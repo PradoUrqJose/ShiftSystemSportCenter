@@ -1,5 +1,6 @@
 package com.sportcenter.shift_manager.controller;
 
+import com.sportcenter.shift_manager.dto.EmpresaDTO;
 import com.sportcenter.shift_manager.model.Empresa;
 import com.sportcenter.shift_manager.service.EmpresaService;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,7 @@ public class EmpresaController {
     }
 
     @GetMapping
-    public List<Empresa> getAllEmpresas() {
+    public List<EmpresaDTO> getAllEmpresas() {
         return empresaService.getAllEmpresas();
     }
     
