@@ -45,26 +45,29 @@
                 {{ colaborador.nombre }}
               </div>
               <div class="colaborador-empresa inline-block text-gray-700 font-bold">
-                {{ colaborador.empresa?.nombre }}
+                {{ colaborador.empresaNombre }}
               </div>
             </div>
           </td>
 
           <!-- Celdas para cada día de la semana -->
           <td *ngFor="let dia of diasSemana$ | async" class=" text-center semana-column">
-            <ng-container *ngIf="obtenerTurno(turnos$ | async, colaborador.id, dia.fecha) as turno; else agregarBoton">
-              <div class="container-green cursor-pointer transition" (click)="abrirModalEdicion(turno)"
-                title="Editar Turno">
-                {{ formatearHora(turno.horaEntrada) }} - {{ formatearHora(turno.horaSalida) }}
-              </div>
+            <ng-container *ngIf="turnos$ | async as turnos">
+              <ng-container
+                *ngIf="obtenerTurno(turnos, colaborador.id, dia.fecha) as turno; else agregarBoton">
+                <div class="container-green cursor-pointer transition" (click)="abrirModalEdicion(turno)"
+                  title="Editar Turno">
+                  {{ formatearHora(turno.horaEntrada) }} - {{ formatearHora(turno.horaSalida) }}
+                </div>
 
+              </ng-container>
+              <ng-template #agregarBoton>
+                <button class="plus_button hover:text-blue-800 transition"
+                  (click)="abrirModal(colaborador.id, dia.fecha)" title="Agregar Turno">
+                  <i class="fa-regular fa-square-plus"></i>
+                </button>
+              </ng-template>
             </ng-container>
-            <ng-template #agregarBoton>
-              <button class="plus_button hover:text-blue-800 transition" (click)="abrirModal(colaborador.id, dia.fecha)"
-                title="Agregar Turno">
-                <i class="fa-regular fa-square-plus"></i>
-              </button>
-            </ng-template>
           </td>
 
           <!-- Columna de Total Horas -->
@@ -111,7 +114,8 @@
         {{ turnoActual.id ? 'Editar Turno' : 'Agregar Turno' }}
       </h3>
       <p class="text-gray-500 text-sm">
-        {{ turnoActual.id ? 'Modifica los datos del turno seleccionado.' : 'Introduce los datos para registrar un nuevo turno.' }}
+        {{ turnoActual.id ? 'Modifica los datos del turno seleccionado.' : 'Introduce los datos para registrar un nuevo
+        turno.' }}
       </p>
     </div>
 
@@ -144,11 +148,11 @@
 
       <!-- Botones -->
       <div class="flex justify-between space-x-4 mt-4 px-2">
-          <button type="submit"
-            class="font-medium bg-gradient-to-r from-blue-500 to-blue-700 text-white py-3 px-4 rounded-lg hover:from-blue-600 hover:to-blue-800 transition text-xs"
-            [disabled]="!seRealizaronCambios() || errorHoraEntrada || errorHoraSalida">
-            {{ turnoActual.id ? 'Actualizar' : 'Agregar' }}
-          </button>
+        <button type="submit"
+          class="font-medium bg-gradient-to-r from-blue-500 to-blue-700 text-white py-3 px-4 rounded-lg hover:from-blue-600 hover:to-blue-800 transition text-xs"
+          [disabled]="!seRealizaronCambios() || errorHoraEntrada || errorHoraSalida">
+          {{ turnoActual.id ? 'Actualizar' : 'Agregar' }}
+        </button>
         <!-- Botón Eliminar -->
         <div *ngIf="turnoActual.id" class="text-right flex items-center">
           <button type="button" (click)="eliminarTurno()" class="text-red-600 hover:text-red-800 transition"

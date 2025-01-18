@@ -31,7 +31,7 @@
           <td class="p-4">{{ colaborador.id }}</td>
           <td class="p-4">{{ colaborador.nombre }}</td>
           <td class="p-4">{{ colaborador.dni }}</td>
-          <td class="p-4">{{ colaborador.empresa?.nombre || 'N/A' }}</td>
+          <td class="p-4">{{ colaborador.empresaNombre || 'N/A' }}</td>
           <td class="p-4 flex justify-center items-center space-x-2">
             <button (click)="editColaborador(colaborador)" class="text-blue-600 hover:text-blue-800 transition">
               <i class="fa-solid fa-pen-to-square"></i> <!--Editar-->
@@ -92,11 +92,14 @@
 
         <div class="py-4 bg-gray-50 px-4 rounded-lg mb-4">
           <label for="empresaId" class="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
-          <select formControlName="empresaId" class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <select
+            formControlName="empresaId"
+            class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400">
             <option value="" disabled selected>Seleccione una Empresa</option>
             <option *ngFor="let empresa of empresas" [value]="empresa.id">{{ empresa.nombre }}</option>
           </select>
         </div>
+
 
         <div class="flex justify-end space-x-4 mt-4">
           <button type="button" (click)="closeModal()" class="bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition">
