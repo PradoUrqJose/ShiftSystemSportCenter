@@ -9,6 +9,7 @@ import {
 import { EmpresaService, Empresa } from '../../services/empresa.service';
 import { CommonModule } from '@angular/common';
 import { BrowserModule } from '@angular/platform-browser';
+import Notiflix from 'notiflix';
 
 @Component({
   selector: 'app-empresas',
@@ -103,6 +104,10 @@ export default class EmpresasComponent implements OnInit {
           next: () => {
             this.getEmpresas(); // Actualiza la lista de empresas
             this.closeModal(); // Cierra el modal tras la actualización
+            Notiflix.Notify.success('Empresa actualizada con éxito', {
+              position: 'right-bottom',
+              cssAnimationStyle: 'from-right',
+            }); // Mostrar notificación de éxito en la esquina inferior derecha con animación de derecha a izquierda
           },
           error: (err) => {
             this.errorMessage =

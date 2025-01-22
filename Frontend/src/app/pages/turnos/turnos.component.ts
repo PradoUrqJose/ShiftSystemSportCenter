@@ -1,10 +1,20 @@
 import { TurnoPayload } from './../../services/turno.service';
 import { Component, OnInit } from '@angular/core';
 import { TurnoService, Turno } from '../../services/turno.service';
-import { ColaboradorService, Colaborador } from '../../services/colaborador.service';
+import {
+  ColaboradorService,
+  Colaborador,
+} from '../../services/colaborador.service';
 import { addDays, subDays, startOfWeek, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { BehaviorSubject, combineLatest, map, Observable, of, switchMap } from 'rxjs';
+import {
+  BehaviorSubject,
+  combineLatest,
+  map,
+  Observable,
+  of,
+  switchMap,
+} from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Notiflix from 'notiflix';
@@ -27,7 +37,9 @@ interface DiaSemana {
 export default class TurnosComponent implements OnInit {
   colaboradores$: Observable<Colaborador[]>; // Observable de colaboradores
   turnos$: Observable<Turno[]> = of([]); // Observable de turnos
-  diasSemana$: BehaviorSubject<DiaSemana[]> = new BehaviorSubject<DiaSemana[]>([]);
+  diasSemana$: BehaviorSubject<DiaSemana[]> = new BehaviorSubject<DiaSemana[]>(
+    []
+  );
   semanaActual: Date = new Date();
 
   //? Manejo de MODAL
@@ -54,7 +66,6 @@ export default class TurnosComponent implements OnInit {
     private colaboradorService: ColaboradorService
   ) {
     this.colaboradores$ = this.colaboradorService.getColaboradores(); // Obtener colaboradores
-
   }
 
   ngOnInit(): void {
@@ -81,7 +92,7 @@ export default class TurnosComponent implements OnInit {
       switchMap(() => this.turnoService.getTurnosPorSemana(this.semanaActual))
     );
 
-    this.turnos$.subscribe(turnos => {
+    this.turnos$.subscribe((turnos) => {
       console.log('Turnos obtenidos:', turnos);
     });
   }
@@ -187,6 +198,10 @@ export default class TurnosComponent implements OnInit {
             this.semanaActual
           );
           this.cerrarModal();
+          Notiflix.Notify.success('Turno actualizado con éxito', {
+            position: 'right-bottom',
+            cssAnimationStyle: 'from-right',
+          }); // Mostrar notificación de éxito en la esquina inferior derecha con animación de derecha a izquierda
         });
     } else {
       // Crear nuevo turno
