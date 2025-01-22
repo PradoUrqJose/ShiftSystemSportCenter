@@ -12,6 +12,7 @@ import {
 } from '../../services/colaborador.service';
 import { EmpresaService, Empresa } from '../../services/empresa.service';
 import { CommonModule } from '@angular/common';
+import Notiflix from 'notiflix';
 
 @Component({
   selector: 'app-colaboradores',
@@ -122,7 +123,14 @@ export default class ColaboradoresComponent implements OnInit {
       this.colaboradorService
         .updateColaborador(this.selectedColaboradorId, colaboradorData)
         .subscribe({
-          next: () => this.getColaboradores(),
+          next: () => {
+            this.getColaboradores();
+            this.closeModal(); // Cerrar el modal al actualizar con éxito
+            Notiflix.Notify.success('Colaborador actualizado con éxito', {
+              position: 'right-bottom',
+              cssAnimationStyle: 'from-right',
+            }); // Mostrar notificación de éxito en la esquina inferior derecha con animación de derecha a izquierda
+          },
           error: (err) => {
             this.errorMessage =
               err.error?.message || 'Error al actualizar colaborador.';
