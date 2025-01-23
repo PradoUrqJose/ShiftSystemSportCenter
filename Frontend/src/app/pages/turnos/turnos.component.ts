@@ -178,6 +178,14 @@ export default class TurnosComponent implements OnInit {
       return; // Si hay errores, no continúa
     }
 
+    // Validación adicional de que la hora de salida es posterior a la hora de entrada
+    const horaEntrada = this.formatearHora(this.turnoActual.horaEntrada);
+    const horaSalida = this.formatearHora(this.turnoActual.horaSalida);
+    if (horaEntrada >= horaSalida) {
+      this.errorHoraSalida = 'La hora de salida debe ser posterior a la hora de entrada.';
+      return; // Si la validación falla, no continúa
+    }
+
     // Preparar datos para enviar al backend
     const turnoParaGuardar: TurnoPayload = {
       colaborador: { id: this.turnoActual.colaboradorId }, // Usar el ID del colaborador
@@ -193,24 +201,51 @@ export default class TurnosComponent implements OnInit {
       // Actualizar turno existente
       this.turnoService
         .updateTurno(this.turnoActual.id, turnoParaGuardar)
-        .subscribe(() => {
+        .subscribe({
+          next: () => {
+            this.turnos$ = this.turnoService.getTurnosPorSemana(
+              this.semanaActual
+            );
+            this.cerrarModal();
+            Notiflix.Notify.success('Turno actualizado con éxito', {
+              position: 'right-bottom',
+              cssAnimationStyle: 'from-right',
+            });
+          },
+          error: (error: any) => {
+            Notiflix.Notify.failure(
+              error.error?.message || 'Error desconocido',
+              {
+                position: 'right-bottom',
+                cssAnimationStyle: 'from-right',
+              }
+            );
+          },
+        });
+    } else {
+      // Si no hay ID, estamos creando un nuevo turno
+      this.turnoService.addTurno(turnoParaGuardar).subscribe({
+        next: () => {
           this.turnos$ = this.turnoService.getTurnosPorSemana(
             this.semanaActual
           );
           this.cerrarModal();
-          Notiflix.Notify.success('Turno actualizado con éxito', {
+          Notiflix.Notify.success('Turno creado con éxito', {
             position: 'right-bottom',
             cssAnimationStyle: 'from-right',
-          }); // Mostrar notificación de éxito en la esquina inferior derecha con animación de derecha a izquierda
-        });
-    } else {
-      // Crear nuevo turno
-      this.turnoService.addTurno(turnoParaGuardar).subscribe(() => {
-        this.turnos$ = this.turnoService.getTurnosPorSemana(this.semanaActual);
-        this.cerrarModal();
+          });
+        },
+        error: (error: any) => {
+          console.log('Detalles del error:', error);
+          Notiflix.Notify.failure(error.error?.message || 'Error desconocido', {
+            position: 'right-bottom',
+            cssAnimationStyle: 'from-right',
+          });
+        },
       });
     }
   }
+
 
   eliminarTurno(): void {
     if (this.turnoActual.id) {
