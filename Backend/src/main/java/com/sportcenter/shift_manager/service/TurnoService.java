@@ -51,6 +51,12 @@ public class TurnoService {
             throw new RuntimeException("El colaborador debe estar especificado en el turno");
         }
 
+        // Verificar que la hora de salida sea posterior a la hora de entrada
+        if (turno.getHoraEntrada() != null && turno.getHoraSalida() != null) {
+            if (!turno.getHoraSalida().isAfter(turno.getHoraEntrada())) {
+                throw new RuntimeException("La hora de salida debe ser posterior a la hora de entrada");
+            }
+        }
         // Verificar que el colaborador existe
         Colaborador colaborador = colaboradorRepository.findById(turno.getColaborador().getId())
                 .orElseThrow(() -> new RuntimeException("El colaborador con ID " + turno.getColaborador().getId() + " no existe"));
@@ -62,6 +68,13 @@ public class TurnoService {
 
     public Turno updateTurno(Long id, Turno updatedTurno) {
         return turnoRepository.findById(id).map(turno -> {
+            // Validar que la hora de salida sea posterior a la de entrada
+            if (updatedTurno.getHoraEntrada() != null && updatedTurno.getHoraSalida() != null) {
+                if (!updatedTurno.getHoraSalida().isAfter(updatedTurno.getHoraEntrada())) {
+                    throw new RuntimeException("La hora de salida debe ser posterior a la hora de entrada");
+                }
+            }
+
             Optional<Colaborador> colaboradorOpt = colaboradorRepository.findById(updatedTurno.getColaborador().getId());
             if (colaboradorOpt.isEmpty()) {
                 throw new RuntimeException("Colaborador con ID " + updatedTurno.getColaborador().getId() + " no existe");
