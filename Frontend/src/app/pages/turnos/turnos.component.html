@@ -126,7 +126,7 @@
         <input id="horaEntrada" type="time" [(ngModel)]="turnoActual.horaEntrada" name="horaEntrada"
           class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" required
           (change)="validarHorarioEntrada()" />
-        <div *ngIf="errorHoraEntrada" class="text-red-500 text-sm mt-1">
+        <div *ngIf="errorHoraEntrada" class="bg-red-50 text-red-600 text-sm mt-4 p-2 rounded-lg">
           {{ errorHoraEntrada }}
         </div>
       </div>
@@ -140,7 +140,7 @@
         <input id="horaSalida" type="time" [(ngModel)]="turnoActual.horaSalida" name="horaSalida"
           class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" required
           (change)="validarHorarioSalida()" />
-        <div *ngIf="errorHoraSalida" class="text-red-500 text-sm mt-1">
+        <div *ngIf="errorHoraSalida" class="bg-red-50 text-red-600 text-sm mt-4 p-2 rounded-lg">
           {{ errorHoraSalida }}
         </div>
       </div>
