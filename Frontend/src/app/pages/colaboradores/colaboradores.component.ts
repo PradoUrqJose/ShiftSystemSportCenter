@@ -73,7 +73,6 @@ export default class ColaboradoresComponent implements OnInit {
     });
   }
 
-
   getColaboradoresByEmpresa(empresaId: number): void {
     this.colaboradorService.getColaboradoresByEmpresa(empresaId).subscribe({
       next: (data) => (this.colaboradores = data),
@@ -160,7 +159,20 @@ export default class ColaboradoresComponent implements OnInit {
   }
 
   closeModal(): void {
-    this.isModalVisible = false;
-    setTimeout(() => (this.isModalOpen = false), 300);
+    this.isModalVisible = false; // Inicia la animación de salida
+    setTimeout(() => {
+      this.isModalOpen = false; // Oculta completamente el modal
+
+      // Si se estaba editando, restablece el estado después del cierre del modal
+      if (this.isEditing) {
+        this.cancelEditCleanup();
+      }
+    }, 300); // Coincide con la duración de la animación
+  }
+
+  private cancelEditCleanup(): void {
+    this.isEditing = false; // Desactiva el modo edición
+    this.selectedColaboradorId = null; // Restablece el ID seleccionado
+    this.colaboradorForm.reset(); // Limpia el formulario
   }
 }

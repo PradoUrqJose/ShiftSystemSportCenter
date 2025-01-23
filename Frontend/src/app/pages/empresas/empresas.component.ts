@@ -127,19 +127,18 @@ export default class EmpresasComponent implements OnInit {
     });
   }
 
-  // Cancelar edición
-  cancelEdit(): void {
-    this.isEditing = false;
-    this.selectedEmpresaId = null;
-    this.empresaForm.reset();
-  }
-
   // Abrir modal
   openModal(): void {
+    this.errorMessage = null; // Limpiar mensaje de error
+
+    if (!this.isEditing) {
+      // Si no está en modo edición, restablece el formulario
+      this.selectedEmpresaId = null;
+      this.empresaForm.reset();
+    }
+
     this.isModalOpen = true;
     this.isModalVisible = false; // Inicia oculto para la animación
-    this.errorMessage = null;
-    this.empresaForm.reset();
 
     // Agrega un pequeño retraso para la animación de entrada
     setTimeout(() => {
@@ -151,7 +150,19 @@ export default class EmpresasComponent implements OnInit {
   closeModal(): void {
     this.isModalVisible = false; // Inicia la animación de salida
     setTimeout(() => {
-      this.isModalOpen = false;
+      this.isModalOpen = false; // Oculta completamente el modal
+
+      // Si se cancela la edición, limpia después de la animación
+      if (this.isEditing) {
+        this.cancelEditCleanup();
+      }
     }, 300); // Coincide con la duración de la transición
+  }
+
+  // Método para limpiar edición después del cierre del modal
+  private cancelEditCleanup(): void {
+    this.isEditing = false; // Desactiva el modo edición
+    this.selectedEmpresaId = null; // Restablece el ID seleccionado
+    this.empresaForm.reset(); // Limpia el formulario
   }
 }
