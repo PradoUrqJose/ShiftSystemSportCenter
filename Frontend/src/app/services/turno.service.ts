@@ -50,12 +50,22 @@ export class TurnoService {
     );
   }
 
-  updateTurno(id: number, turno: TurnoPayload): Observable<Turno> {
-    return this.http.put<Turno>(`${this.apiUrl}/${id}`, turno);
+  updateTurno(id: number, turno: TurnoPayload): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${id}`, turno).pipe(
+      catchError((error) => {
+        // Reenviar el error para que el componente lo gestione
+        return throwError(() => new Error(error.error.message || 'Error desconocido'));
+      })
+    );
   }
 
-  addTurno(turno: TurnoPayload): Observable<Turno> {
-    return this.http.post<Turno>(this.apiUrl, turno);
+  addTurno(turno: TurnoPayload): Observable<any> {
+    return this.http.post(this.apiUrl, turno).pipe(
+      catchError((error) => {
+        // Reenviar el error para que el componente lo gestione
+        return throwError(() => new Error(error.error.message || 'Error desconocido'));
+      })
+    );
   }
 
 
