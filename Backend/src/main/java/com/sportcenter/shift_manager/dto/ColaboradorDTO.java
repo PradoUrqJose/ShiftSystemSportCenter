@@ -8,9 +8,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ColaboradorDTO {
-    private Long id;          // ID del colaborador
-    private String nombre;    // Nombre del colaborador
-    private String dni;       // DNI del colaborador
-    private Long empresaId;   // ID de la empresa asociada
-    private String empresaNombre; // Nombre de la empresa asociada
+    private Long id;
+    private String nombre;
+    private String apellido;
+    private String dni;
+    private String telefono;
+    private String email;
+    private Long empresaId;
+    private String empresaNombre;
+    private String fotoUrl; // Cambié de byte[] a String para la URL de la foto
 }
