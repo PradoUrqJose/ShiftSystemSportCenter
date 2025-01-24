@@ -3,8 +3,12 @@ package com.sportcenter.shift_manager.controller;
 import com.sportcenter.shift_manager.dto.ColaboradorDTO;
 import com.sportcenter.shift_manager.model.Colaborador;
 import com.sportcenter.shift_manager.service.ColaboradorService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -17,10 +21,19 @@ public class ColaboradorController {
         this.colaboradorService = colaboradorService;
     }
 
+
     @PostMapping
-    public Colaborador saveColaborador(@RequestBody ColaboradorDTO colaboradorDTO) {
-        return colaboradorService.saveColaborador(colaboradorDTO);
+    public ResponseEntity<ColaboradorDTO> saveColaborador(@RequestPart("colaborador") ColaboradorDTO colaboradorDTO,
+                                                          @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
+        Colaborador colaborador = colaboradorService.saveColaborador(colaboradorDTO, file);
+
+        // Convertir el Colaborador a ColaboradorDTO para devolverlo
+        ColaboradorDTO colaboradorResponse = colaboradorService.convertToDTO(colaborador);
+
+        return ResponseEntity.ok(colaboradorResponse);
     }
+
+
 
     @GetMapping
     public List<ColaboradorDTO> getAllColaboradores() {
@@ -33,9 +46,12 @@ public class ColaboradorController {
     }
 
     @PutMapping("/{id}")
-    public Colaborador updateColaborador(@PathVariable Long id, @RequestBody ColaboradorDTO colaboradorDTO) {
-        return colaboradorService.updateColaborador(id, colaboradorDTO);
+    public Colaborador updateColaborador(@PathVariable Long id,
+                                         @RequestPart("colaborador") ColaboradorDTO colaboradorDTO,
+                                         @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
+        return colaboradorService.updateColaborador(id, colaboradorDTO, file);
     }
+
 
     @DeleteMapping("/{id}")
     public void deleteColaborador(@PathVariable Long id) {
