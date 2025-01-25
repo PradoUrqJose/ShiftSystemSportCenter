@@ -17,3 +17,14 @@ select option {
     opacity: 1;
   }
 }
+
+.button-disabled {
+  background-color: #d1d5db; /* Color gris claro */
+  cursor: not-allowed; /* Cursor no permitido */
+  opacity: 0.6; /* Opacidad reducida */
+}
+
+.border-red-500 {
+  outline: 2px solid red;
+}
+
