@@ -41,7 +41,7 @@ export default class TurnosComponent implements OnInit {
     []
   );
   semanaActual: Date = new Date();
-
+  isSubmitting: boolean = false; // Bandera para deshabilitar el botón
   //? Manejo de MODAL
   mostrarModal: boolean = false; // Controla la visibilidad del modal
   isModalVisible: boolean = false; // Controla la animación del modal
@@ -164,25 +164,33 @@ export default class TurnosComponent implements OnInit {
   }
 
   cerrarModal(): void {
+    this.isSubmitting = true; // Deshabilitar el botón durante la animación
     this.isModalVisible = false; // Desactivar la animación
+
     setTimeout(() => {
       this.mostrarModal = false; // Ocultar el modal completamente
+      this.isSubmitting = false; // Rehabilitar el botón después de que termine la animación
     }, 300); // Debe coincidir con la duración de la animación (300ms)
   }
 
   guardarTurno(): void {
+    if (this.isSubmitting) return; // Evitar múltiples envíos
+    this.isSubmitting = true;
+
     this.validarHorarioEntrada();
     this.validarHorarioSalida();
 
     if (this.errorHoraEntrada || this.errorHoraSalida) {
+      this.isSubmitting = false; // Rehabilitar el botón en caso de error
       return; // Si hay errores, no continúa
     }
-
     // Validación adicional de que la hora de salida es posterior a la hora de entrada
     const horaEntrada = this.formatearHora(this.turnoActual.horaEntrada);
     const horaSalida = this.formatearHora(this.turnoActual.horaSalida);
     if (horaEntrada >= horaSalida) {
-      this.errorHoraSalida = 'La hora de salida debe ser posterior a la hora de entrada.';
+      this.errorHoraSalida =
+        'La hora de salida debe ser posterior a la hora de entrada.';
+      this.isSubmitting = false; // Rehabilitar el botón en caso de error
       return; // Si la validación falla, no continúa
     }
 
@@ -207,12 +215,14 @@ export default class TurnosComponent implements OnInit {
               this.semanaActual
             );
             this.cerrarModal();
+            this.isSubmitting = false; // Rehabilitar el botón después de la operación
             Notiflix.Notify.success('Turno actualizado con éxito', {
               position: 'right-bottom',
               cssAnimationStyle: 'from-right',
             });
           },
           error: (error: any) => {
+            this.isSubmitting = false; // Rehabilitar el botón en caso de error
             Notiflix.Notify.failure(
               error.error?.message || 'Error desconocido',
               {
@@ -230,12 +240,14 @@ export default class TurnosComponent implements OnInit {
             this.semanaActual
           );
           this.cerrarModal();
+          this.isSubmitting = false; // Rehabilitar el botón después de la operación
           Notiflix.Notify.success('Turno creado con éxito', {
             position: 'right-bottom',
             cssAnimationStyle: 'from-right',
           });
         },
         error: (error: any) => {
+          this.isSubmitting = false; // Rehabilitar el botón en caso de error
           console.log('Detalles del error:', error);
           Notiflix.Notify.failure(error.error?.message || 'Error desconocido', {
             position: 'right-bottom',
@@ -245,7 +257,6 @@ export default class TurnosComponent implements OnInit {
       });
     }
   }
-
 
   eliminarTurno(): void {
     if (this.turnoActual.id) {
