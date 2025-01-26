@@ -38,11 +38,11 @@ public class EmpresaService {
                         empresa.getId(),
                         empresa.getNombre(),
                         empresa.getRuc(),
-                        empresa.getNumeroDeEmpleados() // Método calculado en la entidad
+                        empresa.getNumeroDeEmpleados(), // Método calculado en la entidad
+                        empresa.isHabilitada()
                 ))
                 .toList();
     }
-
 
     // Obtener una empresa por ID
     public Optional<Empresa> getEmpresaById(Long id) {
@@ -91,5 +91,22 @@ public class EmpresaService {
         empresaRepository.delete(empresa);
     }
 
+    public Empresa toggleHabilitacionEmpresa(Long id, boolean habilitada) {
+        Empresa empresa = empresaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Empresa con ID " + id + " no encontrada"));
+        empresa.setHabilitada(habilitada);
+        return empresaRepository.save(empresa);
+    }
 
+    public List<EmpresaDTO> getEmpresasPorHabilitacion(boolean habilitada) {
+        return empresaRepository.findByHabilitada(habilitada).stream()
+                .map(empresa -> new EmpresaDTO(
+                        empresa.getId(),
+                        empresa.getNombre(),
+                        empresa.getRuc(),
+                        empresa.getNumeroDeEmpleados(),
+                        empresa.isHabilitada()
+                ))
+                .toList();
+    }
 }
