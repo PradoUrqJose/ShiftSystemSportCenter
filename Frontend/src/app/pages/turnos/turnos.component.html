@@ -16,85 +16,84 @@
     </div>
   </div>
 
-  <!-- Tabla de turnos -->
-  <table class="w-full bg-white shadow rounded-lg overflow-hidden">
-    <thead>
-      <tr class="bg-blue-50 text-gray-800">
-        <!-- Colaborador -->
-        <th class="text-center p-4 colaborador-column w-[21%]">Colaborador</th>
-        <!-- Días de la semana -->
-        <th class="text-center p-4 capitalize font-normal semana-column w-[10.57%]"
-          *ngFor="let dia of diasSemana$ | async">
-          <span class="text-lg font-bold">{{ dia.dayNumber }}</span><span class="dayNumber"> {{ dia.nombre }}</span>
-        </th>
-        <!-- Total -->
-        <th class="p-3 w-[6%] text-center">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      <ng-container *ngIf="(colaboradores$ | async) as colaboradores; else loadingColaboradores">
-        <tr *ngFor="let colaborador of colaboradores" class="">
-          <!-- Columna de Colaborador -->
-          <td class="py-4 px-4 flex justify-start items-center w-full gap-3">
-            <div
-              class="photo flex items-center justify-center w-12 h-12 rounded-full bg-gray-200 overflow-hidden  -gray-300">
-              <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'" alt="Foto de {{ colaborador.nombre }}" class="w-full h-full object-cover" />
+<!-- Tabla de turnos -->
+<table class="w-full bg-white shadow rounded-lg overflow-hidden">
+  <thead>
+    <tr class="bg-blue-50 text-gray-800">
+      <!-- Colaborador -->
+      <th class="text-center p-4 colaborador-column w-[21%]">Colaborador</th>
+      <!-- Días de la semana -->
+      <th class="text-center p-4 capitalize font-normal semana-column w-[10.57%]"
+        *ngFor="let dia of diasSemana$ | async">
+        <span class="text-lg font-bold">{{ dia.dayNumber }}</span><span class="dayNumber"> {{ dia.nombre }}</span>
+      </th>
+      <!-- Total -->
+      <th class="p-3 w-[6%] text-center">Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <ng-container *ngIf="(colaboradores$ | async) as colaboradores; else loadingColaboradores">
+      <tr *ngFor="let colaborador of colaboradores" class="">
+        <!-- Columna de Colaborador -->
+        <td class="py-4 px-4 flex justify-start items-center w-full gap-3">
+          <div
+            class="photo flex items-center justify-center w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
+            <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'" alt="Foto de {{ colaborador.nombre }}" class="w-full h-full object-cover" />
+          </div>
+          <div class="colaborador">
+            <div class="colaborador-nombre text-sm font-bold">
+              {{ colaborador.nombre }} {{ colaborador.apellido }}
             </div>
-            <div class="colaborador">
-              <div class="colaborador-nombre text-sm font-bold">
-                {{ colaborador.nombre }} {{ colaborador.apellido }}
-              </div>
-              <div class="colaborador-empresa inline-block text-gray-700 font-bold">
-                {{ colaborador.empresaNombre }}
-              </div>
+            <div class="colaborador-empresa inline-block text-gray-700 font-bold">
+              {{ colaborador.empresaNombre }}
             </div>
-          </td>
+          </div>
+        </td>
 
-          <!-- Celdas para cada día de la semana -->
-          <td *ngFor="let dia of diasSemana$ | async" class=" text-center semana-column">
-            <ng-container *ngIf="turnos$ | async as turnos">
-              <ng-container
-                *ngIf="obtenerTurno(turnos, colaborador.id, dia.fecha) as turno; else agregarBoton">
-                <div class="container-green cursor-pointer transition" (click)="abrirModalEdicion(turno)"
-                  title="Editar Turno">
-                  {{ formatearHora(turno.horaEntrada) }} - {{ formatearHora(turno.horaSalida) }}
-                </div>
-
-              </ng-container>
-              <ng-template #agregarBoton>
-                <button class="plus_button hover:text-blue-800 transition"
-                  (click)="abrirModal(colaborador.id, dia.fecha)" title="Agregar Turno">
-                  <i class="fa-regular fa-square-plus"></i>
-                </button>
-              </ng-template>
+        <!-- Celdas para cada día de la semana -->
+        <td *ngFor="let dia of diasSemana$ | async" class="text-center semana-column">
+          <ng-container *ngIf="turnos$ | async as turnos">
+            <ng-container
+              *ngIf="obtenerTurno(turnos, colaborador.id, dia.fecha) as turno; else agregarBoton">
+              <div class="container-green cursor-pointer transition" (click)="abrirModalEdicion(turno)"
+                title="Editar Turno">
+                {{ formatearHora(turno.horaEntrada) }} - {{ formatearHora(turno.horaSalida) }}
+              </div>
             </ng-container>
-          </td>
+            <ng-template #agregarBoton>
+              <button class="plus_button hover:text-blue-800 transition"
+                (click)="abrirModal(colaborador.id, dia.fecha)" title="Agregar Turno">
+                <i class="fa-regular fa-square-plus"></i>
+              </button>
+            </ng-template>
+          </ng-container>
+        </td>
 
-          <!-- Columna de Total Horas -->
-          <td class="p-2 text-center font-bold semana-column">
-            {{ sumarHoras(turnos$ | async, colaborador.id) }}
-          </td>
-        </tr>
-      </ng-container>
-      <ng-template #loadingColaboradores>
-        <tr>
-          <td colspan="8" class="text-center p-4">
-            <div class="sk-chase">
-              <div class="sk-chase-dot"></div>
-              <div class="sk-chase-dot"></div>
-              <div class="sk-chase-dot"></div>
-              <div class="sk-chase-dot"></div>
-              <div class="sk-chase-dot"></div>
-              <div class="sk-chase-dot"></div>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
-    </tbody>
-  </table>
+        <!-- Columna de Total Horas -->
+        <td class="p-2 text-center font-bold semana-column">
+          {{ sumarHoras(turnos$ | async, colaborador.id) }}
+        </td>
+      </tr>
+    </ng-container>
+    <ng-template #loadingColaboradores>
+      <tr>
+        <td colspan="8" class="text-center p-4">
+          <div class="sk-chase">
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </tbody>
+</table>
 </div>
 
-<!-- Modal -->
+<!-- Modal para Turnos -->
 <div *ngIf="mostrarModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
   (click)="cerrarModal()">
   <div class="bg-white p-6 rounded-lg shadow-xl transform transition-all duration-300 w-1/4 max-w-lg relative"
@@ -145,6 +144,18 @@
         </div>
       </div>
 
+      <!-- Sección: Tienda -->
+      <div class="py-4 bg-gray-50 px-4 rounded-lg mb-4">
+        <label for="tienda" class="block text-sm font-medium text-gray-700 mb-1">Tienda</label>
+        <select id="tienda" [(ngModel)]="turnoActual.tiendaId" name="tienda" class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" required>
+          <option *ngFor="let tienda of tiendas$ | async" [value]="tienda.id">{{ tienda.nombre }}</option>
+        </select>
+        <div class="flex justify-between mt-2">
+          <button type="button" class="text-blue-500 hover:text-blue-700 transition" (click)="abrirModalAgregarTienda()">Agregar Tienda</button>
+          <button type="button" class="text-blue-500 hover:text-blue-700 transition" (click)="abrirModalGestionarTiendas()">Gestionar Tiendas</button>
+        </div>
+      </div>
+
       <!-- Botones -->
       <div class="flex justify-between space-x-4 mt-4 px-2">
         <button type="submit"
@@ -161,6 +172,97 @@
         </div>
       </div>
     </form>
+  </div>
+</div>
 
+<!-- Modal para agregar Tienda -->
+<div *ngIf="mostrarModalAgregarTienda" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+  (click)="cerrarModalAgregarTienda()">
+  <div class="bg-white p-6 rounded-lg shadow-xl transform transition-all duration-300 w-1/4 max-w-lg relative"
+    [ngClass]="{ 'opacity-0 -translate-y-10': !isModalAgregarTiendaVisible, 'opacity-100 translate-y-0': isModalAgregarTiendaVisible }"
+    (click)="$event.stopPropagation()">
+    <!-- Botón de cierre -->
+    <button (click)="cerrarModalAgregarTienda()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+      aria-label="Cerrar">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+
+    <!-- Encabezado -->
+    <div class="text-center pb-4 border-b border-gray-200">
+      <h3 class="text-xl font-semibold text-gray-800 mb-2">
+        {{ tiendaActual.id ? 'Editar Tienda' : 'Agregar Tienda' }}
+      </h3>
+    </div>
+
+    <!-- Formulario -->
+    <form (ngSubmit)="guardarTienda()" class="mt-6">
+      <div class="py-4 bg-gray-50 px-4 rounded-lg mb-4">
+        <label for="nombreTienda" class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+        <input id="nombreTienda" type="text" [(ngModel)]="tiendaActual.nombre" name="nombreTienda"
+          class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" required />
+      </div>
+      <div class="py-4 bg-gray-50 px-4 rounded-lg mb-4">
+        <label for="direccionTienda" class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+        <input id="direccionTienda" type="text" [(ngModel)]="tiendaActual.direccion" name="direccionTienda"
+          class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" required />
+      </div>
+      <div class="flex justify-end space-x-4 mt-4 px-2">
+        <button type="submit"
+          class="font-medium bg-gradient-to-r from-blue-500 to-blue-700 text-white py-3 px-4 rounded-lg hover:from-blue-600 hover:to-blue-800 transition text-xs"
+          [disabled]="isSubmitting">
+          {{ tiendaActual.id ? 'Actualizar' : 'Agregar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para gestionar Tiendas -->
+<div *ngIf="mostrarModalGestionarTiendas" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+  (click)="cerrarModalGestionarTiendas()">
+  <div class="bg-white p-6 rounded-lg shadow-xl transform transition-all duration-300 w-2/3 max-w-3xl relative"
+    [ngClass]="{ 'opacity-0 -translate-y-10': !isModalGestionarTiendasVisible, 'opacity-100 translate-y-0': isModalGestionarTiendasVisible }"
+    (click)="$event.stopPropagation()">
+    <!-- Botón de cierre -->
+    <button (click)="cerrarModalGestionarTiendas()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+      aria-label="Cerrar">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+
+    <!-- Encabezado -->
+    <div class="text-center pb-4 border-b border-gray-200">
+      <h3 class="text-xl font-semibold text-gray-800 mb-2">
+        Gestión de Tiendas
+      </h3>
+    </div>
+
+    <!-- Lista de Tiendas -->
+    <div class="mt-6">
+      <ul>
+        <li *ngFor="let tienda of tiendas$ | async" class="flex justify-between items-center py-2 border-b border-gray-200">
+          <div>
+            <span class="font-semibold">{{ tienda.nombre }}</span> - {{ tienda.direccion }}
+          </div>
+          <div class="flex space-x-2">
+            <button (click)="editarTienda(tienda)" class="text-blue-500 hover:text-blue-700 transition">
+              <i class="fa-solid fa-edit"></i>
+            </button>
+            <button (click)="eliminarTienda(tienda.id)" class="text-red-500 hover:text-red-700 transition">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </li>
+      </ul>
+      <div class="flex justify-end mt-4">
+        <button type="button" class="font-medium bg-gradient-to-r from-blue-500 to-blue-700 text-white py-3 px-4 rounded-lg hover:from-blue-600 hover:to-blue-800 transition text-xs"
+          (click)="abrirModalAgregarTienda()">
+          Agregar Tienda
+        </button>
+      </div>
+    </div>
   </div>
 </div>
