@@ -7,6 +7,7 @@ export interface Empresa {
   nombre: string;
   ruc: string; // Agregar el atributo RUC
   numeroEmpleados: number; // Campo calculado de número de empleados
+  habilitada: boolean; // Campo de estado de la empresa
 }
 
 
@@ -33,4 +34,6 @@ export class EmpresaService {
   deleteEmpresa(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+
 }
