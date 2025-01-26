@@ -12,13 +12,14 @@ import java.time.LocalTime;
 @AllArgsConstructor
 public class TurnoDTO {
     private Long id;
-    private Long colaboradorId; // Agregar el ID del colaborador
+    private Long colaboradorId;
     private String nombreColaborador;
     private String dniColaborador;
     private String nombreEmpresa;
+    private Long tiendaId; // Agregar el ID de la tienda
+    private String nombreTienda;
     private LocalDate fecha;
     private LocalTime horaEntrada;
     private LocalTime horaSalida;
     private double horasTrabajadas;
 }
-
