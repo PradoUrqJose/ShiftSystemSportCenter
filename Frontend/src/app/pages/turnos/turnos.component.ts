@@ -86,6 +86,7 @@ export default class TurnosComponent implements OnInit {
       horaEntrada: '',
       horaSalida: '',
       horasTrabajadas: 0,
+      tiendaId: null,
     };
   }
 
@@ -119,8 +120,43 @@ export default class TurnosComponent implements OnInit {
   }
 
   cargarTiendas(): void {
-    this.tiendas$ = this.tiendaService.getTiendas();
+    this.tiendas$ = this.tiendaService.getTiendas().pipe(
+      map(tiendas => tiendas.sort((a, b) => this.customSort(a, b)))
+    );
   }
+
+  //? Sorting Tiendas <----------------
+
+  private customSort(a: Tienda, b: Tienda): number {
+    const numA = this.extractNumber(a.nombre);
+    const numB = this.extractNumber(b.nombre);
+
+    // Caso 1: Ambos son Tienda numerada
+    if (numA !== null && numB !== null) {
+      return numA - numB;
+    }
+    // Caso 2: Solo A es Tienda numerada
+    else if (numA !== null) {
+      return -1;
+    }
+    // Caso 3: Solo B es Tienda numerada
+    else if (numB !== null) {
+      return 1;
+    }
+    // Caso 4: Ninguno es Tienda numerada - orden alfabético
+    else {
+      return a.nombre.localeCompare(b.nombre);
+    }
+  }
+
+  private extractNumber(nombre: string): number | null {
+    const match = nombre.match(/Tienda (\d+)/);
+    return match ? parseInt(match[1], 10) : null;
+  }
+
+  //? <------------------------
+
+
 
   cambiarSemana(direccion: 'anterior' | 'siguiente'): void {
     this.semanaActual =
@@ -154,7 +190,7 @@ export default class TurnosComponent implements OnInit {
             horaEntrada: '',
             horaSalida: '',
             horasTrabajadas: 0,
-            tiendaId: 0,
+            tiendaId: null,
           };
         }
       });
@@ -167,9 +203,14 @@ export default class TurnosComponent implements OnInit {
 
   abrirModalEdicion(turno: Turno): void {
     this.resetearEstadoModal(); // Resetear estado del modal
-    this.turnoOriginal = { ...turno }; // Guardar el turno original para comparación
-    this.turnoActual = { ...turno }; // Copiar datos existentes para edición
-    this.turnoActual.tiendaId = turno.tiendaId; // Asegurar que la tienda se asigne correctamente
+    this.turnoOriginal = {
+      ...turno,
+      tiendaId: turno.tiendaId, // Asegurar que se copie el tiendaId
+    };
+    this.turnoActual = {
+      ...turno,
+      tiendaId: turno.tiendaId,
+    };
     this.mostrarModal = true;
     setTimeout(() => {
       this.isModalVisible = true; // Activar la animación
@@ -177,6 +218,11 @@ export default class TurnosComponent implements OnInit {
   }
 
   abrirModalAgregarTienda(): void {
+    // Cerrar primero el modal de gestión si está abierto
+    if (this.mostrarModalGestionarTiendas) {
+      this.cerrarModalGestionarTiendas();
+    }
+
     this.mostrarModalAgregarTienda = true;
     setTimeout(() => {
       this.isModalAgregarTiendaVisible = true;
@@ -187,10 +233,16 @@ export default class TurnosComponent implements OnInit {
     this.isModalAgregarTiendaVisible = false;
     setTimeout(() => {
       this.mostrarModalAgregarTienda = false;
+      this.tiendaActual = this.resetTienda(); // Resetear formulario
     }, 300);
   }
 
   abrirModalGestionarTiendas(): void {
+    // Cerrar primero el modal de agregar si está abierto
+    if (this.mostrarModalAgregarTienda) {
+      this.cerrarModalAgregarTienda();
+    }
+
     this.mostrarModalGestionarTiendas = true;
     setTimeout(() => {
       this.isModalGestionarTiendasVisible = true;
@@ -225,13 +277,28 @@ export default class TurnosComponent implements OnInit {
     if (this.isSubmitting) return; // Evitar múltiples envíos
     this.isSubmitting = true;
 
+    this.errorHoraEntrada = null;
+    this.errorHoraSalida = null;
+
     this.validarHorarioEntrada();
     this.validarHorarioSalida();
+
+
+    if (!this.turnoActual.tiendaId) {
+      this.isSubmitting = false;
+      Notiflix.Notify.failure('Debes seleccionar una tienda', {
+        position: 'right-bottom',
+        cssAnimationStyle: 'from-right'
+      });
+      return;
+    }
+
 
     if (this.errorHoraEntrada || this.errorHoraSalida) {
       this.isSubmitting = false; // Rehabilitar el botón en caso de error
       return; // Si hay errores, no continúa
     }
+
     // Validación adicional de que la hora de salida es posterior a la hora de entrada
     const horaEntrada = this.formatearHora(this.turnoActual.horaEntrada);
     const horaSalida = this.formatearHora(this.turnoActual.horaSalida);
@@ -377,7 +444,8 @@ export default class TurnosComponent implements OnInit {
     return (
       this.turnoActual.horaEntrada !== this.turnoOriginal.horaEntrada ||
       this.turnoActual.horaSalida !== this.turnoOriginal.horaSalida ||
-      this.turnoActual.fecha !== this.turnoOriginal.fecha
+      this.turnoActual.fecha !== this.turnoOriginal.fecha ||
+      this.turnoActual.tiendaId !== this.turnoOriginal.tiendaId
     );
   }
   //* ------------------------->
