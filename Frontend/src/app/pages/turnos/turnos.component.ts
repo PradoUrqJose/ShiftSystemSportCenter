@@ -18,6 +18,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Notiflix from 'notiflix';
+import { TiendaService, Tienda } from '../../services/tienda.service';
 
 interface DiaSemana {
   fecha: string;
@@ -37,6 +38,7 @@ interface DiaSemana {
 export default class TurnosComponent implements OnInit {
   colaboradores$: Observable<Colaborador[]>; // Observable de colaboradores
   turnos$: Observable<Turno[]> = of([]); // Observable de turnos
+  tiendas$: Observable<Tienda[]> = of([]);
   diasSemana$: BehaviorSubject<DiaSemana[]> = new BehaviorSubject<DiaSemana[]>(
     []
   );
@@ -45,31 +47,50 @@ export default class TurnosComponent implements OnInit {
   //? Manejo de MODAL
   mostrarModal: boolean = false; // Controla la visibilidad del modal
   isModalVisible: boolean = false; // Controla la animación del modal
+
+  // Variables para el modal de Agregar Tienda
+  mostrarModalAgregarTienda: boolean = false;
+  isModalAgregarTiendaVisible: boolean = false;
+
+  // Variables para el modal de Gestionar Tiendas
+  mostrarModalGestionarTiendas: boolean = false;
+  isModalGestionarTiendasVisible: boolean = false;
+
   //* Validaciones de form
   errorHoraEntrada: string | null = null; // Para mostrar errores de hora de entrada
   errorHoraSalida: string | null = null; // Para mostrar errores de hora de salida
   turnoOriginal: Turno | null = null; // Almacena los datos originales del turno para comparar si se ha editado o no
-
-  turnoActual: Turno = {
-    id: 0, // Si no hay ID al inicio, puedes omitirlo o ponerlo como opcional
-    nombreColaborador: '', // Nombre del colaborador
-    dniColaborador: '', // DNI del colaborador
-    nombreEmpresa: '', // Nombre de la empresa
-    fecha: '', // Fecha del turno
-    horaEntrada: '', // Hora de entrada
-    horaSalida: '', // Hora de salida
-    horasTrabajadas: 0, // Opcional, se calcula automáticamente
-  };
+  tiendaActual: Tienda = this.resetTienda();
+  turnoActual: Turno = this.resetTurno();
 
   constructor(
     private turnoService: TurnoService,
-    private colaboradorService: ColaboradorService
+    private colaboradorService: ColaboradorService,
+    private tiendaService: TiendaService
   ) {
     this.colaboradores$ = this.colaboradorService.getColaboradores(); // Obtener colaboradores
   }
 
   ngOnInit(): void {
     this.cargarSemana();
+    this.cargarTiendas();
+  }
+
+  resetTurno(): Turno {
+    return {
+      id: 0,
+      nombreColaborador: '',
+      dniColaborador: '',
+      nombreEmpresa: '',
+      fecha: '',
+      horaEntrada: '',
+      horaSalida: '',
+      horasTrabajadas: 0,
+    };
+  }
+
+  resetTienda(): Tienda {
+    return { id: 0, nombre: '', direccion: '' };
   }
 
   cargarSemana(): void {
@@ -97,6 +118,10 @@ export default class TurnosComponent implements OnInit {
     });
   }
 
+  cargarTiendas(): void {
+    this.tiendas$ = this.tiendaService.getTiendas();
+  }
+
   cambiarSemana(direccion: 'anterior' | 'siguiente'): void {
     this.semanaActual =
       direccion === 'anterior'
@@ -108,44 +133,31 @@ export default class TurnosComponent implements OnInit {
 
   //? MODAL <-----------------------------
 
-  resetearEstadoModal(): void {
-    this.errorHoraEntrada = null; // Limpiar error de hora de entrada
-    this.errorHoraSalida = null; // Limpiar error de hora de salida
-    this.turnoOriginal = null; // Resetear turno original
-    this.turnoActual = {
-      id: 0, // ID del turno, inicializado en 0
-      nombreColaborador: '', // Nombre del colaborador
-      dniColaborador: '', // DNI del colaborador
-      nombreEmpresa: '', // Nombre de la empresa
-      fecha: '', // Fecha del turno
-      horaEntrada: '', // Hora de entrada
-      horaSalida: '', // Hora de salida
-      horasTrabajadas: 0, // Horas trabajadas calculadas (opcional)
-    }; // Resetear turno actual
-  }
-
   abrirModal(colaboradorId: number, fecha: string): void {
-    this.resetearEstadoModal(); // Limpiar estado anterior
-    const colaborador = this.colaboradores$.pipe(
-      map((colaboradores) => colaboradores.find((c) => c.id === colaboradorId))
-    );
-
-    colaborador.subscribe((col) => {
-      if (col) {
-        this.turnoActual = {
-          id: 0, // Para agregar un nuevo turno, no hay ID todavía
-          nombreColaborador: col.nombre, // Nombre del colaborador
-          dniColaborador: col.dni, // DNI del colaborador
-          nombreEmpresa: col.empresaNombre, // Nombre de la empresa
-          empresaId: col.empresaId, // ID de la empresa asociada
-          colaboradorId: col.id, // ID del colaborador
-          fecha: fecha, // Fecha seleccionada
-          horaEntrada: '', // Inicialmente vacío
-          horaSalida: '', // Inicialmente vacío
-          horasTrabajadas: 0, // Inicialmente 0
-        };
-      }
-    });
+    this.resetearEstadoModal();
+    this.colaboradores$
+      .pipe(
+        map((colaboradores) =>
+          colaboradores.find((c) => c.id === colaboradorId)
+        )
+      )
+      .subscribe((col) => {
+        if (col) {
+          this.turnoActual = {
+            id: 0,
+            nombreColaborador: col.nombre,
+            dniColaborador: col.dni,
+            nombreEmpresa: col.empresaNombre,
+            empresaId: col.empresaId,
+            colaboradorId: col.id,
+            fecha: fecha,
+            horaEntrada: '',
+            horaSalida: '',
+            horasTrabajadas: 0,
+            tiendaId: 0,
+          };
+        }
+      });
 
     this.mostrarModal = true;
     setTimeout(() => {
@@ -157,10 +169,39 @@ export default class TurnosComponent implements OnInit {
     this.resetearEstadoModal(); // Resetear estado del modal
     this.turnoOriginal = { ...turno }; // Guardar el turno original para comparación
     this.turnoActual = { ...turno }; // Copiar datos existentes para edición
+    this.turnoActual.tiendaId = turno.tiendaId; // Asegurar que la tienda se asigne correctamente
     this.mostrarModal = true;
     setTimeout(() => {
       this.isModalVisible = true; // Activar la animación
     }, 50);
+  }
+
+  abrirModalAgregarTienda(): void {
+    this.mostrarModalAgregarTienda = true;
+    setTimeout(() => {
+      this.isModalAgregarTiendaVisible = true;
+    }, 50);
+  }
+
+  cerrarModalAgregarTienda(): void {
+    this.isModalAgregarTiendaVisible = false;
+    setTimeout(() => {
+      this.mostrarModalAgregarTienda = false;
+    }, 300);
+  }
+
+  abrirModalGestionarTiendas(): void {
+    this.mostrarModalGestionarTiendas = true;
+    setTimeout(() => {
+      this.isModalGestionarTiendasVisible = true;
+    }, 50);
+  }
+
+  cerrarModalGestionarTiendas(): void {
+    this.isModalGestionarTiendasVisible = false;
+    setTimeout(() => {
+      this.mostrarModalGestionarTiendas = false;
+    }, 300);
   }
 
   cerrarModal(): void {
@@ -171,6 +212,13 @@ export default class TurnosComponent implements OnInit {
       this.mostrarModal = false; // Ocultar el modal completamente
       this.isSubmitting = false; // Rehabilitar el botón después de que termine la animación
     }, 300); // Debe coincidir con la duración de la animación (300ms)
+  }
+
+  resetearEstadoModal(): void {
+    this.errorHoraEntrada = null; // Limpiar error de hora de entrada
+    this.errorHoraSalida = null; // Limpiar error de hora de salida
+    this.turnoOriginal = null; // Resetear turno original
+    this.turnoActual = this.resetTurno();
   }
 
   guardarTurno(): void {
@@ -201,6 +249,7 @@ export default class TurnosComponent implements OnInit {
       horaEntrada: this.turnoActual.horaEntrada,
       horaSalida: this.turnoActual.horaSalida,
       empresa: { id: this.turnoActual.empresaId! }, // Usar el ID de la empresa
+      tienda: { id: this.turnoActual.tiendaId! },
     };
 
     console.log('Datos enviados al backend:', turnoParaGuardar);
@@ -370,5 +419,81 @@ export default class TurnosComponent implements OnInit {
     if (!hora) return '00:00';
     const [horas, minutos] = hora.split(':');
     return `${horas}:${minutos}`;
+  }
+
+  guardarTienda(): void {
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
+
+    if (this.tiendaActual.id) {
+      this.tiendaService
+        .updateTienda(this.tiendaActual.id, this.tiendaActual)
+        .subscribe({
+          next: () => {
+            this.cargarTiendas();
+            this.cerrarModalAgregarTienda();
+            this.isSubmitting = false;
+            Notiflix.Notify.success('Tienda actualizada con éxito', {
+              position: 'right-bottom',
+              cssAnimationStyle: 'from-right',
+            });
+          },
+          error: (error) => {
+            this.isSubmitting = false;
+            Notiflix.Notify.failure(
+              error.error?.message || 'Error desconocido',
+              {
+                position: 'right-bottom',
+                cssAnimationStyle: 'from-right',
+              }
+            );
+          },
+        });
+    } else {
+      this.tiendaService.addTienda(this.tiendaActual).subscribe({
+        next: () => {
+          this.cargarTiendas();
+          this.cerrarModalAgregarTienda();
+          this.isSubmitting = false;
+          Notiflix.Notify.success('Tienda creada con éxito', {
+            position: 'right-bottom',
+            cssAnimationStyle: 'from-right',
+          });
+        },
+        error: (error) => {
+          this.isSubmitting = false;
+          Notiflix.Notify.failure(error.error?.message || 'Error desconocido', {
+            position: 'right-bottom',
+            cssAnimationStyle: 'from-right',
+          });
+        },
+      });
+    }
+  }
+
+  editarTienda(tienda: Tienda): void {
+    this.tiendaActual = { ...tienda };
+    this.abrirModalAgregarTienda();
+  }
+
+  eliminarTienda(id: number): void {
+    Notiflix.Confirm.show(
+      'Confirmar Eliminación',
+      '¿Estás seguro de que deseas eliminar esta tienda?',
+      'Eliminar',
+      'Cancelar',
+      () => {
+        this.tiendaService.deleteTienda(id).subscribe(() => {
+          this.cargarTiendas();
+          Notiflix.Notify.success('Tienda eliminada con éxito', {
+            position: 'right-bottom',
+            cssAnimationStyle: 'from-right',
+          });
+        });
+      },
+      () => {
+        console.log('Eliminación cancelada');
+      }
+    );
   }
 }
