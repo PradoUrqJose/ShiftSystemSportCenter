@@ -2,8 +2,10 @@ package com.sportcenter.shift_manager.service;
 
 import com.sportcenter.shift_manager.dto.TurnoDTO;
 import com.sportcenter.shift_manager.model.Colaborador;
+import com.sportcenter.shift_manager.model.Tienda;
 import com.sportcenter.shift_manager.model.Turno;
 import com.sportcenter.shift_manager.repository.ColaboradorRepository;
+import com.sportcenter.shift_manager.repository.TiendaRepository;
 import com.sportcenter.shift_manager.repository.TurnoRepository;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +19,13 @@ public class TurnoService {
     // Atributos privados
     private final TurnoRepository turnoRepository;
     private final ColaboradorRepository colaboradorRepository;
+    private final TiendaRepository tiendaRepository;
 
     // Constructor
-    public TurnoService(TurnoRepository turnoRepository, ColaboradorRepository colaboradorRepository) {
+    public TurnoService(TurnoRepository turnoRepository, ColaboradorRepository colaboradorRepository, TiendaRepository tiendaRepository) {
         this.turnoRepository = turnoRepository;
         this.colaboradorRepository = colaboradorRepository;
+        this.tiendaRepository = tiendaRepository;
     }
 
     // Métodos públicos: Gestión de turnos por colaborador
@@ -61,8 +65,12 @@ public class TurnoService {
         Colaborador colaborador = colaboradorRepository.findById(turno.getColaborador().getId())
                 .orElseThrow(() -> new RuntimeException("El colaborador con ID " + turno.getColaborador().getId() + " no existe"));
 
+        Tienda tienda = tiendaRepository.findById(turno.getTienda().getId())
+                .orElseThrow(() -> new RuntimeException("La tienda con ID " + turno.getTienda().getId() + " no existe"));
+
         turno.setColaborador(colaborador);
         turno.setEmpresa(colaborador.getEmpresa()); // Aseguramos que la empresa también se asocia correctamente
+        turno.setTienda(tienda);
         return turnoRepository.save(turno); // Guardamos el turno y lo retornamos
     }
 
@@ -79,10 +87,17 @@ public class TurnoService {
             if (colaboradorOpt.isEmpty()) {
                 throw new RuntimeException("Colaborador con ID " + updatedTurno.getColaborador().getId() + " no existe");
             }
+
+            Optional<Tienda> tiendaOpt = tiendaRepository.findById(updatedTurno.getTienda().getId());
+            if (tiendaOpt.isEmpty()) {
+                throw new RuntimeException("Tienda con ID " + updatedTurno.getTienda().getId() + " no existe");
+            }
+
             turno.setColaborador(colaboradorOpt.get());
             turno.setFecha(updatedTurno.getFecha());
             turno.setHoraEntrada(updatedTurno.getHoraEntrada());
             turno.setHoraSalida(updatedTurno.getHoraSalida());
+            turno.setTienda(tiendaOpt.get());
             return turnoRepository.save(turno);
         }).orElseThrow(() -> new RuntimeException("Turno no encontrado"));
     }
@@ -100,10 +115,12 @@ public class TurnoService {
     public TurnoDTO convertToDTO(Turno turno) {
         return new TurnoDTO(
                 turno.getId(),
-                turno.getColaborador() != null ? turno.getColaborador().getId() : null, // Agregar colaboradorId
+                turno.getColaborador() != null ? turno.getColaborador().getId() : null,
                 turno.getColaborador() != null ? turno.getColaborador().getNombre() : "Sin Nombre",
                 turno.getColaborador() != null ? turno.getColaborador().getDni() : "Sin DNI",
                 turno.getEmpresa() != null ? turno.getEmpresa().getNombre() : "Sin Empresa",
+                turno.getTienda() != null ? turno.getTienda().getId() : null, // Agregar tiendaId
+                turno.getTienda() != null ? turno.getTienda().getNombre() : "Sin Tienda",
                 turno.getFecha(),
                 turno.getHoraEntrada(),
                 turno.getHoraSalida(),
