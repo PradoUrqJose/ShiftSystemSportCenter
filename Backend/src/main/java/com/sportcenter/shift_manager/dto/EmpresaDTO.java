@@ -12,4 +12,5 @@ public class EmpresaDTO {
     private String nombre;
     private String ruc;
     private int numeroEmpleados;
+    private boolean habilitada;
 }
