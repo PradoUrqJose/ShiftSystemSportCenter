@@ -41,5 +41,15 @@ public class EmpresaController {
     public void deleteEmpresa(@PathVariable Long id) {
         empresaService.deleteEmpresa(id);
     }
+
+    @PutMapping("/{id}/habilitacion")
+    public Empresa toggleHabilitacionEmpresa(@PathVariable Long id, @RequestParam boolean habilitada) {
+        return empresaService.toggleHabilitacionEmpresa(id, habilitada);
+    }
+
+    @GetMapping("/filtro")
+    public List<EmpresaDTO> getEmpresasPorHabilitacion(@RequestParam boolean habilitada) {
+        return empresaService.getEmpresasPorHabilitacion(habilitada);
+    }
 }
 
