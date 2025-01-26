@@ -23,6 +23,9 @@ export default class EmpresasComponent implements OnInit {
   empresaForm!: FormGroup;
   isEditing: boolean = false;
   selectedEmpresaId: number | null = null;
+  empresasHabilitadas: Empresa[] = [];
+  empresasDeshabilitadas: Empresa[] = [];
+  mostrarDeshabilitadas: boolean = false; // Controla si se muestran las deshabilitadas
 
   // MODAL CONTROL
   // Controla si el modal está abierto o cerrado
@@ -58,7 +61,13 @@ export default class EmpresasComponent implements OnInit {
   getEmpresas(): void {
     this.empresaService.getEmpresas().subscribe((data) => {
       this.empresas = data;
+      this.empresasHabilitadas = this.empresas.filter((e) => e.habilitada);
+      this.empresasDeshabilitadas = this.empresas.filter((e) => !e.habilitada);
     });
+  }
+
+  toggleDeshabilitadas(): void {
+    this.mostrarDeshabilitadas = !this.mostrarDeshabilitadas;
   }
 
   // Agregar empresa
