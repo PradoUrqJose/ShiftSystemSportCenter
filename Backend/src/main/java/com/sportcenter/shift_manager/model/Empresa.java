@@ -24,15 +24,17 @@ public class Empresa {
 
     @Column(unique = true, nullable = false)
     @Pattern(regexp = "\\d{11}", message = "El RUC debe tener 11 dígitos")
-    private String ruc; // Nuevo atributo para el RUC
+    private String ruc;
 
     @OneToMany(mappedBy = "empresa", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("empresa")
     private List<Colaborador> colaboradores;
 
-    // Método calculado: Número de empleados asociados
     @JsonProperty("numeroEmpleados")
     public int getNumeroDeEmpleados() {
         return colaboradores == null ? 0 : colaboradores.size();
     }
+
+    @Column(nullable = false)
+    private boolean habilitada = true; // Nueva propiedad
 }
