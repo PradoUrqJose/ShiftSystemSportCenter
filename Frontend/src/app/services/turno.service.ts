@@ -16,6 +16,7 @@ export interface Turno {
   horaEntrada: string; // Hora de entrada
   horaSalida: string; // Hora de salida
   horasTrabajadas?: number; // Horas trabajadas (opcional)
+  tiendaId?: number; // Añadir tiendaId
 }
 
 export interface TurnoPayload {
@@ -23,7 +24,8 @@ export interface TurnoPayload {
   fecha: string; // Fecha del turno
   horaEntrada: string; // Hora de entrada
   horaSalida: string; // Hora de salida
-  empresa: { id: number }; // Solo el ID de la empresa
+  empresa: { id: number }; // Solo el ID de la empresa\
+  tienda: { id: number }; // Solo el ID de la tienda
 }
 
 @Injectable({
