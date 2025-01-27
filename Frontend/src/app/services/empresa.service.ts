@@ -10,7 +10,6 @@ export interface Empresa {
   habilitada: boolean; // Campo de estado de la empresa
 }
 
-
 @Injectable({
   providedIn: 'root',
 })
@@ -35,5 +34,16 @@ export class EmpresaService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
+  // En empresa.service.ts
+  toggleHabilitacion(id: number, habilitada: boolean): Observable<Empresa> {
+    return this.http.put<Empresa>(`${this.apiUrl}/${id}/habilitacion`, null, {
+      params: { habilitada: habilitada.toString() },
+    });
+  }
 
+  getEmpresasPorHabilitacion(habilitada: boolean): Observable<Empresa[]> {
+    return this.http.get<Empresa[]>(`${this.apiUrl}/filtro`, {
+      params: { habilitada: habilitada.toString() },
+    });
+  }
 }
