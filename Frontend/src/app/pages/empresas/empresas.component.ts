@@ -38,11 +38,13 @@ export default class EmpresasComponent implements OnInit {
     private empresaService: EmpresaService
   ) {}
 
+
   ngOnInit(): void {
     // Inicialización segura del FormGroup
     this.empresaForm = this.fb.group({
       nombre: ['', [Validators.required]],
       ruc: ['', [Validators.required, Validators.pattern(/^\d{11}$/)]],
+      habilitada: [true] // Valor por defecto true
     });
 
     this.getEmpresas();
@@ -95,11 +97,13 @@ export default class EmpresasComponent implements OnInit {
     this.isEditing = true;
     this.selectedEmpresaId = empresa.id;
 
-    this.openModal();
     this.empresaForm.patchValue({
       nombre: empresa.nombre,
       ruc: empresa.ruc,
+      habilitada: empresa.habilitada // Cargar estado actual
     });
+
+    this.openModal();
   }
 
   // Actualizar empresa
@@ -143,7 +147,7 @@ export default class EmpresasComponent implements OnInit {
     if (!this.isEditing) {
       // Si no está en modo edición, restablece el formulario
       this.selectedEmpresaId = null;
-      this.empresaForm.reset();
+      this.empresaForm.reset({ habilitada: true }); // Establece habilitada en true
     }
 
     this.isModalOpen = true;
