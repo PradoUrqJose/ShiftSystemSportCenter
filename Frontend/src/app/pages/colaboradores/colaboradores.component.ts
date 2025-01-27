@@ -143,8 +143,9 @@ export default class ColaboradoresComponent implements OnInit {
   }
 
   getEmpresasAndColaboradores(): void {
-    this.empresaService.getEmpresas().subscribe({
+    this.empresaService.getEmpresasPorHabilitacion(true).subscribe({
       next: (empresas) => {
+        console.log(empresas);
         this.empresas = empresas;
         // Cargar colaboradores después de cargar las empresas
         this.getColaboradores();
@@ -158,7 +159,7 @@ export default class ColaboradoresComponent implements OnInit {
   getColaboradores(): void {
     this.colaboradorService.getColaboradores().subscribe({
       next: (data) => {
-        this.colaboradores = data.map(colaborador => {
+        this.colaboradores = data.map((colaborador) => {
           if (colaborador.fotoUrl) {
             colaborador.fotoUrl += '?t=' + new Date().getTime(); // Agrega un parámetro de tiempo para evitar la caché
           }
@@ -167,7 +168,7 @@ export default class ColaboradoresComponent implements OnInit {
       },
       error: () => {
         this.errorMessage = 'Error al obtener colaboradores.';
-      }
+      },
     });
   }
 
@@ -214,7 +215,7 @@ export default class ColaboradoresComponent implements OnInit {
             err.error?.message || 'Error al agregar colaborador.';
         },
       });
-    }else {
+    } else {
       this.validateForm();
     }
   }
