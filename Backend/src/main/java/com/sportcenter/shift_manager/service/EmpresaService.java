@@ -66,6 +66,7 @@ public class EmpresaService {
 
         empresa.setNombre(empresaDetails.getNombre());
         empresa.setRuc(empresaDetails.getRuc());
+        empresa.setHabilitada(empresaDetails.isHabilitada()); // Nueva línea
         return empresaRepository.save(empresa);
     }
 
