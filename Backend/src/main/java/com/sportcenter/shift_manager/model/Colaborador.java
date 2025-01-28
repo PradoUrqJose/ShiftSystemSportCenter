@@ -40,4 +40,7 @@ public class Colaborador {
     public void setFotoUrl(String fotoUrl) {
         this.fotoUrl = fotoUrl;
     }
+
+    @Column(nullable = false)
+    private boolean habilitado = true; // Nueva propiedad
 }
