@@ -17,4 +17,5 @@ public class ColaboradorDTO {
     private Long empresaId;
     private String empresaNombre;
     private String fotoUrl; // Cambié de byte[] a String para la URL de la foto
+    private boolean habilitado;
 }
