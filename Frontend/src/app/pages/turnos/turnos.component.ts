@@ -68,7 +68,7 @@ export default class TurnosComponent implements OnInit {
     private colaboradorService: ColaboradorService,
     private tiendaService: TiendaService
   ) {
-    this.colaboradores$ = this.colaboradorService.getColaboradores(); // Obtener colaboradores
+    this.colaboradores$ = this.colaboradorService.getColaboradoresPorHabilitacion(true); // Obtener colaboradores
   }
 
   ngOnInit(): void {
@@ -155,9 +155,6 @@ export default class TurnosComponent implements OnInit {
   }
 
   //? <------------------------
-
-
-
   cambiarSemana(direccion: 'anterior' | 'siguiente'): void {
     this.semanaActual =
       direccion === 'anterior'
