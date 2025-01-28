@@ -1,6 +1,7 @@
 package com.sportcenter.shift_manager.service;
 
 import com.sportcenter.shift_manager.dto.ColaboradorDTO;
+import com.sportcenter.shift_manager.dto.EmpresaDTO;
 import com.sportcenter.shift_manager.model.Colaborador;
 import com.sportcenter.shift_manager.model.Empresa;
 import com.sportcenter.shift_manager.repository.ColaboradorRepository;
@@ -40,6 +41,7 @@ public class ColaboradorService {
         colaborador.setDni(colaboradorDTO.getDni());
         colaborador.setTelefono(colaboradorDTO.getTelefono());
         colaborador.setEmail(colaboradorDTO.getEmail());
+        colaborador.setHabilitado(colaboradorDTO.isHabilitado()); // Nueva línea
 
         if (file != null && !file.isEmpty()) {
             if (file.getSize() > 1048576) { // Limitar tamaño a 1 MB
@@ -104,6 +106,7 @@ public class ColaboradorService {
         colaborador.setTelefono(colaboradorDTO.getTelefono());
         colaborador.setEmail(colaboradorDTO.getEmail());
         colaborador.setEmpresa(nuevaEmpresa);
+        colaborador.setHabilitado(colaboradorDTO.isHabilitado()); // Nueva línea
 
         // Manejar la actualización de la imagen
         if (file != null && !file.isEmpty()) {
@@ -144,6 +147,19 @@ public class ColaboradorService {
     }
 
 
+    public Colaborador toggleHabilitacionColaborador(Long id, boolean habilitado) {
+        Colaborador colaborador = colaboradorRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Colaborador con ID " + id + " no encontrado"));
+        colaborador.setHabilitado(habilitado);
+        return colaboradorRepository.save(colaborador);
+    }
+
+    public List<ColaboradorDTO> getColaboradoresPorHabilitacion(boolean habilitado) {
+        return colaboradorRepository.findByHabilitado(habilitado).stream()
+                .map(this::convertToDTO)
+                .toList();
+    }
+
     // Convertir Colaborador a ColaboradorDTO
     public ColaboradorDTO convertToDTO(Colaborador colaborador) {
         return new ColaboradorDTO(
@@ -155,7 +171,8 @@ public class ColaboradorService {
                 colaborador.getEmail(),    // Nuevo campo
                 colaborador.getEmpresa() != null ? colaborador.getEmpresa().getId() : null,
                 colaborador.getEmpresa() != null ? colaborador.getEmpresa().getNombre() : "N/A",
-                colaborador.getFotoUrl()      // Nuevo campo
+                colaborador.getFotoUrl(),      // Nuevo campo
+                colaborador.isHabilitado()
         );
     }
 
