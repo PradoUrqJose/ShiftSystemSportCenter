@@ -30,7 +30,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let colaborador of colaboradores" class="border-t hover:bg-gray-50 transition">
+        <tr *ngFor="let colaborador of colaboradoresHabilitados" class="border-t hover:bg-gray-50 transition">
           <!-- Foto -->
           <td class="p-4">
             <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
@@ -59,6 +59,39 @@
             </button> -->
           </td>
         </tr>
+        <!-- Separador para empresas deshabilitadas -->
+        <tr class="bg-gray-100 text-gray-700">
+          <td colspan="7" class="p-2 text-left">
+            <button class="bg-gray-300 px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+              (click)="toggleDeshabilitados()">
+              <i class="fa-solid transition"
+                [ngClass]="{'fa-caret-down': mostrarDeshabilitados, 'fa-caret-right': !mostrarDeshabilitados}"></i>
+              {{ mostrarDeshabilitados ? 'Ocultar' : 'Mostrar' }} Deshabilitados
+            </button>
+          </td>
+        </tr>
+
+        <!-- Empresas deshabilitadas (mostradas si mostrarDeshabilitadas = true) -->
+        <ng-container *ngIf="mostrarDeshabilitados">
+          <tr *ngFor="let colaborador of colaboradoresDeshabilitados"
+            class="border-t bg-gray-50 hover:bg-gray-100 transition">
+            <td class="p-4">
+              <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
+                alt="Foto de {{ colaborador.nombre }}"
+                class="w-12 h-12 object-cover rounded-full border border-gray-300" />
+            </td>
+            <td class="p-4">{{ colaborador.nombre }}</td>
+            <td class="p-4">{{ colaborador.apellido }}</td>
+            <td class="p-4">{{ colaborador.email }}</td>
+            <td class="p-4">{{ colaborador.telefono }}</td>
+            <td class="p-4">{{ colaborador.empresaNombre || 'N/A' }}</td>
+            <td class="p-4 flex justify-center items-center space-x-2">
+              <button (click)="editColaborador(colaborador)" class="text-blue-600 hover:text-blue-800 transition">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+            </td>
+          </tr>
+        </ng-container>
       </tbody>
     </table>
   </div>
@@ -159,13 +192,23 @@
           <div>
             <select (change)="onEmpresaSelected($event)" formControlName="empresaId"
               class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400">
-              <option value="" disabled selected>Seleccione una Empresa</option>
+              <option [ngValue]="null" disabled selected>Seleccione una Empresa</option>
               <option *ngFor="let empresa of empresas" [value]="empresa.id">
                 {{ empresa.nombre }}
               </option>
             </select>
           </div>
-        </div>
+          </div>
+          <!-- Línea divisora -->
+          <hr class="border-gray-200 my-4">
+
+          <div class="py-4 bg-gray-50 px-4 rounded-lg mb-4">
+            <label class="flex items-center space-x-3">
+              <input type="checkbox" formControlName="habilitado"
+                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+              <span class="text-sm font-medium text-gray-700">Colaborador habilitado</span>
+            </label>
+          </div>
 
         <!-- Botones -->
         <div class="flex justify-end space-x-4 mt-4">
