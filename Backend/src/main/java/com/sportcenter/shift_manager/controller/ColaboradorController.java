@@ -1,7 +1,9 @@
 package com.sportcenter.shift_manager.controller;
 
 import com.sportcenter.shift_manager.dto.ColaboradorDTO;
+import com.sportcenter.shift_manager.dto.EmpresaDTO;
 import com.sportcenter.shift_manager.model.Colaborador;
+import com.sportcenter.shift_manager.model.Empresa;
 import com.sportcenter.shift_manager.service.ColaboradorService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,5 +58,15 @@ public class ColaboradorController {
     @DeleteMapping("/{id}")
     public void deleteColaborador(@PathVariable Long id) {
         colaboradorService.deleteColaborador(id);
+    }
+
+    @PutMapping("/{id}/habilitacion")
+    public Colaborador toggleHabilitacionColaborador(@PathVariable Long id, @RequestParam boolean habilitado) {
+        return colaboradorService.toggleHabilitacionColaborador(id, habilitado);
+    }
+
+    @GetMapping("/filtro")
+    public List<ColaboradorDTO> getColaboradoresPorHabilitacion(@RequestParam boolean habilitado) {
+        return colaboradorService.getColaboradoresPorHabilitacion(habilitado);
     }
 }
