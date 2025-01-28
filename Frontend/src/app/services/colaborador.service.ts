@@ -12,6 +12,7 @@ export interface Colaborador {
   empresaId: number;
   empresaNombre: string; // Campo opcional para el nombre de la empresa
   fotoUrl?: string; // URL de la foto
+  habilitado: boolean; // Campo de estado del colaborador
 }
 
 @Injectable({
@@ -30,26 +31,50 @@ export class ColaboradorService {
     return this.http.get<Colaborador[]>(`${this.apiUrl}/empresa/${empresaId}`);
   }
 
-  addColaborador(colaborador: Colaborador, file?: File): Observable<Colaborador> {
+  addColaborador(
+    colaborador: Colaborador,
+    file?: File
+  ): Observable<Colaborador> {
     const formData = new FormData();
-    formData.append('colaborador', new Blob([JSON.stringify(colaborador)], { type: 'application/json' }));
+    formData.append(
+      'colaborador',
+      new Blob([JSON.stringify(colaborador)], { type: 'application/json' })
+    );
     if (file) {
       formData.append('file', file); // Añade el archivo si está presente
     }
     return this.http.post<Colaborador>(this.apiUrl, formData);
   }
 
-  updateColaborador(id: number, colaborador: Colaborador, file?: File): Observable<Colaborador> {
+  updateColaborador(
+    id: number,
+    colaborador: Colaborador,
+    file?: File
+  ): Observable<Colaborador> {
     const formData = new FormData();
-    formData.append('colaborador', new Blob([JSON.stringify(colaborador)], { type: 'application/json' }));
+    formData.append(
+      'colaborador',
+      new Blob([JSON.stringify(colaborador)], { type: 'application/json' })
+    );
     if (file) {
       formData.append('file', file); // Añade el archivo si está presente
     }
     return this.http.put<Colaborador>(`${this.apiUrl}/${id}`, formData);
   }
 
-
   deleteColaborador(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  toggleHabilitacion(id: number, habilitado: boolean): Observable<Colaborador> {
+    return this.http.put<Colaborador>(`${this.apiUrl}/${id}/habilitacion`, null, {
+      params: { habilitado: habilitado.toString() },
+    });
+  }
+
+  getColaboradoresPorHabilitacion(habilitado: boolean): Observable<Colaborador[]> {
+    return this.http.get<Colaborador[]>(`${this.apiUrl}/filtro`, {
+      params: { habilitado: habilitado.toString() },
+    });
   }
 }
