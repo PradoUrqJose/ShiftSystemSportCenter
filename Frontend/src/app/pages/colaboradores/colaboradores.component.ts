@@ -37,6 +37,11 @@ export default class ColaboradoresComponent implements OnInit {
   selectedColaboradorId: number | null = null;
   selectedEmpresaId: number | null = null; // Propiedad agregada
 
+  colaboradoresHabilitados: Colaborador[] = [];
+  colaboradoresDeshabilitados: Colaborador[] = [];
+  mostrarDeshabilitados: boolean = false; // Controla si se muestran las deshabilitadas
+
+
   // Control de Modal
   isModalOpen: boolean = false;
   isModalVisible: boolean = false;
@@ -61,6 +66,7 @@ export default class ColaboradoresComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       empresaId: ['', Validators.required],
       foto: [null], // Para manejar la imagen
+      habilitado: [true], // Valor por defecto true
     });
   }
 
@@ -165,11 +171,17 @@ export default class ColaboradoresComponent implements OnInit {
           }
           return colaborador;
         });
+        this.colaboradoresHabilitados = this.colaboradores.filter((c) => c.habilitado);
+        this.colaboradoresDeshabilitados = this.colaboradores.filter((c) => !c.habilitado);
       },
       error: () => {
         this.errorMessage = 'Error al obtener colaboradores.';
       },
     });
+  }
+
+  toggleDeshabilitados(): void {
+    this.mostrarDeshabilitados = !this.mostrarDeshabilitados;
   }
 
   getColaboradoresByEmpresa(empresaId: number): void {
@@ -234,6 +246,7 @@ export default class ColaboradoresComponent implements OnInit {
       email: colaborador.email,
       empresaId: colaborador.empresaId,
       foto: null, // Para forzar una nueva subida si es necesario
+      habilitado: colaborador.habilitado, // Valor por defecto
     });
 
     // Asignar la foto actual del colaborador a la vista previa
@@ -303,8 +316,10 @@ export default class ColaboradoresComponent implements OnInit {
 
     // Restablecer el formulario y la vista previa de la foto
     this.colaboradorForm.reset({
-      empresaId: '', // Asegúrate de que el placeholder funcione
+      empresaId: null, // Asegúrate de que el placeholder funcione
     });
+    this.colaboradorForm.reset({ habilitado: true }); // Valor por defecto
+
     this.fotoPreview = 'assets/user-circle-svgrepo-com.svg'; // Restablecer a la imagen predeterminada
 
     setTimeout(() => (this.isModalVisible = true), 10);
