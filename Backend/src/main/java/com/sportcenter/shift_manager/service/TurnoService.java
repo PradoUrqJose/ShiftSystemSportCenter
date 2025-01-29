@@ -10,6 +10,7 @@ import com.sportcenter.shift_manager.repository.TurnoRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -113,18 +114,26 @@ public class TurnoService {
     }
 
     public TurnoDTO convertToDTO(Turno turno) {
+        boolean tomoAlmuerzo = false;
+        if (turno.getHoraEntrada() != null && turno.getHoraSalida() != null) {
+            // Verificar si las horas incluyen el rango del almuerzo
+            tomoAlmuerzo = turno.getHoraEntrada().isBefore(LocalTime.of(12, 1))
+                    && turno.getHoraSalida().isAfter(LocalTime.of(13, 0));
+        }
+
         return new TurnoDTO(
                 turno.getId(),
                 turno.getColaborador() != null ? turno.getColaborador().getId() : null,
                 turno.getColaborador() != null ? turno.getColaborador().getNombre() : "Sin Nombre",
                 turno.getColaborador() != null ? turno.getColaborador().getDni() : "Sin DNI",
                 turno.getEmpresa() != null ? turno.getEmpresa().getNombre() : "Sin Empresa",
-                turno.getTienda() != null ? turno.getTienda().getId() : null, // Agregar tiendaId
+                turno.getTienda() != null ? turno.getTienda().getId() : null,
                 turno.getTienda() != null ? turno.getTienda().getNombre() : "Sin Tienda",
                 turno.getFecha(),
                 turno.getHoraEntrada(),
                 turno.getHoraSalida(),
-                turno.getHorasTrabajadas()
+                turno.getHorasTrabajadas(),
+                tomoAlmuerzo // Asignar el valor calculado
         );
     }
 }
