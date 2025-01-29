@@ -141,3 +141,37 @@ tbody td {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+.dia-actual {
+  position: relative;
+}
+
+
+.dia-actual > * {
+  position: relative;
+  z-index: 2;
+}
+
+.dia-actual::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    60deg,
+    #fff,
+    #fff 7px,
+    #f1f1f17a,
+    #f1f1f187 20px
+  );
+  pointer-events: none; /* Permite que los eventos de clic pasen a través del pseudo-elemento */
+  z-index: 1;
+  border-radius: inherit; /* Mantiene el borde redondeado si existe */
+}
+
+.dia-actual-encabezado {
+  color: rgb(161, 66, 66);
+}
+
