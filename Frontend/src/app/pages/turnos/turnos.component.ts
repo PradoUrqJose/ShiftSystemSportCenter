@@ -1,5 +1,5 @@
 import { TurnoPayload } from './../../services/turno.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { TurnoService, Turno } from '../../services/turno.service';
 import {
   ColaboradorService,
@@ -19,6 +19,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Notiflix from 'notiflix';
 import { TiendaService, Tienda } from '../../services/tienda.service';
+import tippy from 'tippy.js';
+import 'tippy.js/dist/tippy.css'; // Importa el CSS de Tippy
+import 'tippy.js/animations/shift-away-extreme.css'; // Importa la animación de Tippy
+import 'tippy.js/themes/light.css'; // Importa el tema de Tippy
 
 interface DiaSemana {
   fecha: string;
@@ -35,7 +39,7 @@ interface DiaSemana {
   styleUrls: ['./turnos.component.css'],
   imports: [CommonModule, FormsModule],
 })
-export default class TurnosComponent implements OnInit {
+export default class TurnosComponent implements OnInit, AfterViewInit {
   colaboradores$: Observable<Colaborador[]>; // Observable de colaboradores
   turnos$: Observable<Turno[]> = of([]); // Observable de turnos
   tiendas$: Observable<Tienda[]> = of([]);
@@ -66,14 +70,48 @@ export default class TurnosComponent implements OnInit {
   constructor(
     private turnoService: TurnoService,
     private colaboradorService: ColaboradorService,
-    private tiendaService: TiendaService
+    private tiendaService: TiendaService,
+    private cdr: ChangeDetectorRef
   ) {
-    this.colaboradores$ = this.colaboradorService.getColaboradoresPorHabilitacion(true); // Obtener colaboradores
+    this.colaboradores$ =
+      this.colaboradorService.getColaboradoresPorHabilitacion(true); // Obtener colaboradores
   }
 
   ngOnInit(): void {
     this.cargarSemana();
     this.cargarTiendas();
+  }
+
+  ngAfterViewInit(): void {
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.inicializarTooltips();
+    }, 0);
+  }
+
+
+  inicializarTooltips(): void {
+    const elementosTurnos = document.querySelectorAll('.container-green');
+    console.log(elementosTurnos);
+    elementosTurnos.forEach((elemento) => {
+      const horasTrabajadas = elemento.getAttribute('data-horas-trabajadas');
+      const tiendaNombre = elemento.getAttribute('data-tienda');
+      tippy(elemento, {
+        content: `
+          <div class="p-2  flex justify-center flex-col text-center">
+            <div class="font-bold mb-2 text-gray-800">Información del Turno</div>
+            <div class="mb-1 text-gray-700 text-sm"><strong>Total horas:</strong> ${horasTrabajadas}</div>
+            <div class="text-gray-700 font-bold">${tiendaNombre}</div>
+          </div>
+        `,
+        placement: 'top',
+        arrow: true,
+        theme: 'custom', // Aplica el tema personalizado
+        animation: 'shift-away-extreme',
+        delay: [50, 200], // 50ms de retraso al mostrar, 200ms al ocultar
+        allowHTML: true, // Permitir HTML en el contenido del tooltip
+      });
+    });
   }
 
   resetTurno(): Turno {
@@ -114,15 +152,19 @@ export default class TurnosComponent implements OnInit {
       switchMap(() => this.turnoService.getTurnosPorSemana(this.semanaActual))
     );
 
+    this.turnos$.subscribe(() => {
+      setTimeout(() => this.inicializarTooltips(), 500); // Inicializa tooltips después de que los datos se carguen
+    });
+
     this.turnos$.subscribe((turnos) => {
       console.log('Turnos obtenidos:', turnos);
     });
   }
 
   cargarTiendas(): void {
-    this.tiendas$ = this.tiendaService.getTiendas().pipe(
-      map(tiendas => tiendas.sort((a, b) => this.customSort(a, b)))
-    );
+    this.tiendas$ = this.tiendaService
+      .getTiendas()
+      .pipe(map((tiendas) => tiendas.sort((a, b) => this.customSort(a, b))));
   }
 
   //? Sorting Tiendas <----------------
@@ -280,16 +322,14 @@ export default class TurnosComponent implements OnInit {
     this.validarHorarioEntrada();
     this.validarHorarioSalida();
 
-
     if (!this.turnoActual.tiendaId) {
       this.isSubmitting = false;
       Notiflix.Notify.failure('Debes seleccionar una tienda', {
         position: 'right-bottom',
-        cssAnimationStyle: 'from-right'
+        cssAnimationStyle: 'from-right',
       });
       return;
     }
-
 
     if (this.errorHoraEntrada || this.errorHoraSalida) {
       this.isSubmitting = false; // Rehabilitar el botón en caso de error
@@ -327,6 +367,7 @@ export default class TurnosComponent implements OnInit {
             this.turnos$ = this.turnoService.getTurnosPorSemana(
               this.semanaActual
             );
+            setTimeout(() => this.inicializarTooltips(), 500); // Inicializa tooltips después de que los datos se carguen
             this.cerrarModal();
             this.isSubmitting = false; // Rehabilitar el botón después de la operación
             Notiflix.Notify.success('Turno actualizado con éxito', {
@@ -352,6 +393,7 @@ export default class TurnosComponent implements OnInit {
           this.turnos$ = this.turnoService.getTurnosPorSemana(
             this.semanaActual
           );
+          setTimeout(() => this.inicializarTooltips(), 500); // Inicializa tooltips después de que los datos se carguen
           this.cerrarModal();
           this.isSubmitting = false; // Rehabilitar el botón después de la operación
           Notiflix.Notify.success('Turno creado con éxito', {
@@ -384,6 +426,7 @@ export default class TurnosComponent implements OnInit {
             this.turnos$ = this.turnoService.getTurnosPorSemana(
               this.semanaActual
             ); // Actualizar lista
+            setTimeout(() => this.inicializarTooltips(), 50); // Inicializa tooltips después de que los datos se carguen
             this.cerrarModal(); // Cerrar el modal
           });
         },
@@ -484,6 +527,17 @@ export default class TurnosComponent implements OnInit {
     if (!hora) return '00:00';
     const [horas, minutos] = hora.split(':');
     return `${horas}:${minutos}`;
+  }
+
+  sumarHorasDia(number: number | undefined): string {
+    if (!number) return '00:00';
+
+    const horas = Math.floor(number);
+    const minutos = Math.round((number - horas) * 60);
+
+    return `${horas.toString().padStart(2, '0')}:${minutos
+      .toString()
+      .padStart(2, '0')}`;
   }
 
   guardarTienda(): void {
