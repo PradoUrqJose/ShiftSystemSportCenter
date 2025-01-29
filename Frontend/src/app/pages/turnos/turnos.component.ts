@@ -91,7 +91,6 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
 
   inicializarTooltips(): void {
     const elementosTurnos = document.querySelectorAll('.container-green');
-    console.log(elementosTurnos);
     elementosTurnos.forEach((elemento) => {
       const horasTrabajadas = elemento.getAttribute('data-horas-trabajadas');
       const tiendaNombre = elemento.getAttribute('data-tienda');
@@ -117,9 +116,6 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     const hoy = new Date();
     const [year, month, day] = fecha.split('-').map(Number); // Dividir y convertir a números
     const fechaComparar = new Date(year, month - 1, day); // Meses son 0-indexados en JavaScript
-
-    console.log(fecha + ' - ' + fechaComparar);
-
     // Normalizar ambas fechas a medianoche
     hoy.setHours(0, 0, 0, 0);
     fechaComparar.setHours(0, 0, 0, 0);
