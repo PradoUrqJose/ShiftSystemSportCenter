@@ -54,8 +54,9 @@
           <td *ngFor="let dia of diasSemana$ | async" class="text-center semana-column">
             <ng-container *ngIf="turnos$ | async as turnos">
               <ng-container *ngIf="obtenerTurno(turnos, colaborador.id, dia.fecha) as turno; else agregarBoton">
-                <div class="container-green cursor-pointer transition bg-green-100 p-2 rounded-lg"
-                  (click)="abrirModalEdicion(turno)" title="Editar Turno">
+                <div class="container-green cursor-pointer transition bg-green-100 p-2 rounded-lg m-auto"
+                  [attr.data-horas-trabajadas]="sumarHorasDia(turno.horasTrabajadas)"
+                  [attr.data-tienda]="turno.nombreTienda" (click)="abrirModalEdicion(turno)">
                   {{ formatearHora(turno.horaEntrada) }} - {{ formatearHora(turno.horaSalida) }}
                 </div>
               </ng-container>
