@@ -24,7 +24,7 @@
         <th class="text-center p-4 colaborador-column w-[21%]">Colaborador</th>
         <!-- Días de la semana -->
         <th class="text-center p-4 capitalize font-normal semana-column w-[10.57%]"
-          *ngFor="let dia of diasSemana$ | async">
+          *ngFor="let dia of diasSemana$ | async" [ngClass]="{'dia-actual-encabezado': esDiaActual(dia.fecha)}" >
           <span class="text-lg font-bold">{{ dia.dayNumber }}</span><span class="dayNumber"> {{ dia.nombre }}</span>
         </th>
         <!-- Total -->
@@ -51,7 +51,9 @@
           </td>
 
           <!-- Celdas para cada día de la semana -->
-          <td *ngFor="let dia of diasSemana$ | async" class="text-center semana-column">
+          <td *ngFor="let dia of (diasSemana$ | async)" class="text-center semana-column" [ngClass]="{
+            'dia-actual': esDiaActual(dia.fecha)
+          }">
             <ng-container *ngIf="turnos$ | async as turnos">
               <ng-container *ngIf="obtenerTurno(turnos, colaborador.id, dia.fecha) as turno; else agregarBoton">
                 <div class="container-green cursor-pointer transition bg-green-100 p-2 rounded-lg m-auto"
