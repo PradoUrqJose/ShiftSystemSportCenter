@@ -17,6 +17,7 @@ export interface Turno {
   horaSalida: string; // Hora de salida
   horasTrabajadas?: number; // Horas trabajadas (opcional)
   tiendaId?: number | null; // Añadir tiendaId
+  nombreTienda?: string; // Añadir tiendaNombre
 }
 
 export interface TurnoPayload {
