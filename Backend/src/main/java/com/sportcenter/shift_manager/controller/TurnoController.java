@@ -29,6 +29,23 @@ public class TurnoController {
         return turnoService.getTurnosPorSemanaDTO(fecha); // Agregar este método al servicio si quieres retornar DTOs aquí
     }
 
+    // Obtener turnos por mes para un trabajador específico
+    @GetMapping("/mensual/{colaboradorId}")
+    public List<TurnoDTO> getTurnosMensualesPorColaborador(
+            @PathVariable Long colaboradorId,
+            @RequestParam("mes") int mes,
+            @RequestParam("anio") int anio) {
+        return turnoService.getTurnosMensualesPorColaborador(colaboradorId, mes, anio);
+    }
+
+    // Obtener turnos por mes para todos los trabajadores
+    @GetMapping("/mensual")
+    public List<TurnoDTO> getTurnosMensuales(
+            @RequestParam("mes") int mes,
+            @RequestParam("anio") int anio) {
+        return turnoService.getTurnosMensuales(mes, anio);
+    }
+
     // Crear un turno (retorna DTO en lugar de entidad completa)
     @PostMapping
     public TurnoDTO saveTurno(@RequestBody Turno turno) {
