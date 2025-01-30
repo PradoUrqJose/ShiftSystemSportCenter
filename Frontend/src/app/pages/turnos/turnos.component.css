@@ -28,6 +28,13 @@
   width: 95%;
 }
 
+.container-green.minum {
+  width: 100%;
+  font-size: 11px;
+  padding: 8px 5px;
+  text-align: right;
+}
+
 .container-green::after{
   content: "";
   width: 4px;
@@ -36,6 +43,20 @@
   background-color: #4b4370;
   position: absolute;
   left: 8px;
+}
+
+.container-green.minum::after {
+  content: "";
+  width: 3px;
+  height: 16px;
+  border-radius: 6px;
+  background-color: #4b4370;
+  position: absolute;
+  left: 4px;
+}
+
+.container-green.almuerzo-tomado::after {
+  background-color: #ff5e60;
 }
 
 .colaborador-empresa{
@@ -174,4 +195,20 @@ tbody td {
 .dia-actual-encabezado {
   color: rgb(161, 66, 66);
 }
+.buttonWeek, .buttonMonth {
+  margin-bottom: 1.5rem;
+  font-family: "Nunito", serif;
+  font-weight: 800;
+}
+
+.nunito {
+  font-family: "Nunito", serif;
+}
+
+.actualView {
+  background-color: #C6E7FF;
+  color: #0e334e;
+  border: 1px solid #4a708b4d;
+}
+
 
