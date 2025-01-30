@@ -54,6 +54,53 @@ export class TurnoService {
     );
   }
 
+    /**
+   * Obtener turnos por mes para un colaborador específico.
+   * @param colaboradorId ID del colaborador.
+   * @param mes Mes (1-12).
+   * @param anio Año (ejemplo: 2025).
+   * @returns Observable con la lista de turnos.
+   */
+    getTurnosMensualesPorColaborador(colaboradorId: number, mes: number, anio: number): Observable<Turno[]> {
+      return this.http
+        .get<Turno[]>(`${this.apiUrl}/mensual/${colaboradorId}?mes=${mes}&anio=${anio}`)
+        .pipe(
+          map((turnos) =>
+            turnos.map((turno) => ({
+              ...turno,
+              horasTrabajadas: turno.horasTrabajadas ?? 0,
+            }))
+          ),
+          catchError((error) => {
+            console.error('Error al obtener turnos mensuales por colaborador:', error);
+            return throwError(() => new Error('No se pudieron cargar los turnos. Intente más tarde.'));
+          })
+        );
+    }
+
+    /**
+     * Obtener turnos por mes para todos los colaboradores.
+     * @param mes Mes (1-12).
+     * @param anio Año (ejemplo: 2025).
+     * @returns Observable con la lista de turnos.
+     */
+    getTurnosMensuales(mes: number, anio: number): Observable<Turno[]> {
+      return this.http
+        .get<Turno[]>(`${this.apiUrl}/mensual?mes=${mes}&anio=${anio}`)
+        .pipe(
+          map((turnos) =>
+            turnos.map((turno) => ({
+              ...turno,
+              horasTrabajadas: turno.horasTrabajadas ?? 0,
+            }))
+          ),
+          catchError((error) => {
+            console.error('Error al obtener turnos mensuales:', error);
+            return throwError(() => new Error('No se pudieron cargar los turnos. Intente más tarde.'));
+          })
+        );
+    }
+
   updateTurno(id: number, turno: TurnoPayload): Observable<any> {
     return this.http.put(`${this.apiUrl}/${id}`, turno).pipe(
       catchError((error) => {
