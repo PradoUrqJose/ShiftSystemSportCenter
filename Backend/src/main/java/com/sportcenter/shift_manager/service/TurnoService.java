@@ -49,6 +49,23 @@ public class TurnoService {
         }
     }
 
+    // Obtener turnos por mes para un colaborador específico
+    public List<TurnoDTO> getTurnosMensualesPorColaborador(Long colaboradorId, int mes, int anio) {
+        LocalDate inicioMes = LocalDate.of(anio, mes, 1);
+        LocalDate finMes = inicioMes.withDayOfMonth(inicioMes.lengthOfMonth());
+        return turnoRepository.findByColaborador_IdAndFechaBetween(colaboradorId, inicioMes, finMes).stream()
+                .map(this::convertToDTO)
+                .toList();
+    }
+
+    // Obtener turnos por mes para todos los colaboradores
+    public List<TurnoDTO> getTurnosMensuales(int mes, int anio) {
+        LocalDate inicioMes = LocalDate.of(anio, mes, 1);
+        LocalDate finMes = inicioMes.withDayOfMonth(inicioMes.lengthOfMonth());
+        return turnoRepository.findByFechaBetween(inicioMes, finMes).stream()
+                .map(this::convertToDTO)
+                .toList();
+    }
 
     // Métodos públicos: CRUD de turnos
     public Turno saveTurno(Turno turno) {
