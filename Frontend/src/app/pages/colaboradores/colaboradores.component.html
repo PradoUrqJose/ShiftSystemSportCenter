@@ -5,7 +5,6 @@
     <h2 class="text-xl font-bold text-gray-800 sm:mr-6 border-b-2 border-blue-400 pb-1">
       Gestión de Colaboradores
     </h2>
-
     <!-- Botón para abrir el modal -->
     <button (click)="openModal()" class="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
       Agregar
@@ -70,7 +69,6 @@
             </button>
           </td>
         </tr>
-
         <!-- Empresas deshabilitadas (mostradas si mostrarDeshabilitadas = true) -->
         <ng-container *ngIf="mostrarDeshabilitados">
           <tr *ngFor="let colaborador of colaboradoresDeshabilitados"
@@ -95,7 +93,6 @@
       </tbody>
     </table>
   </div>
-
 
   <!-- Modal -->
   <div *ngIf="isModalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -156,9 +153,7 @@
             <button
               class="inline-flex items-center justify-center border align-middle select-none font-sans font-medium text-center duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus:shadow-none text-sm py-2 px-4 shadow-sm hover:shadow-md bg-stone-200 hover:bg-stone-100 relative bg-gradient-to-b from-white to-white border-stone-200 text-stone-700 rounded-lg hover:bg-gradient-to-b hover:from-stone-50 hover:to-stone-50 hover:border-stone-200 after:absolute after:inset-0 after:rounded-[inherit] after:box-shadow after:shadow-[inset_0_1px_0px_rgba(255,255,255,0.35),inset_0_-1px_0px_rgba(0,0,0,0.20)] after:pointer-events-none transition antialiased">View
               Profile</button>
-
           </div>
-
         </div>
 
         <!-- Input de archivo oculto -->
