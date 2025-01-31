@@ -8,7 +8,6 @@ import {
 } from '@angular/forms';
 import { EmpresaService, Empresa } from '../../services/empresa.service';
 import { CommonModule } from '@angular/common';
-import { BrowserModule } from '@angular/platform-browser';
 import Notiflix from 'notiflix';
 
 @Component({
