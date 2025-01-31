@@ -14,5 +14,9 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
 
     // Buscar turnos de un colaborador por rango de fechas
     List<Turno> findByColaborador_IdAndFechaBetween(Long colaboradorId, LocalDate startDate, LocalDate endDate);
-
+    // Método para buscar turnos por tienda y rango de fechas, ordenados por fecha
+    List<Turno> findByTienda_IdAndFechaBetweenOrderByFechaAsc(
+            Long tiendaId,
+            LocalDate fechaInicio,
+            LocalDate fechaFin);
 }
