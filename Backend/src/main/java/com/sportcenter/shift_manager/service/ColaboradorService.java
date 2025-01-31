@@ -135,8 +135,6 @@ public class ColaboradorService {
         return colaboradorRepository.save(colaborador);
     }
 
-
-
     // Eliminar un colaborador
     public void deleteColaborador(Long id) {
         Colaborador colaborador = colaboradorRepository.findById(id)
@@ -145,7 +143,6 @@ public class ColaboradorService {
         // Al eliminar al colaborador, los turnos anteriores no se verán afectados
         colaboradorRepository.delete(colaborador);
     }
-
 
     public Colaborador toggleHabilitacionColaborador(Long id, boolean habilitado) {
         Colaborador colaborador = colaboradorRepository.findById(id)
@@ -175,6 +172,4 @@ public class ColaboradorService {
                 colaborador.isHabilitado()
         );
     }
-
-
 }
