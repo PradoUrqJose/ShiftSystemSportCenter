@@ -28,8 +28,7 @@ export default class EmpresasComponent implements OnInit {
   mostrarDeshabilitadas: boolean = false; // Controla si se muestran las deshabilitadas
 
   // MODAL CONTROL
-  // Controla si el modal está abierto o cerrado
-  isModalOpen: boolean = false;
+  isModalOpen: boolean = false;  // Controla si el modal está abierto o cerrado
   isModalVisible: boolean = false; // Controla la visibilidad con animación
   errorMessage: string | null = null; // Almacena mensajes de error
 
