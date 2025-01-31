@@ -17,14 +17,12 @@ import {
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
-  getDay,
   format,
 } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz'; // Función correcta  import { es } from 'date-fns/locale';
 import { es } from 'date-fns/locale';
 import {
   BehaviorSubject,
-  combineLatest,
   map,
   Observable,
   of,
