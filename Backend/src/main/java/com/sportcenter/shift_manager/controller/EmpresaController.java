@@ -26,20 +26,20 @@ public class EmpresaController {
     public List<EmpresaDTO> getAllEmpresas() {
         return empresaService.getAllEmpresas();
     }
-    
+
     @GetMapping("/{id}/numero-empleados")
     public int getNumeroDeEmpleados(@PathVariable Long id) {
         return empresaService.getNumeroDeEmpleados(id);
     }
-    
+
+    @GetMapping("/filtro")
+    public List<EmpresaDTO> getEmpresasPorHabilitacion(@RequestParam boolean habilitada) {
+        return empresaService.getEmpresasPorHabilitacion(habilitada);
+    }
+
     @PutMapping("/{id}")
     public Empresa updateEmpresa(@PathVariable Long id, @RequestBody Empresa empresaDetails) {
         return empresaService.updateEmpresa(id, empresaDetails);
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteEmpresa(@PathVariable Long id) {
-        empresaService.deleteEmpresa(id);
     }
 
     @PutMapping("/{id}/habilitacion")
@@ -47,9 +47,9 @@ public class EmpresaController {
         return empresaService.toggleHabilitacionEmpresa(id, habilitada);
     }
 
-    @GetMapping("/filtro")
-    public List<EmpresaDTO> getEmpresasPorHabilitacion(@RequestParam boolean habilitada) {
-        return empresaService.getEmpresasPorHabilitacion(habilitada);
+    @DeleteMapping("/{id}")
+    public void deleteEmpresa(@PathVariable Long id) {
+        empresaService.deleteEmpresa(id);
     }
 }
 
