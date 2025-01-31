@@ -12,13 +12,7 @@ import {
 } from '../../services/colaborador.service';
 import { EmpresaService, Empresa } from '../../services/empresa.service';
 import { CommonModule } from '@angular/common';
-import Notiflix from 'notiflix';
-import {
-  HttpClient,
-  HttpErrorResponse,
-  HttpResponse,
-} from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-colaboradores',
@@ -99,7 +93,10 @@ export default class ColaboradoresComponent implements OnInit {
           this.errorMessage = 'El email es obligatorio.';
         } else if (controlName === 'email' && control.errors?.['email']) {
           this.errorMessage = 'El email debe ser válido.';
-        } else if (controlName === 'empresaId' && control.errors?.['required']) {
+        } else if (
+          controlName === 'empresaId' &&
+          control.errors?.['required']
+        ) {
           this.errorMessage = 'La empresa es obligatoria.';
         }
         control?.markAsTouched(); // Marca el campo como tocado
@@ -116,7 +113,9 @@ export default class ColaboradoresComponent implements OnInit {
   }
 
   highlightError(controlName: string): void {
-    const element = document.querySelector(`[formControlName="${controlName}"]`);
+    const element = document.querySelector(
+      `[formControlName="${controlName}"]`
+    );
     if (element) {
       (element as HTMLElement).classList.add('border-red-500');
     }
@@ -170,8 +169,12 @@ export default class ColaboradoresComponent implements OnInit {
           }
           return colaborador;
         });
-        this.colaboradoresHabilitados = this.colaboradores.filter((c) => c.habilitado);
-        this.colaboradoresDeshabilitados = this.colaboradores.filter((c) => !c.habilitado);
+        this.colaboradoresHabilitados = this.colaboradores.filter(
+          (c) => c.habilitado
+        );
+        this.colaboradoresDeshabilitados = this.colaboradores.filter(
+          (c) => !c.habilitado
+        );
       },
       error: () => {
         this.errorMessage = 'Error al obtener colaboradores.';
