@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 select option {
   animation: slide-in 0.4s ease-in-out;
 }
@@ -27,4 +26,3 @@ select option {
 .border-red-500 {
   outline: 2px solid red;
 }
-
