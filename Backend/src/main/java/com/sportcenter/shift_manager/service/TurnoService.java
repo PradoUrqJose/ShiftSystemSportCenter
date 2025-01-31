@@ -29,6 +29,31 @@ public class TurnoService {
         this.tiendaRepository = tiendaRepository;
     }
 
+    // Métodos públicos: CRUD de turnos
+    public Turno saveTurno(Turno turno) {
+        if (turno.getColaborador() == null || turno.getColaborador().getId() == null) {
+            throw new RuntimeException("El colaborador debe estar especificado en el turno");
+        }
+
+        // Verificar que la hora de salida sea posterior a la hora de entrada
+        if (turno.getHoraEntrada() != null && turno.getHoraSalida() != null) {
+            if (!turno.getHoraSalida().isAfter(turno.getHoraEntrada())) {
+                throw new RuntimeException("La hora de salida debe ser posterior a la hora de entrada");
+            }
+        }
+        // Verificar que el colaborador existe
+        Colaborador colaborador = colaboradorRepository.findById(turno.getColaborador().getId())
+                .orElseThrow(() -> new RuntimeException("El colaborador con ID " + turno.getColaborador().getId() + " no existe"));
+
+        Tienda tienda = tiendaRepository.findById(turno.getTienda().getId())
+                .orElseThrow(() -> new RuntimeException("La tienda con ID " + turno.getTienda().getId() + " no existe"));
+
+        turno.setColaborador(colaborador);
+        turno.setEmpresa(colaborador.getEmpresa()); // Aseguramos que la empresa también se asocia correctamente
+        turno.setTienda(tienda);
+        return turnoRepository.save(turno); // Guardamos el turno y lo retornamos
+    }
+
     // Métodos públicos: Gestión de turnos por colaborador
     public List<TurnoDTO> getTurnosByColaboradorId(Long colaboradorId) {
         return turnoRepository.findByColaborador_Id(colaboradorId).stream()
@@ -88,29 +113,10 @@ public class TurnoService {
         }
     }
 
-    // Métodos públicos: CRUD de turnos
-    public Turno saveTurno(Turno turno) {
-        if (turno.getColaborador() == null || turno.getColaborador().getId() == null) {
-            throw new RuntimeException("El colaborador debe estar especificado en el turno");
-        }
-
-        // Verificar que la hora de salida sea posterior a la hora de entrada
-        if (turno.getHoraEntrada() != null && turno.getHoraSalida() != null) {
-            if (!turno.getHoraSalida().isAfter(turno.getHoraEntrada())) {
-                throw new RuntimeException("La hora de salida debe ser posterior a la hora de entrada");
-            }
-        }
-        // Verificar que el colaborador existe
-        Colaborador colaborador = colaboradorRepository.findById(turno.getColaborador().getId())
-                .orElseThrow(() -> new RuntimeException("El colaborador con ID " + turno.getColaborador().getId() + " no existe"));
-
-        Tienda tienda = tiendaRepository.findById(turno.getTienda().getId())
-                .orElseThrow(() -> new RuntimeException("La tienda con ID " + turno.getTienda().getId() + " no existe"));
-
-        turno.setColaborador(colaborador);
-        turno.setEmpresa(colaborador.getEmpresa()); // Aseguramos que la empresa también se asocia correctamente
-        turno.setTienda(tienda);
-        return turnoRepository.save(turno); // Guardamos el turno y lo retornamos
+    // Métodos privados
+    private LocalDate getInicioSemana(String fecha) {
+        LocalDate parsedDate = LocalDate.parse(fecha);
+        return parsedDate.with(java.time.DayOfWeek.MONDAY);
     }
 
     public Turno updateTurno(Long id, Turno updatedTurno) {
@@ -143,12 +149,6 @@ public class TurnoService {
 
     public void deleteTurno(Long id) {
         turnoRepository.deleteById(id);
-    }
-
-    // Métodos privados
-    private LocalDate getInicioSemana(String fecha) {
-        LocalDate parsedDate = LocalDate.parse(fecha);
-        return parsedDate.with(java.time.DayOfWeek.MONDAY);
     }
 
     public TurnoDTO convertToDTO(Turno turno) {
