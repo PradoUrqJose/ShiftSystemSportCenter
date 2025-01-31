@@ -41,7 +41,6 @@ export default class ColaboradoresComponent implements OnInit {
   colaboradoresDeshabilitados: Colaborador[] = [];
   mostrarDeshabilitados: boolean = false; // Controla si se muestran las deshabilitadas
 
-
   // Control de Modal
   isModalOpen: boolean = false;
   isModalVisible: boolean = false;
