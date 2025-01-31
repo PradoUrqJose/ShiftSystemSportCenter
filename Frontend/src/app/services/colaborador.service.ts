@@ -67,12 +67,18 @@ export class ColaboradorService {
   }
 
   toggleHabilitacion(id: number, habilitado: boolean): Observable<Colaborador> {
-    return this.http.put<Colaborador>(`${this.apiUrl}/${id}/habilitacion`, null, {
-      params: { habilitado: habilitado.toString() },
-    });
+    return this.http.put<Colaborador>(
+      `${this.apiUrl}/${id}/habilitacion`,
+      null,
+      {
+        params: { habilitado: habilitado.toString() },
+      }
+    );
   }
 
-  getColaboradoresPorHabilitacion(habilitado: boolean): Observable<Colaborador[]> {
+  getColaboradoresPorHabilitacion(
+    habilitado: boolean
+  ): Observable<Colaborador[]> {
     return this.http.get<Colaborador[]>(`${this.apiUrl}/filtro`, {
       params: { habilitado: habilitado.toString() },
     });
