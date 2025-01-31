@@ -5,7 +5,6 @@
     <h2 class="text-xl font-bold text-gray-800 mb-4 sm:mb-0 sm:mr-4 border-b-2 border-blue-400 pb-1">
       Gestión de Empresas
     </h2>
-
     <!-- Botón para abrir el modal -->
     <button (click)="openModal()" class="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
       Agregar
@@ -52,7 +51,6 @@
             </button>
           </td>
         </tr>
-
         <!-- Empresas deshabilitadas (mostradas si mostrarDeshabilitadas = true) -->
         <ng-container *ngIf="mostrarDeshabilitadas">
           <tr *ngFor="let empresa of empresasDeshabilitadas" class="border-t bg-gray-50 hover:bg-gray-100 transition">
@@ -70,7 +68,6 @@
       </tbody>
     </table>
   </div>
-
 
   <!-- Modal -->
   <div *ngIf="isModalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -150,7 +147,4 @@
       </form>
     </div>
   </div>
-
-
-
 </div>
