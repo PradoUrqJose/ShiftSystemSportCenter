@@ -46,6 +46,15 @@ public class TurnoController {
         return turnoService.getTurnosMensuales(mes, anio);
     }
 
+    // Endpoint para obtener colaboradores que comparten la misma tienda y rango de fechas
+    @GetMapping("/colab-tienda-fecha")
+    public List<TurnoDTO> getColaboradoresPorTiendaYRangoFechas(
+            @RequestParam("tiendaId") Long tiendaId,
+            @RequestParam("fechaInicio") String fechaInicio,
+            @RequestParam("fechaFin") String fechaFin) {
+        return turnoService.getColaboradoresPorTiendaYRangoFechas(tiendaId, fechaInicio, fechaFin);
+    }
+
     // Crear un turno (retorna DTO en lugar de entidad completa)
     @PostMapping
     public TurnoDTO saveTurno(@RequestBody Turno turno) {
