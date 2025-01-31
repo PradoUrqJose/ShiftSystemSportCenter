@@ -49,6 +49,32 @@ public class EmpresaService {
         return empresaRepository.findById(id);
     }
 
+    // Obtener el número de empleados asociados a una empresa
+    public int getNumeroDeEmpleados(Long id) {
+        Empresa empresa = empresaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Empresa con ID " + id + " no encontrada"));
+        return empresa.getNumeroDeEmpleados();
+    }
+
+    public Empresa toggleHabilitacionEmpresa(Long id, boolean habilitada) {
+        Empresa empresa = empresaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Empresa con ID " + id + " no encontrada"));
+        empresa.setHabilitada(habilitada);
+        return empresaRepository.save(empresa);
+    }
+
+    public List<EmpresaDTO> getEmpresasPorHabilitacion(boolean habilitada) {
+        return empresaRepository.findByHabilitada(habilitada).stream()
+                .map(empresa -> new EmpresaDTO(
+                        empresa.getId(),
+                        empresa.getNombre(),
+                        empresa.getRuc(),
+                        empresa.getNumeroDeEmpleados(),
+                        empresa.isHabilitada()
+                ))
+                .toList();
+    }
+
     // Actualizar una empresa
     public Empresa updateEmpresa(Long id, Empresa empresaDetails) {
         Empresa empresa = empresaRepository.findById(id)
@@ -70,13 +96,6 @@ public class EmpresaService {
         return empresaRepository.save(empresa);
     }
 
-    // Obtener el número de empleados asociados a una empresa
-    public int getNumeroDeEmpleados(Long id) {
-        Empresa empresa = empresaRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Empresa con ID " + id + " no encontrada"));
-        return empresa.getNumeroDeEmpleados();
-    }
-
     // Eliminar una empresa
     public void deleteEmpresa(Long id) {
         Empresa empresa = empresaRepository.findById(id)
@@ -92,22 +111,4 @@ public class EmpresaService {
         empresaRepository.delete(empresa);
     }
 
-    public Empresa toggleHabilitacionEmpresa(Long id, boolean habilitada) {
-        Empresa empresa = empresaRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Empresa con ID " + id + " no encontrada"));
-        empresa.setHabilitada(habilitada);
-        return empresaRepository.save(empresa);
-    }
-
-    public List<EmpresaDTO> getEmpresasPorHabilitacion(boolean habilitada) {
-        return empresaRepository.findByHabilitada(habilitada).stream()
-                .map(empresa -> new EmpresaDTO(
-                        empresa.getId(),
-                        empresa.getNombre(),
-                        empresa.getRuc(),
-                        empresa.getNumeroDeEmpleados(),
-                        empresa.isHabilitada()
-                ))
-                .toList();
-    }
 }
