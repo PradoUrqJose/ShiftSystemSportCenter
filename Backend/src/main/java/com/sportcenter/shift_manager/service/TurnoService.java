@@ -67,6 +67,27 @@ public class TurnoService {
                 .toList();
     }
 
+    // Método para obtener colaboradores que comparten la misma tienda y rango de fechas
+    public List<TurnoDTO> getColaboradoresPorTiendaYRangoFechas(
+            Long tiendaId,
+            String fechaInicio,
+            String fechaFin) {
+        try {
+            LocalDate parsedFechaInicio = LocalDate.parse(fechaInicio);
+            LocalDate parsedFechaFin = LocalDate.parse(fechaFin);
+
+            // Buscar turnos ordenados por fecha
+            List<Turno> turnos = turnoRepository.findByTienda_IdAndFechaBetweenOrderByFechaAsc(tiendaId, parsedFechaInicio, parsedFechaFin);
+
+            // Convertir los turnos a DTOs
+            return turnos.stream()
+                    .map(this::convertToDTO)
+                    .toList();
+        } catch (Exception e) {
+            throw new RuntimeException("Error al parsear las fechas: " + fechaInicio + " - " + fechaFin, e);
+        }
+    }
+
     // Métodos públicos: CRUD de turnos
     public Turno saveTurno(Turno turno) {
         if (turno.getColaborador() == null || turno.getColaborador().getId() == null) {
