@@ -17,6 +17,13 @@ public class TurnoController {
         this.turnoService = turnoService;
     }
 
+    // Crear un turno (retorna DTO en lugar de entidad completa)
+    @PostMapping
+    public TurnoDTO saveTurno(@RequestBody Turno turno) {
+        Turno savedTurno = turnoService.saveTurno(turno);
+        return turnoService.convertToDTO(savedTurno); // Convertimos a DTO para incluir colaboradorId y otros datos
+    }
+
     // Obtener turnos para un colaborador específico (retorna DTO)
     @GetMapping("/{colaboradorId}")
     public List<TurnoDTO> getTurnosByColaborador(@PathVariable Long colaboradorId) {
@@ -53,13 +60,6 @@ public class TurnoController {
             @RequestParam("fechaInicio") String fechaInicio,
             @RequestParam("fechaFin") String fechaFin) {
         return turnoService.getColaboradoresPorTiendaYRangoFechas(tiendaId, fechaInicio, fechaFin);
-    }
-
-    // Crear un turno (retorna DTO en lugar de entidad completa)
-    @PostMapping
-    public TurnoDTO saveTurno(@RequestBody Turno turno) {
-        Turno savedTurno = turnoService.saveTurno(turno);
-        return turnoService.convertToDTO(savedTurno); // Convertimos a DTO para incluir colaboradorId y otros datos
     }
 
     // Actualizar un turno (sin DTO, ya que recibe entidad completa)
