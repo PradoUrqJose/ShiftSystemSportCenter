@@ -84,7 +84,6 @@
                 </ng-template>
               </ng-container>
             </td>
-
             <!-- Columna de Total Horas -->
             <td class="p-2 text-center font-bold semana-column">
               {{ sumarHoras(turnos$ | async, colaborador.id) }}
@@ -157,7 +156,6 @@
                   </div>
                 </div>
               </button>
-
             </td>
           </tr>
         </tbody>
@@ -207,7 +205,6 @@
       </table>
     </div>
   </div>
-
 
   <!-- Modal para Turnos -->
   <div *ngIf="mostrarModal"
