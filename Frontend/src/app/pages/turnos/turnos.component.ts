@@ -37,6 +37,8 @@ import 'tippy.js/dist/tippy.css'; // Importa el CSS de Tippy
 import 'tippy.js/animations/shift-away-extreme.css'; // Importa la animación de Tippy
 import 'tippy.js/themes/light.css'; // Importa el tema de Tippy
 
+import { FeriadoService, Feriado } from '../../services/feriado.service';
+
 interface DiaSemana {
   fecha: string;
   nombre: string;
@@ -53,6 +55,8 @@ interface DiaSemana {
   imports: [CommonModule, FormsModule],
 })
 export default class TurnosComponent implements OnInit, AfterViewInit {
+  feriados: Feriado[] = []; // Lista de feriado
+
   nombreMesActual: string = '';
 
   colaboradores$: Observable<Colaborador[]>; // Observable de colaboradores
@@ -100,6 +104,7 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
   constructor(
     private turnoService: TurnoService,
     private colaboradorService: ColaboradorService,
+    private feriadoService: FeriadoService, // Inyectar el servicio de feriados
     private tiendaService: TiendaService,
     private cdr: ChangeDetectorRef
   ) {
@@ -114,6 +119,22 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     this.cargarSemana();
     this.cargarTiendas();
     this.actualizarNombreMes();
+    this.cargarFeriados(); // Cargar feriados al iniciar
+  }
+
+  cargarFeriados(): void {
+    this.feriadoService.getFeriados().subscribe({
+      next: (data) => {
+        this.feriados = data; // Guardar los feriados
+      },
+      error: (error) => {
+        console.error('Error al cargar los feriados:', error);
+      },
+    });
+  }
+
+  esFeriado(fecha: string): boolean {
+    return this.feriados.some((feriado) => feriado.fecha === fecha);
   }
 
   ngAfterViewInit(): void {
@@ -145,12 +166,14 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     const dias = eachDayOfInterval({ start: inicioMes, end: finMes }).map(
       (fecha) => {
         const fechaUTC = toZonedTime(fecha, 'UTC'); // Convertir a UTC
+        const fechaStr = format(fechaUTC, 'yyyy-MM-dd');
         return {
-          fecha: format(fechaUTC, 'yyyy-MM-dd'),
+          fecha: fechaStr,
           nombre: format(fechaUTC, 'EEE', { locale: es }),
           dayNumber: format(fechaUTC, 'dd'),
           monthNombre: format(fechaUTC, 'MMMM', { locale: es }),
           yearName: format(fechaUTC, 'yyyy'),
+          esFeriado: this.esFeriado(fechaStr), // Indicar si es feriado
         };
       }
     );
@@ -282,12 +305,14 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     const inicioSemana = startOfWeek(this.semanaActual, { weekStartsOn: 1 });
     const dias = Array.from({ length: 7 }, (_, i) => {
       const fecha = addDays(inicioSemana, i);
+      const fechaStr = format(fecha, 'yyyy-MM-dd');
       return {
-        fecha: format(fecha, 'yyyy-MM-dd'),
+        fecha: fechaStr,
         nombre: format(fecha, 'EEE', { locale: es }),
         dayNumber: format(fecha, 'dd'),
         monthNombre: format(fecha, 'MMMM', { locale: es }),
         yearName: format(fecha, 'yyyy'),
+        esFeriado: this.esFeriado(fechaStr), // Indicar si es feriado
       };
     });
 
