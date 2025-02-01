@@ -21,12 +21,14 @@ public class TurnoService {
     private final TurnoRepository turnoRepository;
     private final ColaboradorRepository colaboradorRepository;
     private final TiendaRepository tiendaRepository;
+    private final FeriadoService feriadoService;
 
     // Constructor
-    public TurnoService(TurnoRepository turnoRepository, ColaboradorRepository colaboradorRepository, TiendaRepository tiendaRepository) {
+    public TurnoService(TurnoRepository turnoRepository, ColaboradorRepository colaboradorRepository, TiendaRepository tiendaRepository, FeriadoService feriadoService) {
         this.turnoRepository = turnoRepository;
         this.colaboradorRepository = colaboradorRepository;
         this.tiendaRepository = tiendaRepository;
+        this.feriadoService = feriadoService;
     }
 
     // Métodos públicos: CRUD de turnos
