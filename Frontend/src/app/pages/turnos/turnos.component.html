@@ -31,16 +31,16 @@
   <div *ngIf="!vistaMensual">
     <table class="w-full shadow bg-white rounded-lg overflow-hidden">
       <thead>
-        <tr class="bg-blue-50 text-gray-800">
+        <tr class="text-gray-800">
           <!-- Colaborador -->
-          <th class="text-center p-3 colaborador-column w-[21%]">Colaborador</th>
+          <th class="bg-blue-50 text-center p-3 colaborador-column w-[21%]">Colaborador</th>
           <!-- Días de la semana -->
-          <th class="text-center p-3 capitalize font-normal semana-column w-[10.57%]"
-            *ngFor="let dia of diasSemana$ | async" [ngClass]="{'dia-actual-encabezado': esDiaActual(dia.fecha)}">
-            <span class="text-lg font-bold">{{ dia.dayNumber }}</span><span class="dayNumber"> {{ dia.nombre }}</span>
+          <th class="bg-blue-50 text-center p-3 capitalize font-normal semana-column w-[10.57%]"
+            *ngFor="let dia of diasSemana$ | async">
+            <span class="text-lg font-bold py-2 px-4 rounded-full" [ngClass]="{'dia-actual-encabezado': esDiaActual(dia.fecha),'feriado-semanal-encabezado': esFeriado(dia.fecha) }">{{ dia.dayNumber }} <span class="dayNumber font-normal"> {{ dia.nombre }}</span></span>
           </th>
           <!-- Total -->
-          <th class="p-3 w-[6%] text-center">Total</th>
+          <th class="bg-blue-50 p-3 w-[6%] text-center">Total</th>
         </tr>
       </thead>
       <tbody>
@@ -63,9 +63,8 @@
             </td>
 
             <!-- Celdas para cada día de la semana -->
-            <td *ngFor="let dia of (diasSemana$ | async)" class="text-center semana-column" [ngClass]="{
-            'dia-actual': esDiaActual(dia.fecha)
-          }">
+            <td *ngFor="let dia of (diasSemana$ | async)" class="text-center semana-column"
+            [ngClass]="{'dia-actual': esDiaActual(dia.fecha),'feriado-semanal': esFeriado(dia.fecha) }">
               <ng-container *ngIf="turnos$ | async as turnos">
                 <ng-container *ngIf="obtenerTurno(turnos, colaborador.id, dia.fecha) as turno; else agregarBoton">
                   <div class="container-green cursor-pointer transition bg-green-100 p-2 rounded-lg m-auto"
@@ -178,7 +177,8 @@
               <ng-container *ngIf="turnosMensuales$ | async as turnos">
                 <ng-container
                   *ngIf="obtenerTurno(turnos, colaboradorSeleccionado, dia.fecha) as turno; else agregarBoton">
-                  <div class="w-[90%] h-[90%] m-auto bg-white rounded-lg p-4 relative flex justify-end items-end">
+                  <div class="w-[90%] h-[90%] m-auto bg-white rounded-lg p-4 relative flex justify-end items-end"
+                  [ngClass]="{ 'feriado': esFeriado(dia.fecha)}">
                     <div class="container-green minum rounded-lg cursor-pointer transition hover:shadow"
                       [ngClass]="{ 'almuerzo-tomado': turno.tomoAlmuerzo }"
                       [attr.data-horas-trabajadas]="sumarHorasDia(turno.horasTrabajadas)"
