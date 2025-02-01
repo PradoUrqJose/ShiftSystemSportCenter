@@ -21,13 +21,7 @@ import {
 } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz'; // Función correcta  import { es } from 'date-fns/locale';
 import { es } from 'date-fns/locale';
-import {
-  BehaviorSubject,
-  map,
-  Observable,
-  of,
-  switchMap,
-} from 'rxjs';
+import { BehaviorSubject, map, Observable, of, switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Notiflix from 'notiflix';
@@ -160,27 +154,6 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     this.actualizarNombreMes();
   }
 
-  cargarMes(): void {
-    const inicioMes = startOfMonth(this.semanaActual);
-    const finMes = endOfMonth(this.semanaActual);
-    const dias = eachDayOfInterval({ start: inicioMes, end: finMes }).map(
-      (fecha) => {
-        const fechaUTC = toZonedTime(fecha, 'UTC'); // Convertir a UTC
-        const fechaStr = format(fechaUTC, 'yyyy-MM-dd');
-        return {
-          fecha: fechaStr,
-          nombre: format(fechaUTC, 'EEE', { locale: es }),
-          dayNumber: format(fechaUTC, 'dd'),
-          monthNombre: format(fechaUTC, 'MMMM', { locale: es }),
-          yearName: format(fechaUTC, 'yyyy'),
-          esFeriado: this.esFeriado(fechaStr), // Indicar si es feriado
-        };
-      }
-    );
-    this.diasMes = dias;
-    this.semanasDelMes = this.dividirEnSemanas(dias);
-  }
-
   dividirEnSemanas(dias: DiaSemana[]): DiaSemana[][] {
     const semanas: DiaSemana[][] = [];
     let semana: DiaSemana[] = [];
@@ -235,6 +208,10 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
           this.semanaActual.getFullYear()
         );
     }
+
+    setTimeout(() => {
+      this.inicializarTooltips();
+    }, 500);
   }
 
   cambiarMes(direccion: 'anterior' | 'siguiente'): void {
@@ -299,6 +276,32 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
 
   resetTienda(): Tienda {
     return { id: 0, nombre: '', direccion: '' };
+  }
+
+  cargarMes(): void {
+    const inicioMes = startOfMonth(this.semanaActual);
+    const finMes = endOfMonth(this.semanaActual);
+    const dias = eachDayOfInterval({ start: inicioMes, end: finMes }).map(
+      (fecha) => {
+        const fechaUTC = toZonedTime(fecha, 'UTC'); // Convertir a UTC
+        const fechaStr = format(fechaUTC, 'yyyy-MM-dd');
+        return {
+          fecha: fechaStr,
+          nombre: format(fechaUTC, 'EEE', { locale: es }),
+          dayNumber: format(fechaUTC, 'dd'),
+          monthNombre: format(fechaUTC, 'MMMM', { locale: es }),
+          yearName: format(fechaUTC, 'yyyy'),
+          esFeriado: this.esFeriado(fechaStr), // Indicar si es feriado
+        };
+      }
+    );
+
+    this.diasMes = dias;
+    this.semanasDelMes = this.dividirEnSemanas(dias);
+
+    this.turnos$.subscribe(() => {
+      this.inicializarTooltips(); // Inicializa tooltips después de que los datos se carguen
+    });
   }
 
   cargarSemana(): void {
@@ -536,9 +539,13 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
         .updateTurno(this.turnoActual.id, turnoParaGuardar)
         .subscribe({
           next: () => {
-            this.turnos$ = this.turnoService.getTurnosPorSemana(
-              this.semanaActual
-            );
+            if (this.vistaMensual) {
+              this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
+            } else {
+              this.turnos$ = this.turnoService.getTurnosPorSemana(
+                this.semanaActual
+              );
+            }
             setTimeout(() => this.inicializarTooltips(), 500); // Inicializa tooltips después de que los datos se carguen
             this.cerrarModal();
             this.isSubmitting = false; // Rehabilitar el botón después de la operación
@@ -562,9 +569,13 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
       // Si no hay ID, estamos creando un nuevo turno
       this.turnoService.addTurno(turnoParaGuardar).subscribe({
         next: () => {
-          this.turnos$ = this.turnoService.getTurnosPorSemana(
-            this.semanaActual
-          );
+          if (this.vistaMensual) {
+            this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
+          } else {
+            this.turnos$ = this.turnoService.getTurnosPorSemana(
+              this.semanaActual
+            );
+          }
           setTimeout(() => this.inicializarTooltips(), 500); // Inicializa tooltips después de que los datos se carguen
           this.cerrarModal();
           this.isSubmitting = false; // Rehabilitar el botón después de la operación
@@ -595,9 +606,13 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
         () => {
           // Acción al confirmar
           this.turnoService.deleteTurno(this.turnoActual.id!).subscribe(() => {
-            this.turnos$ = this.turnoService.getTurnosPorSemana(
-              this.semanaActual
-            ); // Actualizar lista
+            if (this.vistaMensual) {
+              this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
+            } else {
+              this.turnos$ = this.turnoService.getTurnosPorSemana(
+                this.semanaActual
+              ); // Actualizar lista
+            }
             setTimeout(() => this.inicializarTooltips(), 50); // Inicializa tooltips después de que los datos se carguen
             this.cerrarModal(); // Cerrar el modal
           });
