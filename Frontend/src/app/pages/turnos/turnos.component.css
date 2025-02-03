@@ -245,6 +245,16 @@ tbody td {
   color: rgb(255, 255, 255) !important;
 }
 
+.month {
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .buttonWeek,
 .buttonMonth {
   margin-bottom: 1.5rem;
@@ -277,9 +287,4 @@ tbody td {
       #fff 7px,
       #f1f1f17a,
       #f1f1f187 20px);
-  pointer-events: none;
-  /* Permite que los eventos de clic pasen a través del pseudo-elemento */
-  z-index: 1;
-  border-radius: inherit;
-  /* Mantiene el borde redondeado si existe */
 }
