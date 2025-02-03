@@ -37,7 +37,9 @@
           <!-- Días de la semana -->
           <th class="bg-blue-50 text-center p-3 capitalize font-normal semana-column w-[10.57%]"
             *ngFor="let dia of diasSemana$ | async">
-            <span class="text-lg font-bold py-2 px-4 rounded-full" [ngClass]="{'dia-actual-encabezado': esDiaActual(dia.fecha),'feriado-semanal-encabezado': esFeriado(dia.fecha) }">{{ dia.dayNumber }} <span class="dayNumber font-normal"> {{ dia.nombre }}</span></span>
+            <span class="text-lg font-bold py-2 px-4 rounded-full"
+              [ngClass]="{'dia-actual-encabezado': esDiaActual(dia.fecha),'feriado-semanal-encabezado': esFeriado(dia.fecha) }">{{
+              dia.dayNumber }} <span class="dayNumber font-normal"> {{ dia.nombre }}</span></span>
           </th>
           <!-- Total -->
           <th class="bg-blue-50 p-3 w-[6%] text-center">Total</th>
@@ -64,7 +66,7 @@
 
             <!-- Celdas para cada día de la semana -->
             <td *ngFor="let dia of (diasSemana$ | async)" class="text-center semana-column"
-            [ngClass]="{'dia-actual': esDiaActual(dia.fecha),'feriado-semanal': esFeriado(dia.fecha) }">
+              [ngClass]="{'dia-actual': esDiaActual(dia.fecha),'feriado-semanal': esFeriado(dia.fecha) }">
               <ng-container *ngIf="turnos$ | async as turnos">
                 <ng-container *ngIf="obtenerTurno(turnos, colaborador.id, dia.fecha) as turno; else agregarBoton">
                   <div class="container-green cursor-pointer transition bg-green-100 p-2 rounded-lg m-auto"
@@ -178,24 +180,28 @@
                 <ng-container
                   *ngIf="obtenerTurno(turnos, colaboradorSeleccionado, dia.fecha) as turno; else agregarBoton">
                   <div class="w-[90%] h-[90%] m-auto bg-white rounded-lg p-4 relative flex justify-end items-end"
-                  [ngClass]="{ 'feriado': esFeriado(dia.fecha)}">
+                    [ngClass]="{ 'feriado-semanal': esFeriado(dia.fecha) }">
                     <div class="container-green minum rounded-lg cursor-pointer transition hover:shadow"
                       [ngClass]="{ 'almuerzo-tomado': turno.tomoAlmuerzo }"
                       [attr.data-horas-trabajadas]="sumarHorasDia(turno.horasTrabajadas)"
                       [attr.data-tienda]="turno.nombreTienda" (click)="abrirModalEdicion(turno)">
                       {{ formatearHora(turno.horaEntrada) }} - {{ formatearHora(turno.horaSalida) }}
                     </div>
-                    <span class="absolute top-3 right-3 nunito text-sm font-semibold text-gray-700">{{ dia.dayNumber }}</span>
+                    <span class="absolute top-2.5 right-3 nunito text-sm font-semibold text-gray-700 month"
+                      [ngClass]="{ 'dia-actual-encabezado': esDiaActual(dia.fecha),'feriado-semanal-encabezado': esFeriado(dia.fecha)}">{{
+                      dia.dayNumber }}</span>
                   </div>
                 </ng-container>
                 <ng-template #agregarBoton>
-                  <div class="w-[90%] h-[90%] m-auto bg-white rounded-lg p-4 flex justify-center items-center relative">
-                    <button
-                      class="p-2 text-gray-400 text-xs hover:text-blue-800 hover:scale-125 transition rounded-lg"
+                  <div class="w-[90%] h-[90%] m-auto bg-white rounded-lg p-4 flex justify-center items-center relative"
+                    [ngClass]="{ 'feriado-semanal': esFeriado(dia.fecha) }">
+                    <button class="p-2 text-gray-400 text-xs hover:text-blue-800 hover:scale-125 transition rounded-lg"
                       (click)="abrirModal(colaboradorSeleccionado, dia.fecha)" title="Agregar Turno">
                       <i class="fa-solid fa-plus"></i>
                     </button>
-                    <span class="absolute top-3 right-3 nunito text-sm font-semibold text-gray-700">{{ dia.dayNumber }}</span>
+                    <span class="absolute top-2.5 right-3 nunito text-sm font-semibold text-gray-700 month"
+                      [ngClass]="{ 'dia-actual-encabezado': esDiaActual(dia.fecha),'feriado-semanal-encabezado': esFeriado(dia.fecha)}">{{
+                      dia.dayNumber }}</span>
                   </div>
                 </ng-template>
               </ng-container>
