@@ -12,6 +12,8 @@ import {
 } from '../../services/colaborador.service';
 import {
   addDays,
+  addMonths,
+  subMonths,
   subDays,
   startOfWeek,
   startOfMonth,
@@ -147,6 +149,8 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     this.vistaMensual = nuevaVistaMensual;
     console.log(data);
     if (this.vistaMensual) {
+      // Ajustar semanaActual al primer día del mes al cambiar a vista mensual, PARA ERROR DE MES SIGUIENTE
+      this.semanaActual = startOfMonth(this.semanaActual);
       this.cargarMes();
     } else {
       this.cargarSemana();
@@ -217,8 +221,8 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
   cambiarMes(direccion: 'anterior' | 'siguiente'): void {
     this.semanaActual =
       direccion === 'anterior'
-        ? subDays(this.semanaActual, 30)
-        : addDays(this.semanaActual, 30);
+        ? subMonths(this.semanaActual, 1)
+        : addMonths(this.semanaActual, 1);
     this.cargarMes();
     if (this.colaboradorSeleccionado) {
       this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
