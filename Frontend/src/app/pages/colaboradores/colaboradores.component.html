@@ -211,10 +211,14 @@
             class="bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition">
             Cancelar
           </button>
-          <button type="submit" [disabled]="colaboradorForm.pristine"
-            class="bg-gradient-to-r py-2 px-4 rounded-lg transition"
-            [ngClass]="{'bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800 transition': !colaboradorForm.pristine, 'button-disabled': colaboradorForm.pristine}">
-            {{ isEditing ? 'Actualizar' : 'Agregar' }}
+          <!-- Botón de agregar con spinner de carga -->
+          <button type="submit" [disabled]="isLoading"
+            class="bg-gradient-to-r py-2 px-4 rounded-lg transition flex items-center justify-center"
+            [ngClass]="{'bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800 transition': !isLoading, 'button-disabled': isLoading}">
+            <span *ngIf="!isLoading">{{ isEditing ? 'Actualizar' : 'Agregar' }}</span>
+            <span *ngIf="isLoading">
+              <i class="fa-solid fa-spinner fa-spin mr-2"></i> Cargando...
+            </span>
           </button>
         </div>
       </form>
