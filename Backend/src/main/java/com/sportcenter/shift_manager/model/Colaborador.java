@@ -16,8 +16,10 @@ public class Colaborador {
 
     private String nombre;
     private String apellido; // Nuevo campo
+    @Column(unique = true, nullable = false)
     private String dni;
     private String telefono; // Nuevo campo
+    @Column(unique = true, nullable = true)
     private String email;    // Nuevo campo
 
     @Lob
