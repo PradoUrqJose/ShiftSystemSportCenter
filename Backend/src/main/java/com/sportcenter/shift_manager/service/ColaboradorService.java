@@ -32,35 +32,42 @@ public class ColaboradorService {
 
     // Guardar un nuevo colaborador
     public Colaborador saveColaborador(ColaboradorDTO colaboradorDTO, MultipartFile file) throws IOException {
+        // Validar existencia de empresa
         Empresa empresa = empresaRepository.findById(colaboradorDTO.getEmpresaId())
                 .orElseThrow(() -> new RuntimeException("Empresa con ID " + colaboradorDTO.getEmpresaId() + " no encontrada"));
 
+        // Validar duplicados de email, DNI y Nombre + Apellido
+        if (colaboradorRepository.findByEmail(colaboradorDTO.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Ya existe un colaborador con el email: " + colaboradorDTO.getEmail());
+        }
+        if (colaboradorRepository.findByDni(colaboradorDTO.getDni()).isPresent()) {
+            throw new IllegalArgumentException("Ya existe un colaborador con el DNI: " + colaboradorDTO.getDni());
+        }
+        if (colaboradorRepository.findByNombreAndApellido(colaboradorDTO.getNombre(), colaboradorDTO.getApellido()).isPresent()) {
+            throw new IllegalArgumentException("Ya existe un colaborador con el nombre y apellido: "
+                    + colaboradorDTO.getNombre() + " " + colaboradorDTO.getApellido());
+        }
+
+        // Crear nuevo colaborador
         Colaborador colaborador = new Colaborador();
         colaborador.setNombre(colaboradorDTO.getNombre());
         colaborador.setApellido(colaboradorDTO.getApellido());
         colaborador.setDni(colaboradorDTO.getDni());
         colaborador.setTelefono(colaboradorDTO.getTelefono());
         colaborador.setEmail(colaboradorDTO.getEmail());
-        colaborador.setHabilitado(colaboradorDTO.isHabilitado()); // Nueva línea
+        colaborador.setHabilitado(colaboradorDTO.isHabilitado());
+        colaborador.setEmpresa(empresa);
 
+        // Manejo de imagen (si se proporciona)
         if (file != null && !file.isEmpty()) {
-            if (file.getSize() > 1048576) { // Limitar tamaño a 1 MB
+            if (file.getSize() > 1048576) {
                 throw new RuntimeException("La foto debe ser menor a 1 MB");
             }
-
-            // Reformatear el nombre del archivo
             String fileName = generateNewFileName(colaboradorDTO.getNombre(), colaborador.getId(), file.getOriginalFilename());
             Path targetLocation = Paths.get(IMAGE_DIRECTORY + fileName);
             Files.copy(file.getInputStream(), targetLocation);
-
-            // Generar la URL de la foto accesible desde el frontend
-            String imageUrl = IMAGE_URL_BASE + fileName;
-
-            // Asignar la URL de la foto al colaborador
-            colaborador.setFotoUrl(imageUrl);
+            colaborador.setFotoUrl(IMAGE_URL_BASE + fileName);
         }
-
-        colaborador.setEmpresa(empresa);
 
         return colaboradorRepository.save(colaborador);
     }
@@ -91,49 +98,60 @@ public class ColaboradorService {
 
     // Actualizar un colaborador
     public Colaborador updateColaborador(Long id, ColaboradorDTO colaboradorDTO, MultipartFile file) throws IOException {
-        // Buscar el colaborador por ID
+        // Buscar colaborador existente
         Colaborador colaborador = colaboradorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Colaborador con ID " + id + " no encontrado"));
 
-        // Buscar la nueva empresa por ID
+        // Validar existencia de empresa
         Empresa nuevaEmpresa = empresaRepository.findById(colaboradorDTO.getEmpresaId())
                 .orElseThrow(() -> new RuntimeException("Empresa con ID " + colaboradorDTO.getEmpresaId() + " no encontrada"));
 
-        // Actualizar datos del colaborador
+        // Validar duplicados (excepto si es el mismo usuario)
+        colaboradorRepository.findByEmail(colaboradorDTO.getEmail())
+                .filter(c -> !c.getId().equals(id))
+                .ifPresent(c -> {
+                    throw new IllegalArgumentException("Ya existe un colaborador con el email: " + colaboradorDTO.getEmail());
+                });
+
+        colaboradorRepository.findByDni(colaboradorDTO.getDni())
+                .filter(c -> !c.getId().equals(id))
+                .ifPresent(c -> {
+                    throw new IllegalArgumentException("Ya existe un colaborador con el DNI: " + colaboradorDTO.getDni());
+                });
+
+        colaboradorRepository.findByNombreAndApellido(colaboradorDTO.getNombre(), colaboradorDTO.getApellido())
+                .filter(c -> !c.getId().equals(id))
+                .ifPresent(c -> {
+                    throw new IllegalArgumentException("Ya existe un colaborador con el nombre y apellido: "
+                            + colaboradorDTO.getNombre() + " " + colaboradorDTO.getApellido());
+                });
+
+        // Actualizar datos
         colaborador.setNombre(colaboradorDTO.getNombre());
         colaborador.setApellido(colaboradorDTO.getApellido());
         colaborador.setDni(colaboradorDTO.getDni());
         colaborador.setTelefono(colaboradorDTO.getTelefono());
         colaborador.setEmail(colaboradorDTO.getEmail());
         colaborador.setEmpresa(nuevaEmpresa);
-        colaborador.setHabilitado(colaboradorDTO.isHabilitado()); // Nueva línea
+        colaborador.setHabilitado(colaboradorDTO.isHabilitado());
 
-        // Manejar la actualización de la imagen
+        // Manejo de imagen (si se proporciona)
         if (file != null && !file.isEmpty()) {
-            if (file.getSize() > 1048576) { // Limitar tamaño a 1 MB
+            if (file.getSize() > 1048576) {
                 throw new RuntimeException("La foto debe ser menor a 1 MB");
             }
-
-            // Generar un nuevo nombre de archivo
             String fileName = generateNewFileName(colaboradorDTO.getNombre(), colaborador.getId(), file.getOriginalFilename());
             Path targetLocation = Paths.get(IMAGE_DIRECTORY + fileName);
-
-            // Verificar si ya existe un archivo con el mismo nombre y eliminarlo
             if (Files.exists(targetLocation)) {
                 Files.delete(targetLocation);
             }
-
-            // Guardar el nuevo archivo
             Files.copy(file.getInputStream(), targetLocation);
-
-            // Generar y asignar la nueva URL de la foto
-            String imageUrl = IMAGE_URL_BASE + fileName;
-            colaborador.setFotoUrl(imageUrl);
+            colaborador.setFotoUrl(IMAGE_URL_BASE + fileName);
         }
 
-        // Guardar el colaborador actualizado en la base de datos
         return colaboradorRepository.save(colaborador);
     }
+
 
     // Eliminar un colaborador
     public void deleteColaborador(Long id) {
