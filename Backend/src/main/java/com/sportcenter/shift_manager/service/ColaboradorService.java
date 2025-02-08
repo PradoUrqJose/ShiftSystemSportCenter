@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.sportcenter.shift_manager.config.ImageController.IMAGE_DIRECTORY;
@@ -60,10 +61,8 @@ public class ColaboradorService {
 
         // Manejo de imagen (si se proporciona)
         if (file != null && !file.isEmpty()) {
-            if (file.getSize() > 1048576) {
-                throw new RuntimeException("La foto debe ser menor a 1 MB");
-            }
-            String fileName = generateNewFileName(colaboradorDTO.getNombre(), colaborador.getId(), file.getOriginalFilename());
+            validarImagen(file);
+            String fileName = generateNewFileName(colaboradorDTO.getNombre(), colaboradorDTO.getApellido(), file.getOriginalFilename());
             Path targetLocation = Paths.get(IMAGE_DIRECTORY + fileName);
             Files.copy(file.getInputStream(), targetLocation);
             colaborador.setFotoUrl(IMAGE_URL_BASE + fileName);
@@ -72,14 +71,23 @@ public class ColaboradorService {
         return colaboradorRepository.save(colaborador);
     }
 
-    private String generateNewFileName(String nombreColaborador, Long colaboradorId, String originalFileName) {
-        // Obtener la extensión del archivo
+    // Método para validar la imagen
+    private void validarImagen(MultipartFile file) {
+        if (file.getSize() > 1048576) { // 1 MB
+            throw new RuntimeException("La foto debe ser menor a 1 MB");
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Solo se permiten archivos de imagen.");
+        }
+    }
+
+    // Genera un nombre único para la imagen
+    private String generateNewFileName(String nombre, String apellido, String originalFileName) {
         String extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-
-        // Generar un nuevo nombre usando el formato deseado
-        String newFileName = nombreColaborador + colaboradorId + "SCprofilePhoto" + extension;
-
-        return newFileName;
+        String uniqueId = UUID.randomUUID().toString();
+        return "colaborador_" + nombre + "_" + apellido + "_" + uniqueId + extension;
     }
 
     // Obtener todos los colaboradores
@@ -101,7 +109,7 @@ public class ColaboradorService {
         // Buscar colaborador existente
         Colaborador colaborador = colaboradorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Colaborador con ID " + id + " no encontrado"));
-
+        
         // Validar existencia de empresa
         Empresa nuevaEmpresa = empresaRepository.findById(colaboradorDTO.getEmpresaId())
                 .orElseThrow(() -> new RuntimeException("Empresa con ID " + colaboradorDTO.getEmpresaId() + " no encontrada"));
@@ -137,21 +145,24 @@ public class ColaboradorService {
 
         // Manejo de imagen (si se proporciona)
         if (file != null && !file.isEmpty()) {
-            if (file.getSize() > 1048576) {
-                throw new RuntimeException("La foto debe ser menor a 1 MB");
+            validarImagen(file);
+
+            // Eliminar imagen anterior (opcional)
+            if (colaborador.getFotoUrl() != null) {
+                Path oldImagePath = Paths.get(IMAGE_DIRECTORY + colaborador.getFotoUrl().substring(IMAGE_URL_BASE.length()));
+                if (Files.exists(oldImagePath)) {
+                    Files.delete(oldImagePath);
+                }
             }
-            String fileName = generateNewFileName(colaboradorDTO.getNombre(), colaborador.getId(), file.getOriginalFilename());
+
+            String fileName = generateNewFileName(colaboradorDTO.getNombre(), colaboradorDTO.getApellido(), file.getOriginalFilename());
             Path targetLocation = Paths.get(IMAGE_DIRECTORY + fileName);
-            if (Files.exists(targetLocation)) {
-                Files.delete(targetLocation);
-            }
             Files.copy(file.getInputStream(), targetLocation);
             colaborador.setFotoUrl(IMAGE_URL_BASE + fileName);
         }
 
         return colaboradorRepository.save(colaborador);
     }
-
 
     // Eliminar un colaborador
     public void deleteColaborador(Long id) {
