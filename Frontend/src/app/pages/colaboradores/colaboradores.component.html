@@ -159,7 +159,7 @@
         <!-- Input de archivo oculto -->
         <input #fileInput id="foto" type="file" (change)="onFileSelected($event)" class="hidden" />
         <!-- Mensaje de error -->
-        <div *ngIf="errorMessage" class="bg-red-50 text-red-600 text-sm mt-4 p-2 rounded-lg">
+        <div *ngIf="errorMessage" class="bg-red-50 text-red-600 text-sm mt-4 p-2 rounded-lg mb-3">
           {{ errorMessage }}
         </div>
         <!-- Resto del formulario -->
