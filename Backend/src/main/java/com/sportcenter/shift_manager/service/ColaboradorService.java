@@ -2,6 +2,7 @@ package com.sportcenter.shift_manager.service;
 
 import com.sportcenter.shift_manager.dto.ColaboradorDTO;
 import com.sportcenter.shift_manager.dto.EmpresaDTO;
+import com.sportcenter.shift_manager.service.CloudinaryService;
 import com.sportcenter.shift_manager.model.Colaborador;
 import com.sportcenter.shift_manager.model.Empresa;
 import com.sportcenter.shift_manager.repository.ColaboradorRepository;
@@ -23,12 +24,15 @@ import static com.sportcenter.shift_manager.config.ImageController.IMAGE_DIRECTO
 public class ColaboradorService {
     private final ColaboradorRepository colaboradorRepository;
     private final EmpresaRepository empresaRepository;
+    private final CloudinaryService cloudinaryService;
+
     // Ruta de almacenamiento de la imagen
     private static final String IMAGE_URL_BASE = "http://localhost:8080/images/";
 
-    public ColaboradorService(ColaboradorRepository colaboradorRepository, EmpresaRepository empresaRepository) {
+    public ColaboradorService(ColaboradorRepository colaboradorRepository, EmpresaRepository empresaRepository, CloudinaryService cloudinaryService) {
         this.colaboradorRepository = colaboradorRepository;
         this.empresaRepository = empresaRepository;
+        this.cloudinaryService = cloudinaryService;
     }
 
     // Guardar un nuevo colaborador
@@ -59,13 +63,11 @@ public class ColaboradorService {
         colaborador.setHabilitado(colaboradorDTO.isHabilitado());
         colaborador.setEmpresa(empresa);
 
-        // Manejo de imagen (si se proporciona)
+        // Subir imagen a Cloudinary
         if (file != null && !file.isEmpty()) {
             validarImagen(file);
-            String fileName = generateNewFileName(colaboradorDTO.getNombre(), colaboradorDTO.getApellido(), file.getOriginalFilename());
-            Path targetLocation = Paths.get(IMAGE_DIRECTORY + fileName);
-            Files.copy(file.getInputStream(), targetLocation);
-            colaborador.setFotoUrl(IMAGE_URL_BASE + fileName);
+            String imageUrl = cloudinaryService.uploadImage(file);
+            colaborador.setFotoUrl(imageUrl);
         }
 
         return colaboradorRepository.save(colaborador);
@@ -147,21 +149,23 @@ public class ColaboradorService {
         if (file != null && !file.isEmpty()) {
             validarImagen(file);
 
-            // Eliminar imagen anterior (opcional)
+            // Eliminar imagen anterior en Cloudinary (si existía)
             if (colaborador.getFotoUrl() != null) {
-                Path oldImagePath = Paths.get(IMAGE_DIRECTORY + colaborador.getFotoUrl().substring(IMAGE_URL_BASE.length()));
-                if (Files.exists(oldImagePath)) {
-                    Files.delete(oldImagePath);
-                }
+                String publicId = getPublicIdFromUrl(colaborador.getFotoUrl());
+                cloudinaryService.deleteImage(publicId);
             }
 
-            String fileName = generateNewFileName(colaboradorDTO.getNombre(), colaboradorDTO.getApellido(), file.getOriginalFilename());
-            Path targetLocation = Paths.get(IMAGE_DIRECTORY + fileName);
-            Files.copy(file.getInputStream(), targetLocation);
-            colaborador.setFotoUrl(IMAGE_URL_BASE + fileName);
+            // Subir nueva imagen a Cloudinary
+            String imageUrl = cloudinaryService.uploadImage(file);
+            colaborador.setFotoUrl(imageUrl);
         }
 
         return colaboradorRepository.save(colaborador);
+    }
+
+    // Extrae el public_id de la URL de Cloudinary
+    private String getPublicIdFromUrl(String imageUrl) {
+        return imageUrl.substring(imageUrl.lastIndexOf("/") + 1, imageUrl.lastIndexOf("."));
     }
 
     // Eliminar un colaborador
