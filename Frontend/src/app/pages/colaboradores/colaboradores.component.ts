@@ -45,6 +45,8 @@ export default class ColaboradoresComponent implements OnInit {
     'assets/user-circle-svgrepo-com.svg'; // Inicializar con una imagen por defecto
   @ViewChild('fileInput', { static: false }) fileInput!: ElementRef; // Referencia al input de archivos
 
+  isLoading: boolean = false; // Nueva variable para controlar el spinner
+
   constructor(
     private fb: FormBuilder,
     private colaboradorService: ColaboradorService,
@@ -204,6 +206,8 @@ export default class ColaboradoresComponent implements OnInit {
   addColaborador(): void {
     if (this.colaboradorForm.valid) {
       this.clearValidationErrors(); // Limpia mensajes previos
+      this.isLoading = true; // Activar el spinner de carga
+
       const colaborador: Colaborador = {
         ...this.colaboradorForm.value,
         empresaId: this.selectedEmpresaId!,
@@ -220,13 +224,14 @@ export default class ColaboradoresComponent implements OnInit {
           this.colaboradorForm.reset();
           this.fotoPreview = 'assets/user-circle-svgrepo-com.svg';
           this.selectedColaboradorId = null;
-
+          this.isLoading = false; // Desactiva el spinner
           // Cierra el modal
           this.closeModal();
         },
         error: (err) => {
           this.errorMessage =
             err.error?.message || 'Error al agregar colaborador.';
+            this.isLoading = false; // Desactiva el spinner en caso de error
         },
       });
     } else {
@@ -255,38 +260,39 @@ export default class ColaboradoresComponent implements OnInit {
     this.fotoPreview =
       colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg';
   }
-
+  
   updateColaborador(): void {
     if (this.colaboradorForm.valid && this.selectedColaboradorId !== null) {
       this.clearValidationErrors(); // Limpia mensajes previos
+      this.isLoading = true; // Activa el spinner de carga
+  
       const colaborador: Colaborador = {
         ...this.colaboradorForm.value,
         id: this.selectedColaboradorId,
       };
-
+  
       const file = this.colaboradorForm.get('foto')?.value;
-
+  
       this.colaboradorService
         .updateColaborador(this.selectedColaboradorId, colaborador, file)
         .subscribe({
           next: () => {
-            // Forzar la actualización de la tabla
-            this.getColaboradores();
-
+            this.getColaboradores(); // Actualiza la tabla
+  
             // Limpia el formulario y las variables asociadas
             this.colaboradorForm.reset();
             this.fotoPreview = 'assets/user-circle-svgrepo-com.svg';
             this.selectedColaboradorId = null;
-
-            // Cierra el modal
-            this.closeModal();
-
-            // Limpiar la caché de la imagen para forzar la recarga
-            this.clearImageCache();
+  
+            this.isLoading = false; // Desactiva el spinner
+            this.closeModal(); // Cierra el modal
+  
+            this.clearImageCache(); // Evita que se muestre la imagen en caché
           },
           error: (err) => {
             this.errorMessage =
               err.error?.message || 'Error al actualizar colaborador.';
+            this.isLoading = false; // Desactiva el spinner en caso de error
           },
         });
     } else {
