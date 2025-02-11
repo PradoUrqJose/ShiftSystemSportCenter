@@ -13,3 +13,22 @@
 .tippy-box[data-theme~='custom'][data-placement^='top'] > .tippy-arrow:before {
   border-top-color: #fff;
 }
+
+/* Scrollbar estilo moderno */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #a9bbd2;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
