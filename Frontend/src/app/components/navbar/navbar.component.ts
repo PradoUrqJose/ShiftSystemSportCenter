@@ -9,6 +9,7 @@ import { RouterModule } from '@angular/router';
   styleUrls: ['./navbar.component.css']
 })
 export default class NavbarComponent implements AfterViewInit {
+
   ngAfterViewInit(): void {
     const menuBtn = document.getElementById('menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
@@ -17,4 +18,5 @@ export default class NavbarComponent implements AfterViewInit {
       mobileMenu?.classList.toggle('show');
     });
   }
+
 }
