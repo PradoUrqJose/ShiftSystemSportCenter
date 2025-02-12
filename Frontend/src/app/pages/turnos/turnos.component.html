@@ -63,13 +63,15 @@
                 </div>
               </div>
             </td>
-
+            <!-- Celdas para cada día de la semana -->
             <td *ngFor="let dia of (diasSemana$ | async)" class="text-center semana-column"
               [ngClass]="{'dia-actual': esDiaActual(dia.fecha),'feriado-semanal': esFeriado(dia.fecha) }">
               <ng-container *ngIf="turnos$ | async as turnos">
                 <ng-container *ngIf="obtenerTurno(turnos, colaborador.id, dia.fecha) as turno; else agregarBoton">
                   <div class="container-green cursor-pointer transition bg-green-100 p-2 rounded-lg m-auto"
-                    [ngClass]="{ 'almuerzo-tomado': turno.tomoAlmuerzo}">
+                    [ngClass]="{ 'almuerzo-tomado': turno.tomoAlmuerzo}"
+                    [attr.data-horas-trabajadas]="sumarHorasDia(turno.horasTrabajadas)"
+                    [attr.data-tienda]="turno.nombreTienda" (click)="abrirModalEdicion(turno)">
                     {{ formatearHora(turno.horaEntrada) }} - {{ formatearHora(turno.horaSalida) }}
                   </div>
                 </ng-container>
