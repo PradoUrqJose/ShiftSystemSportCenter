@@ -1,47 +1,50 @@
-import { TurnoPayload } from './../../services/turno.service';
+// -------------- Core Angular Imports --------------
 import {
   Component,
   OnInit,
   AfterViewInit,
   ChangeDetectorRef,
 } from '@angular/core';
-import { TurnoService, Turno } from '../../services/turno.service';
+
+// -------------- Service Imports --------------
+import {
+  TurnoService,
+  Turno,
+  TurnoPayload,
+  DiaSemana,
+} from './../../services/turno.service';
 import {
   ColaboradorService,
   Colaborador,
 } from '../../services/colaborador.service';
+import { TiendaService, Tienda } from '../../services/tienda.service';
+import { FeriadoService, Feriado } from '../../services/feriado.service';
+
+// -------------- Date-fns and Date-fns-TZ Imports --------------
 import {
-  addDays,
   addMonths,
   subMonths,
-  subDays,
-  startOfWeek,
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
   format,
 } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz'; // Función correcta  import { es } from 'date-fns/locale';
-import { es } from 'date-fns/locale';
+import { toZonedTime } from 'date-fns-tz'; // Función para convertir a la zona horaria especificada
+import { es } from 'date-fns/locale'; // Importación de la localización para español
+
+// -------------- RxJS Imports --------------
 import { BehaviorSubject, map, Observable, of, switchMap } from 'rxjs';
+
+// -------------- Angular Modules Imports --------------
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import Notiflix from 'notiflix';
-import { TiendaService, Tienda } from '../../services/tienda.service';
-import tippy from 'tippy.js';
-import 'tippy.js/dist/tippy.css'; // Importa el CSS de Tippy
-import 'tippy.js/animations/shift-away-extreme.css'; // Importa la animación de Tippy
-import 'tippy.js/themes/light.css'; // Importa el tema de Tippy
 
-import { FeriadoService, Feriado } from '../../services/feriado.service';
-
-interface DiaSemana {
-  fecha: string;
-  nombre: string;
-  dayNumber: string;
-  monthNombre: string;
-  yearName: string;
-}
+// -------------- External Libraries Imports --------------
+import Notiflix from 'notiflix'; // Notificación en la UI
+import tippy from 'tippy.js'; // Herramienta para tooltips interactivos
+import 'tippy.js/dist/tippy.css'; // Estilos de Tippy.js
+import 'tippy.js/animations/shift-away-extreme.css'; // Animación de Tippy.js
+import 'tippy.js/themes/light.css'; // Tema claro de Tippy.js
 
 @Component({
   selector: 'app-turnos',
@@ -51,18 +54,19 @@ interface DiaSemana {
   imports: [CommonModule, FormsModule],
 })
 export default class TurnosComponent implements OnInit, AfterViewInit {
-  feriados: Feriado[] = []; // Lista de feriado
-
-  nombreMesActual: string = '';
-
+  //! Variables de estado
+  feriados: Feriado[] = []; // Lista de feriados
+  isLoading: boolean = false; // Controla el spinner de carga
+  nombreMesActual: string = ''; // Nombre del mes actual
   colaboradores$: Observable<Colaborador[]>; // Observable de colaboradores
   turnos$: Observable<Turno[]> = of([]); // Observable de turnos
-  tiendas$: Observable<Tienda[]> = of([]);
+  tiendas$: Observable<Tienda[]> = of([]); // Observable de tiendas
   diasSemana$: BehaviorSubject<DiaSemana[]> = new BehaviorSubject<DiaSemana[]>(
     []
-  );
-  semanaActual: Date = new Date();
-  isSubmitting: boolean = false; // Bandera para deshabilitar el botón
+  ); // Días de la semana
+  semanaActual: Date = new Date(); // Fecha actual de la semana
+  isSubmitting: boolean = false; // Bandera para deshabilitar el botón de envío
+
   //? Manejo de MODAL
   mostrarModal: boolean = false; // Controla la visibilidad del modal
   isModalVisible: boolean = false; // Controla la animación del modal
@@ -75,18 +79,19 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
   mostrarModalGestionarTiendas: boolean = false;
   isModalGestionarTiendasVisible: boolean = false;
 
-  //* Validaciones de form
-  errorHoraEntrada: string | null = null; // Para mostrar errores de hora de entrada
-  errorHoraSalida: string | null = null; // Para mostrar errores de hora de salida
-  turnoOriginal: Turno | null = null; // Almacena los datos originales del turno para comparar si se ha editado o no
-  tiendaActual: Tienda = this.resetTienda();
-  turnoActual: Turno = this.resetTurno();
+  //* Validaciones de formulario
+  errorHoraEntrada: string | null = null; // Error de hora de entrada
+  errorHoraSalida: string | null = null; // Error de hora de salida
+  turnoOriginal: Turno | null = null; // Almacena los datos originales del turno
+  tiendaActual: Tienda = this.resetTienda(); // Tienda actual
+  turnoActual: Turno = this.resetTurno(); // Turno actual
 
-  vistaMensual: boolean = false;
-  diasMes: DiaSemana[] = [];
-  turnosMensuales$: Observable<Turno[]> = of([]);
-  colaboradorSeleccionado: number = 0;
-  semanasDelMes: DiaSemana[][] = [];
+  //! Variables de vista
+  vistaMensual: boolean = false; // Controla la vista mensual
+  diasMes: DiaSemana[] = []; // Días del mes
+  turnosMensuales$: Observable<Turno[]> = of([]); // Turnos mensuales
+  colaboradorSeleccionado: number = 0; // Colaborador seleccionado
+  semanasDelMes: DiaSemana[][] = []; // Semanas del mes
   diasSemana = [
     { nombre: 'Lun' },
     { nombre: 'Mar' },
@@ -95,7 +100,7 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     { nombre: 'Vie' },
     { nombre: 'Sáb' },
     { nombre: 'Dom' },
-  ];
+  ]; // Días de la semana
 
   constructor(
     private turnoService: TurnoService,
@@ -111,6 +116,7 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     });
   }
 
+  //! Métodos del ciclo de vida
   ngOnInit(): void {
     this.cargarSemana();
     this.cargarTiendas();
@@ -118,6 +124,14 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     this.cargarFeriados(); // Cargar feriados al iniciar
   }
 
+  ngAfterViewInit(): void {
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.inicializarTooltips();
+    }, 0);
+  }
+
+  //! Métodos de carga de datos
   cargarFeriados(): void {
     this.feriadoService.getFeriados().subscribe({
       next: (data) => {
@@ -129,17 +143,67 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     });
   }
 
-  esFeriado(fecha: string): boolean {
-    return this.feriados.some((feriado) => feriado.fecha === fecha);
+  cargarMes(): void {
+    this.isLoading = true; // Activar el spinner
+
+    this.turnoService
+      .getSemanasDelMes(
+        this.semanaActual.getMonth() + 1,
+        this.semanaActual.getFullYear()
+      )
+      .subscribe(
+        (semanas) => {
+          console.log('📌 Semanas del mes recibidas:', semanas);
+
+          // ✅ Aplicar completarSemanasDelMes para asegurar los días sobrantes
+          this.semanasDelMes = this.completarSemanasDelMes(
+            semanas,
+            this.semanaActual.getMonth() + 1,
+            this.semanaActual.getFullYear()
+          );
+
+          this.diasMes = this.semanasDelMes.flat(); // Opcional, para manipulación de días
+
+          this.turnos$.subscribe(() => {
+            this.inicializarTooltips();
+            this.isLoading = false; // Ocultar el spinner después de cargar los datos
+          });
+        },
+        (error) => {
+          console.error('❌ Error al obtener semanas del mes:', error);
+          this.isLoading = false;
+        }
+      );
   }
 
-  ngAfterViewInit(): void {
-    this.cdr.detectChanges();
+  //? Mostrar Turnos mensuales
+  mostrarTurnosMensuales(colaboradorId: number): void {
+    if (colaboradorId !== null) {
+      this.colaboradorSeleccionado = colaboradorId;
+
+      this.turnosMensuales$ = this.turnoService.getTurnosMensualesPorColaborador(
+        colaboradorId,
+        this.semanaActual.getMonth() + 1,
+        this.semanaActual.getFullYear()
+      );
+
+      this.turnosMensuales$.subscribe(() => {
+        // 📌 Volver a completar las semanas para restaurar días sobrantes
+        this.semanasDelMes = this.completarSemanasDelMes(
+          this.semanasDelMes,
+          this.semanaActual.getMonth() + 1,
+          this.semanaActual.getFullYear()
+        );
+      });
+    }
+    console.log("✅ Cargando turnos mensuales para colaborador ID:", colaboradorId);
     setTimeout(() => {
       this.inicializarTooltips();
-    }, 0);
+    }, 500);
   }
 
+
+  //? Cambio de vista
   toggleVistaMensual(data: string): void {
     const nuevaVistaMensual = data === 'month';
     if (this.vistaMensual === nuevaVistaMensual) {
@@ -158,99 +222,138 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     this.actualizarNombreMes();
   }
 
-  dividirEnSemanas(dias: DiaSemana[]): DiaSemana[][] {
-    const semanas: DiaSemana[][] = [];
-    let semana: DiaSemana[] = [];
+  cargarSemana(): void {
+    this.isLoading = true; // Mostrar el spinner antes de la solicitud
 
-    dias.forEach((dia) => {
-      const fecha = new Date(dia.fecha);
-      const diaSemana = ((fecha.getUTCDay() + 6) % 7) + 1; // Usar getUTCDay()
+    this.turnoService
+      .getSemanasDelMes(
+        this.semanaActual.getMonth() + 1,
+        this.semanaActual.getFullYear()
+      )
+      .subscribe(
+        (semanas) => {
+          console.log('📌 Semanas recibidas del backend:', semanas); // LOG IMPORTANTE
 
-      if (semana.length === 0 && diaSemana !== 1) {
-        for (let i = 1; i < diaSemana; i++) {
-          semana.push({
-            fecha: '',
-            nombre: '',
-            dayNumber: '',
-            monthNombre: '',
-            yearName: '',
+          this.semanasDelMes = semanas; // Guardamos las semanas recibidas
+
+          // Encontrar la semana actual dentro de la lista
+          const semanaEncontrada = this.semanasDelMes.find((semana) =>
+            semana.some(
+              (dia) => dia.fecha === format(this.semanaActual, 'yyyy-MM-dd')
+            )
+          );
+
+          console.log('📌 Semana encontrada:', semanaEncontrada); // LOG IMPORTANTE
+
+          // Si no encuentra la semana, carga la primera semana
+          this.diasSemana$.next(semanaEncontrada ?? this.semanasDelMes[0]);
+
+          // Cargar turnos de la semana actual
+          this.turnos$ = this.turnoService.getTurnosPorSemana(
+            this.semanaActual
+          );
+          this.turnos$.subscribe(() => {
+            setTimeout(() => this.inicializarTooltips(), 500);
+            this.isLoading = false; // Ocultar el spinner después de cargar los datos
           });
+        },
+        () => {
+          this.isLoading = false; // Ocultar el spinner si hay un error
+        }
+      );
+  }
+
+  //? ----------------------> Método Completar Semana y mes con celdas Vacías
+  // Asegura que cada semana tenga 7 días, agregando días vacíos si es necesario
+  completarSemana(semana: DiaSemana[] | null): DiaSemana[] {
+    if (!semana) return [];
+
+    let semanaCompleta = [...semana]; // Copiar la semana
+    const diasFaltantes = 7 - semanaCompleta.length; // Días que faltan para completar la semana
+
+    // Si hay días faltantes, agregarlos al inicio en lugar de al final
+    for (let i = 0; i < diasFaltantes; i++) {
+      semanaCompleta.unshift({
+        fecha: 'empty', // Indicador de celda vacía
+        nombre: '',
+        dayNumber: '',
+        monthNombre: '',
+        yearName: '',
+        esFeriado: false,
+      });
+    }
+
+    return semanaCompleta;
+  }
+
+  completarSemanasDelMes(semanas: DiaSemana[][], mesActual: number, anioActual: number): DiaSemana[][] {
+    if (!semanas || semanas.length === 0) return [];
+
+    return semanas.map((semana, index) => {
+      let nuevaSemana = [...semana];
+
+      // 📌 Agregar días del mes anterior si la primera semana no empieza en lunes
+      if (index === 0) {
+        const primerDiaReal = new Date(semana[0].fecha);
+        const diaSemana = primerDiaReal.getDay(); // 0 (Domingo) - 6 (Sábado)
+
+        if (diaSemana > 0) { // Si no es lunes
+          const mesPrevio = mesActual === 1 ? 12 : mesActual - 1;
+          const anioPrevio = mesActual === 1 ? anioActual - 1 : anioActual;
+          const diasMesPrevio = new Date(anioPrevio, mesPrevio, 0).getDate(); // Último día del mes anterior
+
+          const diasSobrantes = [];
+          for (let i = diaSemana - 1; i >= 0; i--) {
+            diasSobrantes.push({
+              fecha: `${anioPrevio}-${String(mesPrevio).padStart(2, "0")}-${String(diasMesPrevio - i).padStart(2, "0")}`,
+              nombre: format(new Date(anioPrevio, mesPrevio - 1, diasMesPrevio - i), "EEE", { locale: es }),
+              dayNumber: String(diasMesPrevio - i),
+              monthNombre: format(new Date(anioPrevio, mesPrevio - 1, 1), "MMMM", { locale: es }),
+              yearName: String(anioPrevio),
+              esSobrante: true, // 🔴 Indica que es del mes anterior
+            });
+          }
+          nuevaSemana = [...diasSobrantes, ...nuevaSemana]; // Asegura el orden correcto
         }
       }
 
-      semana.push(dia);
+      // 📌 Agregar días del mes siguiente si la última semana no termina en domingo
+      if (index === semanas.length - 1) {
+        const ultimoDiaReal = new Date(nuevaSemana[nuevaSemana.length - 1].fecha);
+        let siguienteDia = new Date(ultimoDiaReal);
+        siguienteDia.setDate(1); // 📌 Asegurar que empieza en el primer día del mes siguiente
 
-      if (semana.length === 7) {
-        semanas.push(semana);
-        semana = [];
+        const mesSiguiente = mesActual === 12 ? 1 : mesActual + 1;
+        const anioSiguiente = mesActual === 12 ? anioActual + 1 : anioActual;
+
+        while (nuevaSemana.length < 7) {
+          nuevaSemana.push({
+            fecha: `${anioSiguiente}-${String(mesSiguiente).padStart(2, "0")}-${String(siguienteDia.getDate()).padStart(2, "0")}`,
+            nombre: format(siguienteDia, "EEE", { locale: es }),
+            dayNumber: format(siguienteDia, "d"),
+            monthNombre: format(siguienteDia, "MMMM", { locale: es }),
+            yearName: format(siguienteDia, "yyyy"),
+            esSobrante: true, // 🔴 Indica que es del mes siguiente
+          });
+          siguienteDia.setDate(siguienteDia.getDate() + 1);
+        }
       }
+
+      return nuevaSemana;
     });
-
-    if (semana.length > 0) {
-      while (semana.length < 7) {
-        semana.push({
-          fecha: '',
-          nombre: '',
-          dayNumber: '',
-          monthNombre: '',
-          yearName: '',
-        });
-      }
-      semanas.push(semana);
-    }
-
-    return semanas;
   }
 
-  mostrarTurnosMensuales(colaboradorId: number): void {
-    if (colaboradorId !== null) {
-      this.colaboradorSeleccionado = colaboradorId;
-      this.turnosMensuales$ =
-        this.turnoService.getTurnosMensualesPorColaborador(
-          colaboradorId,
-          this.semanaActual.getMonth() + 1,
-          this.semanaActual.getFullYear()
-        );
-    }
+  //? ---------------------->
 
-    setTimeout(() => {
-      this.inicializarTooltips();
-    }, 500);
+  cargarTiendas(): void {
+    this.tiendas$ = this.tiendaService
+      .getTiendas()
+      .pipe(map((tiendas) => tiendas.sort((a, b) => this.customSort(a, b))));
   }
 
-  cambiarMes(direccion: 'anterior' | 'siguiente'): void {
-    this.semanaActual =
-      direccion === 'anterior'
-        ? subMonths(this.semanaActual, 1)
-        : addMonths(this.semanaActual, 1);
-    this.cargarMes();
-    if (this.colaboradorSeleccionado) {
-      this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
-    }
-    this.actualizarNombreMes();
-  }
-
-  inicializarTooltips(): void {
-    const elementosTurnos = document.querySelectorAll('.container-green');
-    elementosTurnos.forEach((elemento) => {
-      const horasTrabajadas = elemento.getAttribute('data-horas-trabajadas');
-      const tiendaNombre = elemento.getAttribute('data-tienda');
-      tippy(elemento, {
-        content: `
-          <div class="p-2  flex justify-center flex-col text-center">
-            <div class="font-bold mb-2 text-gray-800">Información del Turno</div>
-            <div class="mb-1 text-gray-700 text-sm"><strong>Total horas:</strong> ${horasTrabajadas}</div>
-            <div class="text-gray-700 font-bold">${tiendaNombre}</div>
-          </div>
-        `,
-        placement: 'top',
-        arrow: true,
-        theme: 'custom', // Aplica el tema personalizado
-        animation: 'shift-away-extreme',
-        delay: [50, 200], // 50ms de retraso al mostrar, 200ms al ocultar
-        allowHTML: true, // Permitir HTML en el contenido del tooltip
-      });
-    });
+  //! Métodos de utilidad
+  esFeriado(fecha: string): boolean {
+    return this.feriados.some((feriado) => feriado.fecha === fecha);
   }
 
   esDiaActual(fecha: string): boolean {
@@ -282,71 +385,7 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     return { id: 0, nombre: '', direccion: '' };
   }
 
-  cargarMes(): void {
-    const inicioMes = startOfMonth(this.semanaActual);
-    const finMes = endOfMonth(this.semanaActual);
-    const dias = eachDayOfInterval({ start: inicioMes, end: finMes }).map(
-      (fecha) => {
-        const fechaUTC = toZonedTime(fecha, 'UTC'); // Convertir a UTC
-        const fechaStr = format(fechaUTC, 'yyyy-MM-dd');
-        return {
-          fecha: fechaStr,
-          nombre: format(fechaUTC, 'EEE', { locale: es }),
-          dayNumber: format(fechaUTC, 'dd'),
-          monthNombre: format(fechaUTC, 'MMMM', { locale: es }),
-          yearName: format(fechaUTC, 'yyyy'),
-          esFeriado: this.esFeriado(fechaStr), // Indicar si es feriado
-        };
-      }
-    );
-
-    this.diasMes = dias;
-    this.semanasDelMes = this.dividirEnSemanas(dias);
-
-    this.turnos$.subscribe(() => {
-      this.inicializarTooltips(); // Inicializa tooltips después de que los datos se carguen
-    });
-  }
-
-  cargarSemana(): void {
-    const inicioSemana = startOfWeek(this.semanaActual, { weekStartsOn: 1 });
-    const dias = Array.from({ length: 7 }, (_, i) => {
-      const fecha = addDays(inicioSemana, i);
-      const fechaStr = format(fecha, 'yyyy-MM-dd');
-      return {
-        fecha: fechaStr,
-        nombre: format(fecha, 'EEE', { locale: es }),
-        dayNumber: format(fecha, 'dd'),
-        monthNombre: format(fecha, 'MMMM', { locale: es }),
-        yearName: format(fecha, 'yyyy'),
-        esFeriado: this.esFeriado(fechaStr), // Indicar si es feriado
-      };
-    });
-
-    this.diasSemana$.next(dias);
-
-    // Usar switchMap para evitar múltiples suscripciones
-    this.turnos$ = this.diasSemana$.pipe(
-      switchMap(() => this.turnoService.getTurnosPorSemana(this.semanaActual))
-    );
-
-    this.turnos$.subscribe(() => {
-      setTimeout(() => this.inicializarTooltips(), 500); // Inicializa tooltips después de que los datos se carguen
-    });
-
-    this.turnos$.subscribe((turnos) => {
-      // console.log('Turnos obtenidos:', turnos);
-    });
-  }
-
-  cargarTiendas(): void {
-    this.tiendas$ = this.tiendaService
-      .getTiendas()
-      .pipe(map((tiendas) => tiendas.sort((a, b) => this.customSort(a, b))));
-  }
-
-  //? Sorting Tiendas <----------------
-
+  //! Métodos de ordenamiento
   private customSort(a: Tienda, b: Tienda): number {
     const numA = this.extractNumber(a.nombre);
     const numB = this.extractNumber(b.nombre);
@@ -374,19 +413,132 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     return match ? parseInt(match[1], 10) : null;
   }
 
-  //? <------------------------
-  cambiarSemana(direccion: 'anterior' | 'siguiente'): void {
+  //! Métodos de navegación
+  cambiarMes(direccion: 'anterior' | 'siguiente'): void {
     this.semanaActual =
       direccion === 'anterior'
-        ? subDays(this.semanaActual, 7)
-        : addDays(this.semanaActual, 7);
-
-    this.cargarSemana(); // Esto ya actualizará los turnos$
+        ? subMonths(this.semanaActual, 1)
+        : addMonths(this.semanaActual, 1);
+    this.cargarMes();
+    if (this.colaboradorSeleccionado) {
+      this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
+    }
     this.actualizarNombreMes();
   }
 
-  //? MODAL <-----------------------------
+  //? Cambiar Semana Lógica Completa <-----------------------------------
 
+  cambiarSemana(direccion: 'anterior' | 'siguiente'): void {
+    this.isLoading = true; // Activar el spinner
+
+    this.turnoService
+      .getSemanasDelMes(
+        this.semanaActual.getMonth() + 1,
+        this.semanaActual.getFullYear()
+      )
+      .subscribe(
+        (semanas) => {
+          let indiceSemanaActual = this.obtenerIndiceSemanaActual(semanas);
+
+          if (direccion === 'anterior') {
+            if (indiceSemanaActual > 0) {
+              indiceSemanaActual--;
+            } else {
+              this.cargarSemanaDeOtroMes('anterior');
+              return;
+            }
+          } else {
+            if (indiceSemanaActual < semanas.length - 1) {
+              indiceSemanaActual++;
+            } else {
+              this.cargarSemanaDeOtroMes('siguiente');
+              return;
+            }
+          }
+
+          this.actualizarSemana(semanas[indiceSemanaActual]);
+        },
+        (error) => {
+          console.error('❌ Error al cargar semanas:', error);
+          this.isLoading = false;
+        }
+      );
+  }
+
+  //* Obtiene el índice de la semana actual dentro del array de semanas.
+  private obtenerIndiceSemanaActual(semanas: DiaSemana[][]): number {
+    return semanas.findIndex((semana) =>
+      semana.some(
+        (dia) =>
+          dia.fecha !== 'filler' &&
+          dia.fecha === format(this.semanaActual, 'yyyy-MM-dd')
+      )
+    );
+  }
+
+  //* Carga la semana de otro mes cuando se intenta cambiar desde la primera o última semana del mes
+  private cargarSemanaDeOtroMes(direccion: 'anterior' | 'siguiente'): void {
+    this.semanaActual =
+      direccion === 'anterior'
+        ? subMonths(this.semanaActual, 1)
+        : addMonths(this.semanaActual, 1);
+
+    this.turnoService
+      .getSemanasDelMes(
+        this.semanaActual.getMonth() + 1,
+        this.semanaActual.getFullYear()
+      )
+      .subscribe(
+        (semanas) => {
+          if (semanas.length > 0) {
+            const semanaSeleccionada =
+              direccion === 'anterior'
+                ? semanas[semanas.length - 1]
+                : semanas[0];
+            this.actualizarSemana(semanaSeleccionada);
+          } else {
+            console.warn(
+              `⚠️ No se encontraron semanas en el mes ${
+                direccion === 'anterior' ? 'anterior' : 'siguiente'
+              }.`
+            );
+          }
+        },
+        (error) => {
+          console.error(
+            `❌ Error al cargar semanas del mes ${
+              direccion === 'anterior' ? 'anterior' : 'siguiente'
+            }:`,
+            error
+          );
+          this.isLoading = false;
+        }
+      );
+  }
+
+  //* Actualiza la semana actual y los turnos
+  private actualizarSemana(nuevaSemana: DiaSemana[]): void {
+    const primerDiaValido = nuevaSemana.find((dia) => dia.fecha !== 'filler');
+
+    if (primerDiaValido) {
+      const [year, month, day] = primerDiaValido.fecha.split('-').map(Number);
+      this.semanaActual = new Date(year, month - 1, day);
+    }
+
+    this.diasSemana$.next(nuevaSemana);
+    this.actualizarNombreMes();
+
+    // ✅ Volver a cargar los turnos de la semana seleccionada
+    this.turnos$ = this.turnoService.getTurnosPorSemana(this.semanaActual);
+    this.turnos$.subscribe(() => {
+      setTimeout(() => this.inicializarTooltips(), 500);
+      this.isLoading = false;
+    });
+  }
+
+  //? ---------------------------------------------------->
+
+  //! Métodos de modal
   abrirModal(colaboradorId: number, fecha: string): void {
     this.resetearEstadoModal();
     this.colaboradores$
@@ -421,14 +573,8 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
 
   abrirModalEdicion(turno: Turno): void {
     this.resetearEstadoModal(); // Resetear estado del modal
-    this.turnoOriginal = {
-      ...turno,
-      tiendaId: turno.tiendaId, // Asegurar que se copie el tiendaId
-    };
-    this.turnoActual = {
-      ...turno,
-      tiendaId: turno.tiendaId,
-    };
+    this.turnoOriginal = { ...turno, tiendaId: turno.tiendaId }; // Asegurar que se copie el tiendaId
+    this.turnoActual = { ...turno, tiendaId: turno.tiendaId };
     this.mostrarModal = true;
     setTimeout(() => {
       this.isModalVisible = true; // Activar la animación
@@ -491,6 +637,7 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     this.turnoActual = this.resetTurno();
   }
 
+  //! Métodos de guardado y eliminación
   guardarTurno(): void {
     if (this.isSubmitting) return; // Evitar múltiples envíos
     this.isSubmitting = true;
@@ -629,8 +776,7 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     }
   }
 
-  //* VALIDACIONES <-----------
-
+  //! Métodos de validación
   validarHorarioEntrada(): void {
     let hora = this.turnoActual.horaEntrada;
     if (!hora) {
@@ -679,48 +825,38 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
       this.turnoActual.tiendaId !== this.turnoOriginal.tiendaId
     );
   }
-  //* ------------------------->
 
-  obtenerTurno(
-    turnos: Turno[] | null,
+  //! Métodos de cálculo de horas
+
+  getHorasTotalesSemanaFormateadas(
     colaboradorId: number,
-    fecha: string
-  ): Turno | undefined {
-    if (!turnos) return undefined; // Manejo de null
-    return turnos.find(
-      (turno) => turno.colaboradorId === colaboradorId && turno.fecha === fecha
-    ); // Cambiar las llaves {} por paréntesis ()
+    turnos: Turno[] | null
+  ): string {
+    if (!turnos) return '00:00'; // Si no hay turnos, devolver 00:00
+
+    const turnoColaborador = turnos.find(
+      (t) => t.colaboradorId === colaboradorId
+    );
+    const horasTotales = turnoColaborador
+      ? turnoColaborador.horasTotalesSemana ?? 0
+      : 0;
+
+    const horas = Math.floor(horasTotales); // Parte entera (horas)
+    const minutos = Math.round((horasTotales - horas) * 60); // Convertir parte decimal a minutos
+
+    return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(
+      2,
+      '0'
+    )}`; // Formato HH:mm
   }
 
-  sumarHoras(turnos: Turno[] | null, colaboradorId: number): string {
-    if (!turnos) return '00:00';
-
-    // Filtrar los turnos del colaborador
-    const turnosColaborador = turnos.filter(
-      (turno) => turno.colaboradorId === colaboradorId
-    );
-
-    // Sumar las horas trabajadas
-    const totalHoras = turnosColaborador.reduce(
-      (total, turno) => total + (turno.horasTrabajadas ?? 0),
-      0
-    );
-
-    const horas = Math.floor(totalHoras);
-    const minutos = Math.round((totalHoras - horas) * 60);
-
-    return `${horas.toString().padStart(2, '0')}:${minutos
-      .toString()
-      .padStart(2, '0')}`;
-  }
-
-  formatearHora(hora: string): string {
+  formatearHora(hora: string | undefined): string {
     if (!hora) return '00:00';
     const [horas, minutos] = hora.split(':');
     return `${horas}:${minutos}`;
   }
 
-  sumarHorasDia(number: number | undefined): string {
+  formatearHorasDia(number: number | undefined): string {
     if (!number) return '00:00';
 
     const horas = Math.floor(number);
@@ -731,6 +867,7 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
       .padStart(2, '0')}`;
   }
 
+  //! Métodos de gestión de tiendas
   guardarTienda(): void {
     if (this.isSubmitting) return;
     this.isSubmitting = true;
@@ -807,9 +944,45 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     );
   }
 
+  //! Métodos de actualización de UI
   actualizarNombreMes(): void {
     this.nombreMesActual = format(this.semanaActual, 'MMMM yyyy', {
       locale: es,
     });
+  }
+
+  inicializarTooltips(): void {
+    const elementosTurnos = document.querySelectorAll('.container-green');
+    elementosTurnos.forEach((elemento) => {
+      const horasTrabajadas = elemento.getAttribute('data-horas-trabajadas');
+      const tiendaNombre = elemento.getAttribute('data-tienda');
+      tippy(elemento, {
+        content: `
+          <div class="p-2  flex justify-center flex-col text-center">
+            <div class="font-bold mb-2 text-gray-800">Información del Turno</div>
+            <div class="mb-1 text-gray-700 text-sm"><strong>Total horas:</strong> ${horasTrabajadas}</div>
+            <div class="text-gray-700 font-bold">${tiendaNombre}</div>
+          </div>
+        `,
+        placement: 'top',
+        arrow: true,
+        theme: 'custom', // Aplica el tema personalizado
+        animation: 'shift-away-extreme',
+        delay: [50, 200], // 50ms de retraso al mostrar, 200ms al ocultar
+        allowHTML: true, // Permitir HTML en el contenido del tooltip
+      });
+    });
+  }
+
+  //! Métodos de obtención de datos
+  obtenerTurno(
+    turnos: Turno[] | null,
+    colaboradorId: number,
+    fecha: string
+  ): Turno | undefined {
+    if (!turnos) return undefined; // Manejo de null
+    return turnos.find(
+      (turno) => turno.colaboradorId === colaboradorId && turno.fecha === fecha
+    ); // Cambiar las llaves {} por paréntesis ()
   }
 }
