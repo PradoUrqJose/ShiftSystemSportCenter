@@ -23,4 +23,5 @@ public class TurnoDTO {
     private LocalTime horaSalida;
     private double horasTrabajadas;
     private boolean tomoAlmuerzo; // Nuevo atributo
+    private double horasTotalesSemana; // ✅ Nuevo atributo
 }
