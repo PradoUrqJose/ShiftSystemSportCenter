@@ -13,7 +13,7 @@
         [ngClass]="{'actualView': vistaMensual}" (click)="toggleVistaMensual('month')">
         Mes
       </button>
-      <div class="flex gap-3">
+      <div class="flex gap-3 items-center">
         <button class="text-gray-500 py-2 rounded-lg hover:text-blue-700 transition transform hover:scale-105"
           (click)="vistaMensual ? cambiarMes('anterior') : cambiarSemana('anterior')">
           <i class="fa-solid fa-angle-left"></i>
@@ -31,92 +31,114 @@
     </div>
   </div>
 
-<!-- Tabla de turnos semanal -->
-<div *ngIf="!vistaMensual">
-  <table class="w-full shadow bg-white rounded-lg overflow-hidden">
-    <thead>
-      <tr class="text-gray-800">
-        <th class="bg-blue-50 text-center px-2 py-4 colaborador-column w-[30%] sm:w-[21%]">Colaborador</th>
-        <!-- Encabezado de los días de la semana -->
-        <th class="bg-blue-50 text-center px-2 py-4 capitalize font-normal semana-column w-[20%] sm:w-[10.57%]"
-          *ngFor="let dia of diasSemana$ | async">
-          <span class="text-lg font-bold py-2 px-4 rounded-full"
-            [ngClass]="{
+
+  <!-- Spinner de carga  -->
+  <div *ngIf="isLoading" class="sk-circle">
+    <div class="sk-circle1 sk-child"></div>
+    <div class="sk-circle2 sk-child"></div>
+    <div class="sk-circle3 sk-child"></div>
+    <div class="sk-circle4 sk-child"></div>
+    <div class="sk-circle5 sk-child"></div>
+    <div class="sk-circle6 sk-child"></div>
+    <div class="sk-circle7 sk-child"></div>
+    <div class="sk-circle8 sk-child"></div>
+    <div class="sk-circle9 sk-child"></div>
+    <div class="sk-circle10 sk-child"></div>
+    <div class="sk-circle11 sk-child"></div>
+    <div class="sk-circle12 sk-child"></div>
+  </div>
+
+  <!-- Tabla de turnos semanal -->
+  <div *ngIf="!vistaMensual && !isLoading">
+    <table class="w-full shadow bg-white rounded-lg overflow-hidden">
+      <thead>
+        <tr class="text-gray-800">
+          <th class="bg-blue-50 text-center px-2 py-4 colaborador-column w-[30%] sm:w-[21%]">Colaborador</th>
+          <th class="bg-blue-50 text-center px-2 py-4 capitalize font-normal semana-column w-[20%] sm:w-[10.57%]"
+            *ngFor="let dia of completarSemana(diasSemana$ | async)">
+            <!-- Celda vacía para los días faltantes -->
+            <ng-template #emptyCell>
+              <span class="text-lg font-bold py-2 px-4 rounded-full">
+                <span class="dayNumber font-normal">-</span>
+              </span>
+            </ng-template>
+            <span class="text-lg font-bold py-2 px-4 rounded-full" [ngClass]="{
               'dia-actual-encabezado': esDiaActual(dia.fecha),
               'feriado-semanal-encabezado': esFeriado(dia.fecha)
             }">
-            {{ dia.dayNumber ? dia.dayNumber : '-' }}
-            <span class="dayNumber font-normal">{{ dia.nombre }}</span>
-          </span>
-        </th>
-        <th class="bg-blue-50 px-2 py-4 w-[6%] text-center">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      <ng-container *ngIf="(colaboradores$ | async) as colaboradores;">
-        <tr *ngFor="let colaborador of colaboradores" class="hover:bg-gray-50 transition">
-          <!-- Columna de colaborador -->
-          <td class="py-4 px-4 flex justify-start items-center gap-3 w-full">
-            <div class="photo flex items-center justify-center w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
-              <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
-                alt="Foto de {{ colaborador.nombre }}" class="w-full h-full object-cover" />
-            </div>
-            <div class="colaborador">
-              <div class="colaborador-nombre text-sm font-bold">
-                {{ colaborador.nombre }} {{ colaborador.apellido }}
-              </div>
-              <div class="colaborador-empresa inline-block text-gray-700 font-bold">
-                {{ colaborador.empresaNombre }}
-              </div>
-            </div>
-          </td>
-
-          <!-- Celdas para cada día de la semana -->
-          <td *ngFor="let dia of (diasSemana$ | async)" class="text-center semana-column"
-            [ngClass]="{
-              'dia-actual': esDiaActual(dia.fecha),
-              'feriado-semanal': esFeriado(dia.fecha)
-            }">
-            <!-- Mostrar contenido si el día pertenece al mes actual -->
-            <ng-container *ngIf="dia.fecha; else emptyDay">
-              <ng-container *ngIf="turnos$ | async as turnos">
-                <ng-container *ngIf="obtenerTurno(turnos, colaborador.id, dia.fecha) as turno; else agregarBoton">
-                  <div class="container-green cursor-pointer transition bg-green-100 p-2 rounded-lg m-auto text-center"
-                    [ngClass]="{ 'almuerzo-tomado': turno.tomoAlmuerzo }"
-                    [attr.data-horas-trabajadas]="sumarHorasDia(turno.horasTrabajadas)"
-                    [attr.data-tienda]="turno.nombreTienda" (click)="abrirModalEdicion(turno)">
-                    {{ formatearHora(turno.horaEntrada) }} - {{ formatearHora(turno.horaSalida) }}
-                  </div>
-                </ng-container>
-                <ng-template #agregarBoton>
-                  <button class="plus_button hover:text-blue-800 transition text-blue-500 hover:bg-blue-50 p-2 rounded-lg"
-                    (click)="abrirModal(colaborador.id, dia.fecha)" title="Agregar Turno">
-                    <i class="fa-regular fa-square-plus"></i>
-                  </button>
-                </ng-template>
-              </ng-container>
-            </ng-container>
-            <!-- Mostrar celda vacía si el día no pertenece al mes actual -->
-            <ng-template #emptyDay>
-              <div class="empty-day">-</div>
-            </ng-template>
-          </td>
-
-          <!-- Columna de total de horas -->
-          <td class="p-2 text-center font-bold semana-column">
-            {{ sumarHoras(turnos$ | async, colaborador.id) }}
-          </td>
+              {{ dia.dayNumber ? dia.dayNumber : '-' }}
+              <span class="dayNumber font-normal">{{ dia.nombre }}</span>
+            </span>
+          </th>
+          <th class="bg-blue-50 px-2 py-4 w-[6%] text-center">Total</th>
         </tr>
-      </ng-container>
-    </tbody>
-  </table>
-</div>
+      </thead>
+      <tbody>
+        <ng-container *ngIf="(colaboradores$ | async) as colaboradores;">
+          <tr *ngFor="let colaborador of colaboradores" class="hover:bg-gray-50 transition">
+            <!-- Columna de colaborador -->
+            <td class="py-4 px-4 flex justify-start items-center gap-3 w-full">
+              <div class="photo flex items-center justify-center w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
+                <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
+                  alt="Foto de {{ colaborador.nombre }}" class="w-full h-full object-cover" />
+              </div>
+              <div class="colaborador">
+                <div class="colaborador-nombre text-sm font-bold">
+                  {{ colaborador.nombre }} {{ colaborador.apellido }}
+                </div>
+                <div class="colaborador-empresa inline-block text-gray-700 font-bold">
+                  {{ colaborador.empresaNombre }}
+                </div>
+              </div>
+            </td>
+
+            <!-- Celdas de la semana con días vacíos si es necesario -->
+            <td *ngFor="let dia of completarSemana(diasSemana$ | async)" class="text-center semana-column" [ngClass]="{
+              'dia-actual': esDiaActual(dia.fecha) || dia.fecha === 'empty',
+              'feriado-semanal': esFeriado(dia.fecha),
+            }">
+              <ng-container *ngIf="dia.fecha !== 'empty'; else emptyCell">
+                <ng-container *ngIf="turnos$ | async as turnos">
+                  <ng-container *ngIf="obtenerTurno(turnos, colaborador.id, dia.fecha) as turno; else agregarBoton">
+                    <div
+                      class="container-green cursor-pointer transition bg-green-100 p-2 rounded-lg m-auto text-center"
+                      [ngClass]="{ 'almuerzo-tomado': turno.tomoAlmuerzo }"
+                      [attr.data-horas-trabajadas]="formatearHorasDia(turno.horasTrabajadas)"
+                      [attr.data-tienda]="turno.nombreTienda" (click)="abrirModalEdicion(turno)">
+                      {{ formatearHora(turno.horaEntrada) }} - {{ formatearHora(turno.horaSalida) }}
+                    </div>
+                  </ng-container>
+                  <ng-template #agregarBoton>
+                    <button
+                      class="plus_button hover:text-blue-800 transition text-blue-500 hover:bg-blue-50 p-2 rounded-lg"
+                      (click)="abrirModal(colaborador.id, dia.fecha)" title="Agregar Turno">
+                      <i class="fa-regular fa-square-plus"></i>
+                    </button>
+                  </ng-template>
+                </ng-container>
+              </ng-container>
+              <!-- Celda vacía para los días faltantes -->
+              <ng-template #emptyCell></ng-template>
+            </td>
+
+            <!-- Columna de total de horas -->
+            <td class="p-2 text-center font-bold semana-column">
+              {{ getHorasTotalesSemanaFormateadas(colaborador.id, turnos$ | async) }}
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
 
   <!-- Contenedor principal para las tablas -->
-  <div class="flex flex-col sm:flex-row gap-3 space-y-6 sm:space-y-0">
+  <div class="flex flex-col sm:flex-row gap-3 space-y-6 sm:space-y-0" *ngIf="!isLoading">
     <!-- Tabla de selección de colaborador -->
     <div *ngIf="vistaMensual" class="w-[24%]">
-      <table class="w-full shadow bg-transparent rounded-lg overflow-hidden">
+      <div *ngIf="colaboradorSeleccionado === 0" class="text-red-500 text-sm py-4 text-center">
+        * Seleccione un colaborador
+      </div>
+      <table class="w-full shadow bg-transparent rounded-lg overflow-hidden bg-white">
         <thead>
           <tr class="bg-blue-50 text-gray-800">
             <th class="text-center p-3">Colaborador</th>
@@ -124,9 +146,10 @@
         </thead>
         <tbody>
           <tr *ngFor="let colaborador of colaboradores$ | async" class="hover:bg-gray-50 transition">
-            <td class="py-4 px-4 flex justify-start items-center gap-3 w-full">
+            <td class="py-4 px-4 flex justify-start items-center gap-3 w-full"
+              [ngClass]="{'bg-blue-100 text-blue-800 font-bold': colaborador.id === colaboradorSeleccionado}">
               <button (click)="mostrarTurnosMensuales(colaborador.id)"
-                class="flex justify-start items-center w-full gap-3">
+                class="flex justify-start items-center w-full gap-3 transition">
                 <div class="photo flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
                   <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
                     alt="Foto de {{ colaborador.nombre }}" class="w-full h-full object-cover" />
@@ -158,7 +181,9 @@
         </thead>
         <tbody>
           <tr *ngFor="let semana of semanasDelMes">
-            <td *ngFor="let dia of semana" class="text-center w-[8rem] h-[8rem] bg-transparent">
+            <td *ngFor="let dia of semana" class="text-center w-[8rem] h-[8rem] bg-transparent"
+              [ngClass]="{ 'dia-sobrante': dia.esSobrante, 'feriado-semanal': esFeriado(dia.fecha) }">
+
               <ng-container *ngIf="turnosMensuales$ | async as turnos">
                 <ng-container
                   *ngIf="obtenerTurno(turnos, colaboradorSeleccionado, dia.fecha) as turno; else agregarBoton">
@@ -166,27 +191,30 @@
                     [ngClass]="{ 'feriado-semanal': esFeriado(dia.fecha) }">
                     <div class="container-green minum rounded-lg cursor-pointer transition hover:shadow"
                       [ngClass]="{ 'almuerzo-tomado': turno.tomoAlmuerzo }"
-                      [attr.data-horas-trabajadas]="sumarHorasDia(turno.horasTrabajadas)"
+                      [attr.data-horas-trabajadas]="formatearHorasDia(turno.horasTrabajadas)"
                       [attr.data-tienda]="turno.nombreTienda" (click)="abrirModalEdicion(turno)">
                       <span>{{ formatearHora(turno.horaEntrada) }} </span>
                       <i class="fa-solid fa-caret-right"></i>
                       <span> {{ formatearHora(turno.horaSalida) }}</span>
                     </div>
-                    <span class="absolute top-2.5 right-3 nunito text-sm font-semibold text-gray-700 month"
-                      [ngClass]="{ 'dia-actual-encabezado': esDiaActual(dia.fecha),'feriado-semanal-encabezado': esFeriado(dia.fecha)}">{{
-                      dia.dayNumber }}</span>
+                    <span class="absolute top-2.5 right-3 nunito text-sm font-semibold month"
+                      [ngClass]="{ 'dia-actual-encabezado': esDiaActual(dia.fecha), 'feriado-semanal-encabezado': esFeriado(dia.fecha), 'dia-sobrante-texto': dia.esSobrante }">
+                      {{ dia.dayNumber }}
+                    </span>
                   </div>
                 </ng-container>
                 <ng-template #agregarBoton>
                   <div class="w-[95%] h-[95%] m-auto bg-white rounded-lg p-4 flex justify-center items-center relative"
                     [ngClass]="{ 'feriado-semanal': esFeriado(dia.fecha) }">
-                    <button class="p-2 text-gray-400 text-xs hover:text-blue-800 hover:scale-125 transition rounded-lg"
+                    <button *ngIf="colaboradorSeleccionado !== 0"
+                      class="p-2 text-gray-400 text-xs hover:text-blue-800 hover:scale-125 transition rounded-lg"
                       (click)="abrirModal(colaboradorSeleccionado, dia.fecha)" title="Agregar Turno">
                       <i class="fa-solid fa-plus"></i>
                     </button>
-                    <span class="absolute top-2.5 right-3 nunito text-sm font-semibold text-gray-700 month"
-                      [ngClass]="{ 'dia-actual-encabezado': esDiaActual(dia.fecha),'feriado-semanal-encabezado': esFeriado(dia.fecha)}">{{
-                      dia.dayNumber }}</span>
+                    <span class="absolute top-2.5 right-3 nunito text-sm font-semibold month"
+                      [ngClass]="{ 'dia-actual-encabezado': esDiaActual(dia.fecha), 'feriado-semanal-encabezado': esFeriado(dia.fecha), 'dia-sobrante-texto': dia.esSobrante }">
+                      {{ dia.dayNumber }}
+                    </span>
                   </div>
                 </ng-template>
               </ng-container>
