@@ -9,10 +9,13 @@ import com.sportcenter.shift_manager.repository.TiendaRepository;
 import com.sportcenter.shift_manager.repository.TurnoRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Optional;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class TurnoService {
@@ -68,12 +71,43 @@ public class TurnoService {
         try {
             LocalDate inicioSemana = getInicioSemana(fecha);
             LocalDate finSemana = inicioSemana.plusDays(6);
-            return turnoRepository.findByFechaBetween(inicioSemana, finSemana).stream()
-                    .map(this::convertToDTO)
-                    .toList();
+
+            List<Turno> turnos = turnoRepository.findByFechaBetween(inicioSemana, finSemana);
+
+            // Mapa para almacenar la suma de horas trabajadas por colaborador
+            Map<Long, Double> horasSemanalesPorColaborador = new HashMap<>();
+
+            for (Turno turno : turnos) {
+                double horasTrabajadas = calcularHorasTrabajadas(turno);
+                horasSemanalesPorColaborador.put(
+                        turno.getColaborador().getId(),
+                        horasSemanalesPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0) + horasTrabajadas
+                );
+            }
+
+            return turnos.stream().map(turno -> {
+                TurnoDTO dto = convertToDTO(turno);
+                dto.setHorasTotalesSemana(horasSemanalesPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0));
+                return dto;
+            }).collect(Collectors.toList());
+
         } catch (Exception e) {
-            throw new RuntimeException("Error al parsear la fecha: " + fecha, e);
+            throw new RuntimeException("Error al procesar la semana: " + fecha, e);
         }
+    }
+
+    private double calcularHorasTrabajadas(Turno turno) {
+        if (turno.getHoraEntrada() != null && turno.getHoraSalida() != null) {
+            long minutosTrabajados = java.time.Duration.between(turno.getHoraEntrada(), turno.getHoraSalida()).toMinutes();
+
+            // Restar 45 minutos si el turno abarca la hora del almuerzo (12:00 - 13:00)
+            if (turno.getHoraEntrada().isBefore(LocalTime.of(12, 1)) && turno.getHoraSalida().isAfter(LocalTime.of(13, 0))) {
+                minutosTrabajados -= 45;
+            }
+
+            return minutosTrabajados / 60.0; // Convertir minutos a horas
+        }
+        return 0;
     }
 
     // Obtener turnos por mes para un colaborador específico
@@ -173,7 +207,58 @@ public class TurnoService {
                 turno.getHoraEntrada(),
                 turno.getHoraSalida(),
                 turno.getHorasTrabajadas(),
-                tomoAlmuerzo // Asignar el valor calculado
+                tomoAlmuerzo,
+                0.0 // ✅ Inicializar horasTotalesSemana en 0.0 por defecto
         );
+    }
+
+    // ---- AGREGADOS PARA LA OPTIMIZACIÓN --------
+
+    public List<List<String>> calcularSemanasDelMes(int mes, int anio) {
+        List<List<String>> semanas = new ArrayList<>();
+        List<String> semanaActual = new ArrayList<>();
+
+        // Obtener primer y último día del mes
+        LocalDate inicioMes = LocalDate.of(anio, mes, 1);
+        LocalDate finMes = inicioMes.withDayOfMonth(inicioMes.lengthOfMonth());
+
+        System.out.println("Inicio del mes: " + inicioMes);
+        System.out.println("Fin del mes: " + finMes);
+
+        // Iniciar desde el primer día del mes
+        LocalDate diaActual = inicioMes;
+
+        // 1️⃣ PRIMERA SEMANA (INCOMPLETA, si el mes no inicia en Lunes)
+        while (diaActual.getDayOfWeek() != DayOfWeek.MONDAY && !diaActual.isAfter(finMes)) {
+            semanaActual.add(diaActual.toString());
+            diaActual = diaActual.plusDays(1);
+        }
+
+        // Si hay días en la primera semana, la agregamos antes de avanzar a semanas regulares
+        if (!semanaActual.isEmpty()) {
+            System.out.println("Primera semana (incompleta): " + semanaActual);
+            semanas.add(new ArrayList<>(semanaActual));
+            semanaActual.clear();
+        }
+
+        // 2️⃣ SEMANAS REGULARES (Lunes a Domingo)
+        while (!diaActual.isAfter(finMes)) {
+            for (int i = 0; i < 7 && !diaActual.isAfter(finMes); i++) {
+                semanaActual.add(diaActual.toString());
+                diaActual = diaActual.plusDays(1);
+            }
+            semanas.add(new ArrayList<>(semanaActual));
+            System.out.println("Semana generada: " + semanaActual);
+            semanaActual.clear();
+        }
+
+        // 3️⃣ ÚLTIMA SEMANA (INCOMPLETA, si el mes no termina en Domingo)
+        if (!semanaActual.isEmpty()) {
+            System.out.println("Última semana (incompleta): " + semanaActual);
+            semanas.add(new ArrayList<>(semanaActual));
+        }
+
+        System.out.println("Semanas finales generadas: " + semanas);
+        return semanas;
     }
 }
