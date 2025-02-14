@@ -5,6 +5,7 @@ import com.sportcenter.shift_manager.model.Turno;
 import com.sportcenter.shift_manager.service.TurnoService;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -72,5 +73,14 @@ public class TurnoController {
     @DeleteMapping("/{id}")
     public void deleteTurno(@PathVariable Long id) {
         turnoService.deleteTurno(id);
+    }
+
+
+    // ---- AGREGADOS PARA LA OPTIMIZACIÓN --------
+    @GetMapping("/semanas-del-mes")
+    public List<List<String>> getSemanasDelMes(
+            @RequestParam("mes") int mes,
+            @RequestParam("anio") int anio) {
+        return turnoService.calcularSemanasDelMes(mes, anio);
     }
 }
