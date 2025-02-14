@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { catchError, map, Observable, tap, throwError } from 'rxjs';
 import { Colaborador } from './colaborador.service';
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export interface Turno {
   id: number; // ID del turno
@@ -19,6 +20,7 @@ export interface Turno {
   tiendaId?: number | null; // Añadir tiendaId
   nombreTienda?: string; // Añadir tiendaNombre
   tomoAlmuerzo?: boolean; // Añadir tomoAlmuerzo
+  horasTotalesSemana?: number; // ✅ SumaDesdeBackend
 }
 
 export interface TurnoPayload {
@@ -28,6 +30,16 @@ export interface TurnoPayload {
   horaSalida: string; // Hora de salida
   empresa: { id: number }; // Solo el ID de la empresa\
   tienda: { id: number }; // Solo el ID de la tienda
+}
+
+export interface DiaSemana {
+  fecha: string;
+  nombre: string;
+  dayNumber: string;
+  monthNombre: string;
+  yearName: string;
+  esFeriado?: boolean;
+  esSobrante?: boolean;
 }
 
 @Injectable({
@@ -41,18 +53,10 @@ export class TurnoService {
   getTurnosPorSemana(fecha: Date): Observable<Turno[]> {
     const formattedDate = format(fecha, 'yyyy-MM-dd');
     return this.http.get<Turno[]>(`${this.apiUrl}?fecha=${formattedDate}`).pipe(
-      map((turnos: Turno[]) =>
-        turnos.map((turno) => ({
-          ...turno,
-          horasTrabajadas: turno.horasTrabajadas ?? 0,
-        }))
-      ),
+      tap((turnos) => console.log('🔄 Turnos recibidos del backend:', turnos)), // Debugging
       catchError((error) => {
-        console.error('Error al obtener turnos:', error);
-        return throwError(
-          () =>
-            new Error('No se pudieron cargar los turnos. Intente más tarde.')
-        );
+        console.error('❌ Error al obtener turnos:', error);
+        return throwError(() => new Error('No se pudieron cargar los turnos. Intente más tarde.'));
       })
     );
   }
@@ -143,5 +147,31 @@ export class TurnoService {
 
   deleteTurno(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  // ---- AGREGADOS PARA LA OPTIMIZACIÓN --------
+  getSemanasDelMes(mes: number, anio: number): Observable<DiaSemana[][]> {
+    return this.http
+      .get<string[][]>(`${this.apiUrl}/semanas-del-mes?mes=${mes}&anio=${anio}`)
+      .pipe(
+        map((semanas) =>
+          semanas.map((semana) =>
+            semana.map((fechaStr) => {
+              const fecha = new Date(fechaStr + 'T00:00:00'); // Corregir la conversión de zona horaria
+              return {
+                fecha: format(fecha, 'yyyy-MM-dd'),
+                nombre: format(fecha, 'EEE', { locale: es }), // Aquí estaba el error
+                dayNumber: format(fecha, 'd'), // Se estaba asignando el día de la fecha anterior
+                monthNombre: format(fecha, 'MMMM', { locale: es }),
+                yearName: format(fecha, 'yyyy'),
+              };
+            })
+          )
+        ),
+        catchError((error) => {
+          console.error('Error al obtener semanas del mes:', error);
+          return throwError(() => new Error('Error al obtener las semanas.'));
+        })
+      );
   }
 }
