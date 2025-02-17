@@ -182,7 +182,7 @@
         <tbody>
           <tr *ngFor="let semana of semanasDelMes">
             <td *ngFor="let dia of semana" class="text-center w-[8rem] h-[8rem] bg-transparent"
-              [ngClass]="{ 'dia-sobrante': dia.esSobrante, 'feriado-semanal': esFeriado(dia.fecha) }">
+              [ngClass]="{ 'dia-sobrante': dia.esSobrante}">
 
               <ng-container *ngIf="turnosMensuales$ | async as turnos">
                 <ng-container
