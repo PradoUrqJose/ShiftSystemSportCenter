@@ -1,3 +1,4 @@
+import { ModalService } from './../../services/modal.service';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import {
   FormBuilder,
@@ -13,6 +14,7 @@ import {
 import { EmpresaService, Empresa } from '../../services/empresa.service';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-colaboradores',
@@ -36,21 +38,22 @@ export default class ColaboradoresComponent implements OnInit {
   mostrarDeshabilitados: boolean = false; // Controla si se muestran las deshabilitadas
 
   // Control de Modal
-  isModalOpen: boolean = false;
-  isModalVisible: boolean = false;
+  mostrarModal$!: Observable<boolean>; // ✅ Declaramos correctamente
+  isModalVisible$!: Observable<boolean>; // ✅ Declaramos correctamente
   errorMessage: string | null = null;
+  isLoading: boolean = false; // Nueva variable para controlar el spinner
 
   // Nueva funcionalidad
   fotoPreview: string | ArrayBuffer | null =
     'assets/user-circle-svgrepo-com.svg'; // Inicializar con una imagen por defecto
   @ViewChild('fileInput', { static: false }) fileInput!: ElementRef; // Referencia al input de archivos
 
-  isLoading: boolean = false; // Nueva variable para controlar el spinner
 
   constructor(
     private fb: FormBuilder,
     private colaboradorService: ColaboradorService,
     private empresaService: EmpresaService,
+    private modalService: ModalService,
     private http: HttpClient // Inyecta HttpClient aquí
   ) {
     this.colaboradorForm = this.fb.group({
@@ -71,6 +74,8 @@ export default class ColaboradoresComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.mostrarModal$ = this.modalService.mostrarModal$;
+    this.isModalVisible$ = this.modalService.isModalVisible$;
     this.getEmpresasAndColaboradores();
   }
 
@@ -231,7 +236,7 @@ export default class ColaboradoresComponent implements OnInit {
         error: (err) => {
           this.errorMessage =
             err.error?.message || 'Error al agregar colaborador.';
-            this.isLoading = false; // Desactiva el spinner en caso de error
+          this.isLoading = false; // Desactiva el spinner en caso de error
         },
       });
     } else {
@@ -260,33 +265,33 @@ export default class ColaboradoresComponent implements OnInit {
     this.fotoPreview =
       colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg';
   }
-  
+
   updateColaborador(): void {
     if (this.colaboradorForm.valid && this.selectedColaboradorId !== null) {
       this.clearValidationErrors(); // Limpia mensajes previos
       this.isLoading = true; // Activa el spinner de carga
-  
+
       const colaborador: Colaborador = {
         ...this.colaboradorForm.value,
         id: this.selectedColaboradorId,
       };
-  
+
       const file = this.colaboradorForm.get('foto')?.value;
-  
+
       this.colaboradorService
         .updateColaborador(this.selectedColaboradorId, colaborador, file)
         .subscribe({
           next: () => {
             this.getColaboradores(); // Actualiza la tabla
-  
+
             // Limpia el formulario y las variables asociadas
             this.colaboradorForm.reset();
             this.fotoPreview = 'assets/user-circle-svgrepo-com.svg';
             this.selectedColaboradorId = null;
-  
+
             this.isLoading = false; // Desactiva el spinner
             this.closeModal(); // Cierra el modal
-  
+
             this.clearImageCache(); // Evita que se muestre la imagen en caché
           },
           error: (err) => {
@@ -318,8 +323,6 @@ export default class ColaboradoresComponent implements OnInit {
   }
 
   openModal(): void {
-    this.isModalOpen = true;
-    this.isModalVisible = false;
     this.errorMessage = null;
 
     // Restablecer el formulario y la vista previa de la foto
@@ -330,24 +333,20 @@ export default class ColaboradoresComponent implements OnInit {
 
     this.fotoPreview = 'assets/user-circle-svgrepo-com.svg'; // Restablecer a la imagen predeterminada
 
-    setTimeout(() => (this.isModalVisible = true), 10);
+    this.modalService.abrirModal(50);
   }
 
   closeModal(): void {
-    this.isModalVisible = false; // Inicia la animación de salida
-    setTimeout(() => {
-      this.isModalOpen = false; // Oculta completamente el modal
+    // Si se estaba editando, restablece el estado después del cierre del modal
+    if (this.isEditing) {
+      this.cancelEditCleanup();
+    }
 
-      // Si se estaba editando, restablece el estado después del cierre del modal
-      if (this.isEditing) {
-        this.cancelEditCleanup();
-      }
+    this.fotoPreview = 'assets/user-circle-svgrepo-com.svg'; // Restablecer la foto predeterminada
 
-      this.fotoPreview = 'assets/user-circle-svgrepo-com.svg'; // Restablecer la foto predeterminada
-
-      // Refrescar la tabla tras cerrar el modal
-      this.getColaboradores();
-    }, 300); // Coincide con la duración de la animación
+    // Refrescar la tabla tras cerrar el modal
+    this.getColaboradores();
+    this.modalService.cerrarModal(50);
   }
 
   private cancelEditCleanup(): void {
