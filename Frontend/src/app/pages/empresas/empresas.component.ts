@@ -1,3 +1,4 @@
+import { ModalService } from './../../services/modal.service';
 import { Component, NgModule, OnInit } from '@angular/core';
 import {
   FormBuilder,
@@ -9,6 +10,7 @@ import {
 import { EmpresaService, Empresa } from '../../services/empresa.service';
 import { CommonModule } from '@angular/common';
 import Notiflix from 'notiflix';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-empresas',
@@ -27,14 +29,15 @@ export default class EmpresasComponent implements OnInit {
   mostrarDeshabilitadas: boolean = false; // Controla si se muestran las deshabilitadas
 
   // MODAL CONTROL
-  isModalOpen: boolean = false;  // Controla si el modal está abierto o cerrado
-  isModalVisible: boolean = false; // Controla la visibilidad con animación
+  mostrarModal$!: Observable<boolean>;  // Controla si el modal está abierto o cerrado
+  isModalVisible$!: Observable<boolean>; // Controla la visibilidad con animación
   errorMessage: string | null = null; // Almacena mensajes de error
 
   constructor(
     private fb: FormBuilder,
+    private modalService: ModalService,
     private empresaService: EmpresaService
-  ) {}
+  ) { }
 
 
   ngOnInit(): void {
@@ -44,6 +47,9 @@ export default class EmpresasComponent implements OnInit {
       ruc: ['', [Validators.required, Validators.pattern(/^\d{11}$/)]],
       habilitada: [true] // Valor por defecto true
     });
+
+    this.mostrarModal$ = this.modalService.mostrarModal$;
+    this.isModalVisible$ = this.modalService.isModalVisible$;
 
     this.getEmpresas();
   }
@@ -148,26 +154,16 @@ export default class EmpresasComponent implements OnInit {
       this.empresaForm.reset({ habilitada: true }); // Establece habilitada en true
     }
 
-    this.isModalOpen = true;
-    this.isModalVisible = false; // Inicia oculto para la animación
-
-    // Agrega un pequeño retraso para la animación de entrada
-    setTimeout(() => {
-      this.isModalVisible = true;
-    }, 10);
+    this.modalService.abrirModal(50);
   }
 
   // Cerrar el modal con animación
   closeModal(): void {
-    this.isModalVisible = false; // Inicia la animación de salida
-    setTimeout(() => {
-      this.isModalOpen = false; // Oculta completamente el modal
-
-      // Si se cancela la edición, limpia después de la animación
-      if (this.isEditing) {
-        this.cancelEditCleanup();
-      }
-    }, 300); // Coincide con la duración de la transición
+    // Si se cancela la edición, limpia después de la animación
+    if (this.isEditing) {
+      this.cancelEditCleanup();
+    }
+    this.modalService.cerrarModal(100);
   }
 
   // Método para limpiar edición después del cierre del modal
