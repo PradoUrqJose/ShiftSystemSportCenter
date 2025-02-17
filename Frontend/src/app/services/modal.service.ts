@@ -13,17 +13,17 @@ export class ModalService {
 
   constructor() {}
 
-  abrirModal(): void {
+  abrirModal(time: number): void {
     this.mostrarModalSubject.next(true);
     setTimeout(() => {
       this.isModalVisibleSubject.next(true);
-    }, 50);
+    }, time);
   }
 
-  cerrarModal(): void {
+  cerrarModal(time: number): void {
     this.isModalVisibleSubject.next(false);
     setTimeout(() => {
       this.mostrarModalSubject.next(false);
-    }, 300); // ✅ Asegurar que el cierre respete la animación
+    }, time); // ✅ Asegurar que el cierre respete la animación
   }
 }
