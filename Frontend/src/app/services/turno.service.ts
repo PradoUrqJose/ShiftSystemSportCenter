@@ -1,3 +1,5 @@
+import { Feriado } from './feriado.service';
+import { DiaSemana } from './calendario.service';
 // turno.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -5,6 +7,7 @@ import { catchError, map, Observable, tap, throwError } from 'rxjs';
 import { Colaborador } from './colaborador.service';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+
 
 export interface Turno {
   id: number; // ID del turno
@@ -32,15 +35,6 @@ export interface TurnoPayload {
   tienda: { id: number }; // Solo el ID de la tienda
 }
 
-export interface DiaSemana {
-  fecha: string;
-  nombre: string;
-  dayNumber: string;
-  monthNombre: string;
-  yearName: string;
-  esFeriado?: boolean;
-  esSobrante?: boolean;
-}
 
 @Injectable({
   providedIn: 'root',
@@ -48,12 +42,11 @@ export interface DiaSemana {
 export class TurnoService {
   private apiUrl = 'http://localhost:8080/api/turnos';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getTurnosPorSemana(fecha: Date): Observable<Turno[]> {
     const formattedDate = format(fecha, 'yyyy-MM-dd');
     return this.http.get<Turno[]>(`${this.apiUrl}?fecha=${formattedDate}`).pipe(
-      tap((turnos) => console.log('🔄 Turnos recibidos del backend:', turnos)), // Debugging
       catchError((error) => {
         console.error('❌ Error al obtener turnos:', error);
         return throwError(() => new Error('No se pudieron cargar los turnos. Intente más tarde.'));
@@ -173,5 +166,29 @@ export class TurnoService {
           return throwError(() => new Error('Error al obtener las semanas.'));
         })
       );
+  }
+
+
+  /**
+ * Filtra los turnos de un colaborador específico en una fecha específica.
+ * @param turnos Lista de turnos.
+ * @param colaboradorId ID del colaborador.
+ * @param fecha Fecha a buscar.
+ * @returns Turno correspondiente o `null` si no existe.
+ */
+  obtenerTurno(turnos: Turno[], colaboradorId: number, fecha: string): Turno | null {
+    return turnos.find(
+      (turno) => turno.colaboradorId === colaboradorId && turno.fecha === fecha
+    ) || null;
+  }
+
+  /**
+   * Determina si una fecha es un día feriado.
+   * @param fecha Fecha en formato `yyyy-MM-dd`.
+   * @param feriados Lista de feriados.
+   * @returns `true` si es feriado, `false` en caso contrario.
+   */
+  esFeriado(fecha: string, feriados: Feriado[]): boolean {
+    return feriados.some((feriado) => feriado.fecha === fecha);
   }
 }
