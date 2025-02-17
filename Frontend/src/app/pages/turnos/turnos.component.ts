@@ -447,7 +447,7 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
         }
       });
 
-    this.modalService.abrirModal(); // ✅ Usamos el servicio
+    this.modalService.abrirModal(50); // ✅ Usamos el servicio
 
   }
 
@@ -455,7 +455,7 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     this.resetearEstadoModal(); // Resetear estado del modal
     this.turnoOriginal = { ...turno, tiendaId: turno.tiendaId }; // Asegurar que se copie el tiendaId
     this.turnoActual = { ...turno, tiendaId: turno.tiendaId };
-    this.modalService.abrirModal(); // ✅ Usamos el servicio
+    this.modalService.abrirModal(50); // ✅ Usamos el servicio
   }
 
   abrirModalAgregarTienda(): void {
@@ -499,7 +499,7 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
 
   cerrarModal(): void {
     this.isSubmitting = true; // Deshabilitar el botón durante la animación
-    this.modalService.cerrarModal(); // ✅ Cerrar modal usando el servicio
+    this.modalService.cerrarModal(300); // ✅ Cerrar modal usando el servicio
 
     setTimeout(() => {
       this.isSubmitting = false; // Rehabilitar el botón después de que termine la animación
