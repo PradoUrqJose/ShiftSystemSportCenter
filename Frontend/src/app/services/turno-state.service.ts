@@ -28,8 +28,9 @@ export class TurnoStateService {
     this.vistaMensualSubject.next(value);
   }
 
-  setSemanaActual(fecha: Date): void {
-    this.semanaActualSubject.next(fecha);
+  setSemanaActual(nuevaFecha: Date): void {
+    console.log('🔄 Nueva semana establecida en TurnoStateService:', nuevaFecha);
+    this.semanaActualSubject.next(nuevaFecha);
   }
 
   getSemanaActual(): Date {
