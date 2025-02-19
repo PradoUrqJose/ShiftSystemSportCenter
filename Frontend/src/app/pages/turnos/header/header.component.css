@@ -1,0 +1,10 @@
+.buttonWeek {
+  font-family: "Nunito", serif;
+  font-weight: 800;
+}
+
+.actualView {
+  background-color: #c6e7ff;
+  color: #0e334e;
+  border: 1px solid #4a708b4d;
+}
