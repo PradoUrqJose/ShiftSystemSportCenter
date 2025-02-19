@@ -49,13 +49,16 @@ import { TurnoStateService } from '../../services/turno-state.service';
 import { ModalService } from '../../services/modal.service';
 import { CalendarioService } from '../../services/calendario.service';
 import { SemanaService } from '../../services/semana.service';
+import { HeaderComponent } from './header/header.component';
+import { WeeklyViewComponent } from './weekly-view/weekly-view.component';
+import { MonthlyViewComponent } from './monthly-view/monthly-view.component';
 
 @Component({
   selector: 'app-turnos',
   templateUrl: './turnos.component.html',
   standalone: true,
   styleUrls: ['./turnos.component.css'],
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent],
 })
 export default class TurnosComponent implements OnInit, AfterViewInit {
   //! Variables de estado
@@ -137,7 +140,6 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     this.cargarSemana();
     this.cargarTiendas();
     this.actualizarNombreMes();
-    this.cargarFeriados(); // Cargar feriados al iniciar
   }
 
   ngAfterViewInit(): void {
@@ -147,17 +149,6 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     }, 0);
   }
 
-  //! Métodos de carga de datos
-  cargarFeriados(): void {
-    this.feriadoService.getFeriados().subscribe({
-      next: (data) => {
-        this.feriados = data; // Guardar los feriados
-      },
-      error: (error) => {
-        console.error('Error al cargar los feriados:', error);
-      },
-    });
-  }
 
   cargarMes(): void {
     this.turnoStateService.setLoading(true);
@@ -200,7 +191,6 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
 
 
   //? Cambio de vista
-  //? Cambio de vista
   toggleVistaMensual(data: string): void {
     const nuevaVistaMensual = data === 'month';
 
@@ -221,7 +211,6 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     this.actualizarNombreMes();
   }
 
-
   cargarSemana(): void {
     this.turnoStateService.setLoading(true);
 
@@ -237,27 +226,6 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
 
 
   //? ----------------------> Método Completar Semana y mes con celdas Vacías
-  // Asegura que cada semana tenga 7 días, agregando días vacíos si es necesario
-  completarSemana(semana: DiaSemana[] | null): DiaSemana[] {
-    if (!semana) return [];
-
-    let semanaCompleta = [...semana]; // Copiar la semana
-    const diasFaltantes = 7 - semanaCompleta.length; // Días que faltan para completar la semana
-
-    // Si hay días faltantes, agregarlos al inicio en lugar de al final
-    for (let i = 0; i < diasFaltantes; i++) {
-      semanaCompleta.unshift({
-        fecha: 'empty', // Indicador de celda vacía
-        nombre: '',
-        dayNumber: '',
-        monthNombre: '',
-        yearName: '',
-        esFeriado: false,
-      });
-    }
-
-    return semanaCompleta;
-  }
 
   completarSemanasDelMes(semanas: DiaSemana[][], mesActual: number, anioActual: number): DiaSemana[][] {
     if (!semanas || semanas.length === 0) return [];
@@ -416,6 +384,17 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
         this.turnoStateService.setLoading(false);
       },
     });
+  }
+
+  // Método para manejar el cambio de semana o mes
+  cambiarSemanaOMesHandler(direccion: 'anterior' | 'siguiente'): void {
+    if (this.vistaMensual) {
+      // Si la vista es mensual, cambia el mes
+      this.cambiarMes(direccion);
+    } else {
+      // Si la vista es semanal, cambia la semana
+      this.cambiarSemana(direccion);
+    }
   }
 
   //? ---------------------------------------------------->
@@ -611,16 +590,17 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
         // ✅ Eliminar el turno
         this.turnoService.deleteTurno(this.turnoActual.id!).subscribe({
           next: () => {
-            const vistaMensual = this.turnoStateService.vistaMensual$;
-            if (vistaMensual) {
+            if (this.vistaMensual) {
               this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
             } else {
               this.turnos$ = this.turnoService.getTurnosPorSemana(
-                this.turnoStateService.getSemanaActual() // ✅ Reemplazamos `this.semanaActual`
+                this.turnoStateService.getSemanaActual()
               );
+              this.turnos$.subscribe(() => {
+                setTimeout(() => this.inicializarTooltips(), 500);
+              });
             }
 
-            setTimeout(() => this.inicializarTooltips(), 50);
             this.cerrarModal();
 
             Notiflix.Notify.success('Turno eliminado con éxito', {
@@ -694,28 +674,6 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
   }
 
   //! Métodos de cálculo de horas
-
-  getHorasTotalesSemanaFormateadas(
-    colaboradorId: number,
-    turnos: Turno[] | null
-  ): string {
-    if (!turnos) return '00:00'; // Si no hay turnos, devolver 00:00
-
-    const turnoColaborador = turnos.find(
-      (t) => t.colaboradorId === colaboradorId
-    );
-    const horasTotales = turnoColaborador
-      ? turnoColaborador.horasTotalesSemana ?? 0
-      : 0;
-
-    const horas = Math.floor(horasTotales); // Parte entera (horas)
-    const minutos = Math.round((horasTotales - horas) * 60); // Convertir parte decimal a minutos
-
-    return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(
-      2,
-      '0'
-    )}`; // Formato HH:mm
-  }
 
   formatearHora(hora: string | undefined): string {
     if (!hora) return '00:00';
