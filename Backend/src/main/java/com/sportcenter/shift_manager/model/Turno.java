@@ -46,4 +46,6 @@ public class Turno {
         }
         return 0;
     }
+
+    private boolean esFeriado;
 }
