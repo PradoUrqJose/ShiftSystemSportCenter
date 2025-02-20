@@ -142,3 +142,19 @@
   min-height: 48px; /* Ajusta la altura para mantener uniformidad */
   pointer-events: none; /* Evita interacción con la celda */
 }
+
+/* Estilo para el borde rojo en turnos de feriados */
+.border-red-500 {
+  border-color: #ef4444;
+}
+
+/* Estilo para el tooltip */
+.tooltip {
+  position: absolute;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
