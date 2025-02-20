@@ -1,7 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Quicksand:wght@300..700&display=swap');
+@import "@ng-select/ng-select/themes/default.theme.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 
 .tippy-box[data-theme~='custom'] {
   color: #168fff;
@@ -31,4 +33,16 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+
+.buttonStyle {
+  font-family: "Nunito", serif;
+  font-weight: 800;
+}
+
+.blue-button {
+  background-color: #c6e7ff;
+  color: #0e334e;
+  border: 1px solid #4a708b4d;
 }
