@@ -23,7 +23,8 @@ export interface Turno {
   tiendaId?: number | null; // Añadir tiendaId
   nombreTienda?: string; // Añadir tiendaNombre
   tomoAlmuerzo?: boolean; // Añadir tomoAlmuerzo
-  horasTotalesSemana?: number; // ✅ SumaDesdeBackend
+  esFeriado?: boolean; // ✅ EsFeriado
+  horasTotalesSemana?: number; // ✅ HorasTotalesSemana
 }
 
 export interface TurnoPayload {
@@ -47,6 +48,7 @@ export class TurnoService {
   getTurnosPorSemana(fecha: Date): Observable<Turno[]> {
     const formattedDate = format(fecha, 'yyyy-MM-dd');
     return this.http.get<Turno[]>(`${this.apiUrl}?fecha=${formattedDate}`).pipe(
+      tap((turnos) => console.log('🔄 Turnos recibidos del backend:', turnos)), // Debugging
       catchError((error) => {
         console.error('❌ Error al obtener turnos:', error);
         return throwError(() => new Error('No se pudieron cargar los turnos. Intente más tarde.'));
@@ -147,17 +149,20 @@ export class TurnoService {
     return this.http
       .get<string[][]>(`${this.apiUrl}/semanas-del-mes?mes=${mes}&anio=${anio}`)
       .pipe(
+        tap((semanas) => console.log('Semanas obtenidas:', semanas)),
         map((semanas) =>
           semanas.map((semana) =>
             semana.map((fechaStr) => {
               const fecha = new Date(fechaStr + 'T00:00:00'); // Corregir la conversión de zona horaria
-              return {
+              const diaSemana: DiaSemana = {
                 fecha: format(fecha, 'yyyy-MM-dd'),
                 nombre: format(fecha, 'EEE', { locale: es }), // Aquí estaba el error
                 dayNumber: format(fecha, 'd'), // Se estaba asignando el día de la fecha anterior
                 monthNombre: format(fecha, 'MMMM', { locale: es }),
                 yearName: format(fecha, 'yyyy'),
               };
+              console.log('Día de la semana procesado:', diaSemana);
+              return diaSemana;
             })
           )
         ),
@@ -168,6 +173,10 @@ export class TurnoService {
       );
   }
 
+  // ✅ Método para obtener turnos semanales según las semanas del mes
+  getTurnosPorSemanaEstricta(mes: number, anio: number): Observable<Turno[]> {
+    return this.http.get<Turno[]>(`${this.apiUrl}/semanal-estricto?mes=${mes}&anio=${anio}`);
+  }
 
   /**
  * Filtra los turnos de un colaborador específico en una fecha específica.
