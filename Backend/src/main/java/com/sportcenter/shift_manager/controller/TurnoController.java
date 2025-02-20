@@ -54,15 +54,6 @@ public class TurnoController {
         return turnoService.getTurnosMensuales(mes, anio);
     }
 
-    // Endpoint para obtener colaboradores que comparten la misma tienda y rango de fechas
-    @GetMapping("/colab-tienda-fecha")
-    public List<TurnoDTO> getColaboradoresPorTiendaYRangoFechas(
-            @RequestParam("tiendaId") Long tiendaId,
-            @RequestParam("fechaInicio") String fechaInicio,
-            @RequestParam("fechaFin") String fechaFin) {
-        return turnoService.getColaboradoresPorTiendaYRangoFechas(tiendaId, fechaInicio, fechaFin);
-    }
-
     // Actualizar un turno (sin DTO, ya que recibe entidad completa)
     @PutMapping("/{id}")
     public Turno updateTurno(@PathVariable Long id, @RequestBody Turno turno) {
@@ -82,5 +73,12 @@ public class TurnoController {
             @RequestParam("mes") int mes,
             @RequestParam("anio") int anio) {
         return turnoService.calcularSemanasDelMes(mes, anio);
+    }
+
+    @GetMapping("/semanal-estricto")
+    public List<TurnoDTO> getTurnosPorSemanaEstricta(
+            @RequestParam("mes") int mes,
+            @RequestParam("anio") int anio) {
+        return turnoService.getTurnosPorSemanaEstricta(mes, anio);
     }
 }
