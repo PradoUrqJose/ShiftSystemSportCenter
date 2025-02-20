@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { DiaSemana } from './../../../services/calendario.service';
+import { CalendarioService, DiaSemana } from './../../../services/calendario.service';
 import { Colaborador } from './../../../services/colaborador.service';
 import { Turno, TurnoService } from './../../../services/turno.service';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
@@ -17,6 +17,7 @@ export class WeeklyViewComponent implements OnInit {
   constructor(
     private turnoService: TurnoService,
     private feriadoService: FeriadoService, // Inyectar el servicio de feriados
+    private calendarioService: CalendarioService // Inyectar el servicio de calendario
   ) { }
 
   ngOnInit(): void {
@@ -45,21 +46,13 @@ export class WeeklyViewComponent implements OnInit {
 
   // Método para formatear las horas trabajadas
   formatearHorasDia(horasTrabajadas: number | undefined): string {
-    if (!horasTrabajadas) return '00:00';
-
-    const horas = Math.floor(horasTrabajadas);
-    const minutos = Math.round((horasTrabajadas - horas) * 60);
-
-    return `${horas.toString().padStart(2, '0')}:${minutos
-      .toString()
-      .padStart(2, '0')}`;
+    return this.calendarioService.formatearHoras(horasTrabajadas ?? 0);
   }
 
   // Método para formatear la hora
   formatearHora(hora: string | undefined): string {
-    if (!hora) return '00:00';
-    const [horas, minutos] = hora.split(':');
-    return `${horas}:${minutos}`;
+    const horasTotales = hora ? parseFloat(hora) : 0;
+    return this.calendarioService.formatearHoras(horasTotales);
   }
 
   esDiaActual(fecha: string): boolean {
@@ -78,23 +71,28 @@ export class WeeklyViewComponent implements OnInit {
     return this.turnoService.esFeriado(fecha, this.feriados);
   }
 
-  getHorasTotalesSemanaFormateadas(colaboradorId: number, turnos: Turno[] | null): string {
-    if (!turnos) return '00:00'; // Si no hay turnos, devolver 00:00
-
-    const turnoColaborador = turnos.find(
-      (t) => t.colaboradorId === colaboradorId
+  getHorasTotalesSemanaFormateadas(colaboradorId: number): string {
+    // 1️⃣ Filtrar turnos solo de la semana actual que se está mostrando en `diasSemana`
+    const turnosSemana = this.turnos.filter(turno =>
+      this.diasSemana.some(dia => dia.fecha === turno.fecha) && turno.colaboradorId === colaboradorId
     );
-    const horasTotales = turnoColaborador
-      ? turnoColaborador.horasTotalesSemana ?? 0
-      : 0;
 
-    const horas = Math.floor(horasTotales); // Parte entera (horas)
-    const minutos = Math.round((horasTotales - horas) * 60); // Convertir parte decimal a minutos
+    // 2️⃣ Sumar las horas trabajadas en esa semana estricta
+    const horasTotales = turnosSemana.reduce((total, turno) => total + (turno.horasTrabajadas ?? 0), 0);
 
-    return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(
-      2,
-      '0'
-    )}`; // Formato HH:mm
+    // 3️⃣ Formatear usando el servicio
+    return this.calendarioService.formatearHoras(horasTotales);
+  }
+
+
+  // Método para verificar si un colaborador tiene turnos en feriados
+  tieneTurnosFeriados(colaboradorId: number): boolean {
+    if (!this.turnos || !this.feriados) return false;
+    return this.turnos.some(
+      (turno) =>
+        turno.colaboradorId === colaboradorId &&
+        this.esFeriado(turno.fecha)
+    );
   }
 
   cargarFeriados(): void {
@@ -129,4 +127,5 @@ export class WeeklyViewComponent implements OnInit {
 
     return semanaCompleta;
   }
+
 }
