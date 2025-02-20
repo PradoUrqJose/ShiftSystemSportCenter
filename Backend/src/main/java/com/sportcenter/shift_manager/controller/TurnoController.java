@@ -6,6 +6,8 @@ import com.sportcenter.shift_manager.service.TurnoService;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -81,4 +83,49 @@ public class TurnoController {
             @RequestParam("anio") int anio) {
         return turnoService.getTurnosPorSemanaEstricta(mes, anio);
     }
+
+    // ----------------- REPORTES ---------------
+    // Endpoint para obtener colaboradores que comparten la misma tienda y rango de fechas
+    @GetMapping("/colab-tienda-fecha")
+    public List<TurnoDTO> getColaboradoresPorTiendaYRangoFechas(
+            @RequestParam("tiendaId") Long tiendaId,
+            @RequestParam("fechaInicio") String fechaInicio,
+            @RequestParam("fechaFin") String fechaFin) {
+        return turnoService.getColaboradoresPorTiendaYRangoFechas(tiendaId, fechaInicio, fechaFin);
+    }
+
+    // Agregar @CrossOrigin en cada método de reportes
+    @CrossOrigin(origins = "http://localhost:4200")
+    @GetMapping("/reporte")
+    public List<TurnoDTO> getHorasTrabajadasPorColaboradores(
+            @RequestParam("fechaInicio") String fechaInicio,
+            @RequestParam("fechaFin") String fechaFin,
+            @RequestParam(value = "colaboradores", required = false) String colaboradores) {
+
+        List<Long> colaboradoresIds = (colaboradores != null && !colaboradores.isEmpty())
+                ? Arrays.stream(colaboradores.split(",")).map(Long::parseLong).toList()
+                : new ArrayList<>();
+
+        return turnoService.getHorasTrabajadasPorColaboradores(colaboradoresIds, fechaInicio, fechaFin);
+    }
+
+
+
+
+    @CrossOrigin(origins = "http://localhost:4200")
+    @GetMapping("/reporte/feriados")
+    public List<TurnoDTO> getTurnosEnFeriados(
+            @RequestParam("fechaInicio") String fechaInicio,
+            @RequestParam("fechaFin") String fechaFin) {
+        return turnoService.getTurnosEnFeriados(fechaInicio, fechaFin);
+    }
+
+    @CrossOrigin(origins = "http://localhost:4200")
+    @GetMapping("/reporte/horas-extra")
+    public List<TurnoDTO> getColaboradoresConMasHorasExtra(
+            @RequestParam("fechaInicio") String fechaInicio,
+            @RequestParam("fechaFin") String fechaFin) {
+        return turnoService.getColaboradoresConMasHorasExtra(fechaInicio, fechaFin);
+    }
+
 }
