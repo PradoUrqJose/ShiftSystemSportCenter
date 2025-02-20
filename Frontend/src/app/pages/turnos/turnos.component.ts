@@ -113,7 +113,6 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     private turnoStateService: TurnoStateService, // ✅ Inyectamos el nuevo servicio
     private modalService: ModalService, // ✅ Inyectamos el nuevo servicio
     private colaboradorService: ColaboradorService,
-    private feriadoService: FeriadoService, // Inyectar el servicio de feriados
     private tiendaService: TiendaService,
     private semanaService: SemanaService, // Inyectar el nuevo servicio
     private calendarioService: CalendarioService, // ✅ Nuevo servicio inyectado
