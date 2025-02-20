@@ -2,6 +2,7 @@ package com.sportcenter.shift_manager.service;
 
 import com.sportcenter.shift_manager.dto.TurnoDTO;
 import com.sportcenter.shift_manager.model.Colaborador;
+import com.sportcenter.shift_manager.model.Feriado;
 import com.sportcenter.shift_manager.model.Tienda;
 import com.sportcenter.shift_manager.model.Turno;
 import com.sportcenter.shift_manager.repository.ColaboradorRepository;
@@ -52,6 +53,10 @@ public class TurnoService {
 
         Tienda tienda = tiendaRepository.findById(turno.getTienda().getId())
                 .orElseThrow(() -> new RuntimeException("La tienda con ID " + turno.getTienda().getId() + " no existe"));
+
+        // Verificar si el turno es en un día feriado
+        boolean esFeriado = feriadoService.isFeriado(turno.getFecha());
+        turno.setEsFeriado(esFeriado);
 
         turno.setColaborador(colaborador);
         turno.setEmpresa(colaborador.getEmpresa()); // Aseguramos que la empresa también se asocia correctamente
@@ -128,27 +133,6 @@ public class TurnoService {
                 .toList();
     }
 
-    // Método para obtener colaboradores que comparten la misma tienda y rango de fechas
-    public List<TurnoDTO> getColaboradoresPorTiendaYRangoFechas(
-            Long tiendaId,
-            String fechaInicio,
-            String fechaFin) {
-        try {
-            LocalDate parsedFechaInicio = LocalDate.parse(fechaInicio);
-            LocalDate parsedFechaFin = LocalDate.parse(fechaFin);
-
-            // Buscar turnos ordenados por fecha
-            List<Turno> turnos = turnoRepository.findByTienda_IdAndFechaBetweenOrderByFechaAsc(tiendaId, parsedFechaInicio, parsedFechaFin);
-
-            // Convertir los turnos a DTOs
-            return turnos.stream()
-                    .map(this::convertToDTO)
-                    .toList();
-        } catch (Exception e) {
-            throw new RuntimeException("Error al parsear las fechas: " + fechaInicio + " - " + fechaFin, e);
-        }
-    }
-
     // Métodos privados
     private LocalDate getInicioSemana(String fecha) {
         LocalDate parsedDate = LocalDate.parse(fecha);
@@ -190,10 +174,11 @@ public class TurnoService {
     public TurnoDTO convertToDTO(Turno turno) {
         boolean tomoAlmuerzo = false;
         if (turno.getHoraEntrada() != null && turno.getHoraSalida() != null) {
-            // Verificar si las horas incluyen el rango del almuerzo
             tomoAlmuerzo = turno.getHoraEntrada().isBefore(LocalTime.of(12, 1))
                     && turno.getHoraSalida().isAfter(LocalTime.of(13, 0));
         }
+
+        boolean esFeriado = feriadoService.isFeriado(turno.getFecha());
 
         return new TurnoDTO(
                 turno.getId(),
@@ -208,7 +193,8 @@ public class TurnoService {
                 turno.getHoraSalida(),
                 turno.getHorasTrabajadas(),
                 tomoAlmuerzo,
-                0.0 // ✅ Inicializar horasTotalesSemana en 0.0 por defecto
+                0.0, // Inicializar horas totales en 0
+                esFeriado // ✅ Solo marcamos si es feriado, sin cálculo de horas extra
         );
     }
 
