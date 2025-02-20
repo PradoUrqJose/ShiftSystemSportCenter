@@ -19,4 +19,5 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
             Long tiendaId,
             LocalDate fechaInicio,
             LocalDate fechaFin);
+    List<Turno> findByColaborador_IdInAndFechaBetween(List<Long> colaboradores, LocalDate inicio, LocalDate fin);
 }
