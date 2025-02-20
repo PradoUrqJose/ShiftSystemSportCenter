@@ -274,4 +274,144 @@ public class TurnoService {
 
         return semanas;
     }
+
+    public List<TurnoDTO> getTurnosPorSemanaEstricta(int mes, int anio) {
+        List<List<String>> semanasDelMes = calcularSemanasDelMes(mes, anio);
+        List<TurnoDTO> turnosDTO = new ArrayList<>();
+
+        for (List<String> semana : semanasDelMes) {
+            if (!semana.isEmpty()) {
+                LocalDate inicioSemana = LocalDate.parse(semana.get(0));
+                LocalDate finSemana = LocalDate.parse(semana.get(semana.size() - 1));
+
+                List<Turno> turnos = turnoRepository.findByFechaBetween(inicioSemana, finSemana);
+
+                // Mapa para almacenar la suma de horas trabajadas por colaborador en la semana
+                Map<Long, Double> horasSemanalesPorColaborador = new HashMap<>();
+
+                for (Turno turno : turnos) {
+                    double horasTrabajadas = calcularHorasTrabajadas(turno);
+                    horasSemanalesPorColaborador.put(
+                            turno.getColaborador().getId(),
+                            horasSemanalesPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0) + horasTrabajadas
+                    );
+                }
+
+                // Convertir turnos a DTO y asignar horas semanales
+                for (Turno turno : turnos) {
+                    TurnoDTO dto = convertToDTO(turno);
+                    dto.setHorasTotalesSemana(horasSemanalesPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0));
+                    turnosDTO.add(dto);
+                }
+            }
+        }
+        return turnosDTO;
+    }
+
+    // --------------------- REPORTES ------------------------
+    // Método para obtener colaboradores que comparten la misma tienda y rango de fechas
+    public List<TurnoDTO> getColaboradoresPorTiendaYRangoFechas(
+            Long tiendaId,
+            String fechaInicio,
+            String fechaFin) {
+        try {
+            LocalDate parsedFechaInicio = LocalDate.parse(fechaInicio);
+            LocalDate parsedFechaFin = LocalDate.parse(fechaFin);
+
+            // Buscar turnos ordenados por fecha
+            List<Turno> turnos = turnoRepository.findByTienda_IdAndFechaBetweenOrderByFechaAsc(tiendaId, parsedFechaInicio, parsedFechaFin);
+
+            // Convertir los turnos a DTOs
+            return turnos.stream()
+                    .map(this::convertToDTO)
+                    .toList();
+        } catch (Exception e) {
+            throw new RuntimeException("Error al parsear las fechas: " + fechaInicio + " - " + fechaFin, e);
+        }
+    }
+
+    public List<TurnoDTO> getHorasTrabajadasPorColaborador(String fechaInicio, String fechaFin) {
+        LocalDate inicio = LocalDate.parse(fechaInicio);
+        LocalDate fin = LocalDate.parse(fechaFin);
+
+        List<Turno> turnos = turnoRepository.findByFechaBetween(inicio, fin);
+
+        // Mapa para acumular horas trabajadas por colaborador
+        Map<Long, Double> horasTotales = new HashMap<>();
+
+        for (Turno turno : turnos) {
+            horasTotales.put(
+                    turno.getColaborador().getId(),
+                    horasTotales.getOrDefault(turno.getColaborador().getId(), 0.0) + turno.getHorasTrabajadas()
+            );
+        }
+
+        return turnos.stream().map(turno -> {
+            TurnoDTO dto = convertToDTO(turno);
+            dto.setHorasTotalesSemana(horasTotales.get(turno.getColaborador().getId())); // Asignamos total
+            return dto;
+        }).distinct().toList();
+    }
+
+    public List<TurnoDTO> getHorasTrabajadasPorColaboradores(List<Long> colaboradores, String fechaInicio, String fechaFin) {
+        LocalDate inicio = LocalDate.parse(fechaInicio);
+        LocalDate fin = LocalDate.parse(fechaFin);
+
+        List<Turno> turnos = turnoRepository.findByColaborador_IdInAndFechaBetween(colaboradores, inicio, fin);
+
+        Map<Long, Double> horasTotales = new HashMap<>();
+
+        for (Turno turno : turnos) {
+            horasTotales.put(
+                    turno.getColaborador().getId(),
+                    horasTotales.getOrDefault(turno.getColaborador().getId(), 0.0) + turno.getHorasTrabajadas()
+            );
+        }
+
+        return turnos.stream().map(turno -> {
+            TurnoDTO dto = convertToDTO(turno);
+            dto.setHorasTotalesSemana(horasTotales.get(turno.getColaborador().getId())); // Asignamos total
+            return dto;
+        }).distinct().toList();
+    }
+
+    public List<TurnoDTO> getTurnosEnFeriados(String fechaInicio, String fechaFin) {
+        LocalDate inicio = LocalDate.parse(fechaInicio);
+        LocalDate fin = LocalDate.parse(fechaFin);
+
+        List<Turno> turnos = turnoRepository.findByFechaBetween(inicio, fin)
+                .stream()
+                .filter(Turno::isEsFeriado) // Solo filtrar turnos en feriados
+                .toList();
+
+        return turnos.stream().map(this::convertToDTO).toList();
+    }
+
+    public List<TurnoDTO> getColaboradoresConMasHorasExtra(String fechaInicio, String fechaFin) {
+        LocalDate inicio = LocalDate.parse(fechaInicio);
+        LocalDate fin = LocalDate.parse(fechaFin);
+
+        List<Turno> turnos = turnoRepository.findByFechaBetween(inicio, fin);
+
+        Map<Long, Double> horasExtraPorColaborador = new HashMap<>();
+
+        for (Turno turno : turnos) {
+            double horasTrabajadas = turno.getHorasTrabajadas();
+            double horasExtra = horasTrabajadas > 8 ? horasTrabajadas - 8 : 0; // Más de 8h es extra
+            horasExtraPorColaborador.put(
+                    turno.getColaborador().getId(),
+                    horasExtraPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0) + horasExtra
+            );
+        }
+
+        return turnos.stream()
+                .filter(turno -> horasExtraPorColaborador.get(turno.getColaborador().getId()) > 0) // Solo con horas extra
+                .map(turno -> {
+                    TurnoDTO dto = convertToDTO(turno);
+                    dto.setHorasTotalesSemana(horasExtraPorColaborador.get(turno.getColaborador().getId())); // Guardar total extra
+                    return dto;
+                }).distinct().toList();
+    }
+
+
 }
