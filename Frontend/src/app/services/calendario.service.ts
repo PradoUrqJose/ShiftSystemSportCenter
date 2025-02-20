@@ -27,13 +27,22 @@ export class CalendarioService {
     const inicioSemana = startOfWeek(fecha, { weekStartsOn: 1 });
     const finSemana = endOfWeek(fecha, { weekStartsOn: 1 });
 
-    return eachDayOfInterval({ start: inicioSemana, end: finSemana }).map((dia) => this.formatearDia(dia));
+    console.log('Inicio de la semana:', inicioSemana);
+    console.log('Fin de la semana:', finSemana);
+
+    const diasSemana = eachDayOfInterval({ start: inicioSemana, end: finSemana }).map((dia) => this.formatearDia(dia));
+    console.log('Días de la semana:', diasSemana);
+
+    return diasSemana;
   }
 
   // ✅ Obtiene todas las semanas del mes formateadas como `DiaSemana[][]`
   obtenerSemanasDelMes(fecha: Date): DiaSemana[][] {
     const inicioMes = startOfMonth(fecha);
     const finMes = endOfMonth(fecha);
+
+    console.log('Inicio del mes:', inicioMes);
+    console.log('Fin del mes:', finMes);
 
     let semanas: DiaSemana[][] = [];
     let inicioSemana = startOfWeek(inicioMes, { weekStartsOn: 1 });
@@ -44,9 +53,13 @@ export class CalendarioService {
         esSobrante: dia.fecha < format(inicioMes, 'yyyy-MM-dd') || dia.fecha > format(finMes, 'yyyy-MM-dd'),
       }));
 
+      console.log('Semana:', semana);
+
       semanas.push(semana);
       inicioSemana = addDays(inicioSemana, 7); // ✅ Pasar a la siguiente semana
     }
+
+    console.log('Semanas del mes:', semanas);
 
     return semanas;
   }
@@ -71,4 +84,15 @@ export class CalendarioService {
   cambiarMes(fecha: Date, direccion: 'anterior' | 'siguiente'): Date {
     return direccion === 'anterior' ? subMonths(fecha, 1) : addMonths(fecha, 1);
   }
+
+  // ✅ Formatea un número decimal de horas a formato HH:MM
+  formatearHoras(horasTotales: number): string {
+    if (!horasTotales || horasTotales < 0) return '00:00';
+
+    const horas = Math.floor(horasTotales);
+    const minutos = Math.round((horasTotales - horas) * 60) % 60;
+
+    return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
+  }
+
 }
