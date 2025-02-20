@@ -1,37 +1,82 @@
-  <div class="fixed flex flex-col top-0 left-0 w-[10.6rem] bg-white h-full border-r">
-    <div class="flex items-center h-20 p-4">
-      <img src="assets/logo.png" alt="SportCenter Logo" class="h-10">
-    </div>
-    <div class="overflow-y-auto overflow-x-hidden flex-grow">
-      <ul class="flex flex-col py-4 space-y-1">
-        <li>
-          <a routerLink="/empresas" routerLinkActive="active" class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-gray-50 text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6">
-            <span class="inline-flex justify-center items-center ml-4">
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6 7H7M6 10H7M11 10H12M11 13H12M6 13H7M11 7H12M7 21V18C7 16.8954 7.89543 16 9 16C10.1046 16 11 16.8954 11 18V21H7ZM7 21H3V4.6C3 4.03995 3 3.75992 3.10899 3.54601C3.20487 3.35785 3.35785 3.20487 3.54601 3.10899C3.75992 3 4.03995 3 4.6 3H13.4C13.9601 3 14.2401 3 14.454 3.10899C14.6422 3.20487 14.7951 3.35785 14.891 3.54601C15 3.75992 15 4.03995 15 4.6V9M19.7 13.5C19.7 14.3284 19.0284 15 18.2 15C17.3716 15 16.7 14.3284 16.7 13.5C16.7 12.6716 17.3716 12 18.2 12C19.0284 12 19.7 12.6716 19.7 13.5ZM21.5 21V20.5C21.5 19.1193 20.3807 18 19 18H17.5C16.1193 18 15 19.1193 15 20.5V21H21.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-            <span class="ml-2 text-sm tracking-wide truncate">Empresas</span>
-          </a>
-        </li>
-        <li>
-          <a routerLink="/colaboradores" routerLinkActive="active" class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-gray-50 text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6">
-            <span class="inline-flex justify-center items-center ml-4">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            </span>
-            <span class="ml-2 text-sm tracking-wide truncate">Colaboradores</span>
-          </a>
-        </li>
-        <li>
-          <a routerLink="/turnos" routerLinkActive="active" class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-gray-50 text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6">
-            <span class="inline-flex justify-center items-center ml-4">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 9H21M9 15L11 17L15 13M7 3V5M17 3V5M6.2 21H17.8C18.9201 21 19.4802 21 19.908 20.782C20.2843 20.5903 20.5903 20.2843 20.782 19.908C21 19.4802 21 18.9201 21 17.8V8.2C21 7.07989 21 6.51984 20.782 6.09202C20.5903 5.71569 20.2843 5.40973 19.908 5.21799C19.4802 5 18.9201 5 17.8 5H6.2C5.0799 5 4.51984 5 4.09202 5.21799C3.71569 5.40973 3.40973 5.71569 3.21799 6.09202C3 6.51984 3 7.07989 3 8.2V17.8C3 18.9201 3 19.4802 3.21799 19.908C3.40973 20.2843 3.71569 20.5903 4.09202 20.782C4.51984 21 5.07989 21 6.2 21Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </span>
-            <span class="ml-2 text-sm tracking-wide truncate">Turnos</span>
-          </a>
-        </li>
-      </ul>
-    </div>
+<div class="fixed flex flex-col top-0 left-0 w-[10.6rem] bg-white h-full border-r">
+  <div class="flex items-center h-20 p-4">
+    <img src="assets/logo.png" alt="SportCenter Logo" class="h-10">
   </div>
+  <div class="flex-grow">
+    <ul class="flex flex-col py-4 space-y-1">
+      <li>
+        <a routerLink="/empresas" routerLinkActive="active"
+          class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-gray-50 text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6">
+          <span class="inline-flex justify-center items-center ml-4">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M6 7H7M6 10H7M11 10H12M11 13H12M6 13H7M11 7H12M7 21V18C7 16.8954 7.89543 16 9 16C10.1046 16 11 16.8954 11 18V21H7ZM7 21H3V4.6C3 4.03995 3 3.75992 3.10899 3.54601C3.20487 3.35785 3.35785 3.20487 3.54601 3.10899C3.75992 3 4.03995 3 4.6 3H13.4C13.9601 3 14.2401 3 14.454 3.10899C14.6422 3.20487 14.7951 3.35785 14.891 3.54601C15 3.75992 15 4.03995 15 4.6V9M19.7 13.5C19.7 14.3284 19.0284 15 18.2 15C17.3716 15 16.7 14.3284 16.7 13.5C16.7 12.6716 17.3716 12 18.2 12C19.0284 12 19.7 12.6716 19.7 13.5ZM21.5 21V20.5C21.5 19.1193 20.3807 18 19 18H17.5C16.1193 18 15 19.1193 15 20.5V21H21.5Z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span class="ml-2 text-sm tracking-wide truncate">Empresas</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/colaboradores" routerLinkActive="active"
+          class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-gray-50 text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6">
+          <span class="inline-flex justify-center items-center ml-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+              </path>
+            </svg>
+          </span>
+          <span class="ml-2 text-sm tracking-wide truncate">Colaboradores</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/turnos" routerLinkActive="active"
+          class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-gray-50 text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6">
+          <span class="inline-flex justify-center items-center ml-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M3 9H21M9 15L11 17L15 13M7 3V5M17 3V5M6.2 21H17.8C18.9201 21 19.4802 21 19.908 20.782C20.2843 20.5903 20.5903 20.2843 20.782 19.908C21 19.4802 21 18.9201 21 17.8V8.2C21 7.07989 21 6.51984 20.782 6.09202C20.5903 5.71569 20.2843 5.40973 19.908 5.21799C19.4802 5 18.9201 5 17.8 5H6.2C5.0799 5 4.51984 5 4.09202 5.21799C3.71569 5.40973 3.40973 5.71569 3.21799 6.09202C3 6.51984 3 7.07989 3 8.2V17.8C3 18.9201 3 19.4802 3.21799 19.908C3.40973 20.2843 3.71569 20.5903 4.09202 20.782C4.51984 21 5.07989 21 6.2 21Z"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span class="ml-2 text-sm tracking-wide truncate">Turnos</span>
+        </a>
+      </li>
+      <li class="relative group">
+        <a routerLink="/reportes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }"
+          class="nav-link flex items-center h-11 cursor-pointer text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6">
+          <span class="inline-flex justify-center items-center ml-4">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+              <path d="M6 7H18M6 12H18M6 17H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span class="ml-2 text-sm tracking-wide truncate">Reportes</span>
+          <svg class="w-4 h-4 ml-2 group-hover:rotate-90 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+              clip-rule="evenodd" />
+          </svg>
+        </a>
+
+        <!-- Submenú alineado a la derecha con animación -->
+        <div
+        class="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-white border rounded-lg shadow-xl opacity-0 translate-x-[-10px] pointer-events-none
+        group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-200 ease-in-out w-48">
+          <ul class="py-1">
+            <li><a routerLink="/reportes/horas-trabajadas" class="block px-4 py-2 text-gray-600 hover:bg-gray-200">Horas
+                Trabajadas</a></li>
+            <li><a routerLink="/reportes/turnos-feriados" class="block px-4 py-2 text-gray-600 hover:bg-gray-200">Turnos
+                en Feriados</a></li>
+            <li><a routerLink="/reportes/horas-extras" class="block px-4 py-2 text-gray-600 hover:bg-gray-200">Horas
+                Extras</a></li>
+          </ul>
+        </div>
+
+      </li>
+    </ul>
+  </div>
+</div>
