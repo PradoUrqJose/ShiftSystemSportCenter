@@ -5,11 +5,11 @@
   </h2>
 
   <!-- Botones de cambio de vista (semana/mes) -->
-  <div class="buttonWeek flex gap-2 flex-wrap justify-between">
+  <div class="buttonStyle flex gap-2 flex-wrap justify-between">
     <!-- Botón para vista semanal -->
     <button
       class="changeView font-bold py-2 px-3 rounded-lg transition transform hover:scale-105"
-      [ngClass]="{ 'actualView': !vistaMensual }"
+      [ngClass]="{ 'blue-button': !vistaMensual }"
       (click)="toggleVistaMensual('week')">
       Semana
     </button>
@@ -17,7 +17,7 @@
     <!-- Botón para vista mensual -->
     <button
       class="changeView font-bold py-2 px-3 rounded-lg transition transform hover:scale-105"
-      [ngClass]="{ 'actualView': vistaMensual }"
+      [ngClass]="{ 'blue-button': vistaMensual }"
       (click)="toggleVistaMensual('month')">
       Mes
     </button>
