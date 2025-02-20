@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* En tu archivo CSS */
 input[type="checkbox"] {
   cursor: pointer;
