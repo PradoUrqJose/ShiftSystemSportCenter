@@ -245,6 +245,33 @@ public class TurnoService {
         }
 
         System.out.println("Semanas finales generadas: " + semanas);
+
+        // Calcular las horas trabajadas por semana
+        for (List<String> semana : semanas) {
+            if (!semana.isEmpty()) {
+                LocalDate inicioSemana = LocalDate.parse(semana.get(0));
+                LocalDate finSemana = LocalDate.parse(semana.get(semana.size() - 1));
+
+                List<Turno> turnos = turnoRepository.findByFechaBetween(inicioSemana, finSemana);
+
+                // Mapa para almacenar la suma de horas trabajadas por colaborador en la semana
+                Map<Long, Double> horasSemanalesPorColaborador = new HashMap<>();
+
+                for (Turno turno : turnos) {
+                    double horasTrabajadas = calcularHorasTrabajadas(turno);
+                    horasSemanalesPorColaborador.put(
+                            turno.getColaborador().getId(),
+                            horasSemanalesPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0) + horasTrabajadas
+                    );
+                }
+
+                // Asignar las horas totales a cada turno en la semana
+                for (Turno turno : turnos) {
+                    turno.setHorasTrabajadas(horasSemanalesPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0));
+                }
+            }
+        }
+
         return semanas;
     }
 }
