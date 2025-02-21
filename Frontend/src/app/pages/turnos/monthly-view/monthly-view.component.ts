@@ -14,7 +14,7 @@ import { Observable } from 'rxjs';
 })
 export class MonthlyViewComponent {
   // Inputs para recibir datos del componente padre
-  @Input() feriados: Feriado[] = []; // Lista de feriados
+  feriados: Feriado[] = []; // Lista de feriados
   @Input() semanasDelMes: DiaSemana[][] = []; // Semanas del mes
   @Input() colaboradorSeleccionado: number = 0; // Colaborador seleccionado
   @Input() turnosMensuales$!: Observable<Turno[]>; // Turnos mensuales (Observable)
