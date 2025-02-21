@@ -1,5 +1,6 @@
 package com.sportcenter.shift_manager.controller;
 
+import com.sportcenter.shift_manager.dto.FeriadoDTO;
 import com.sportcenter.shift_manager.model.Feriado;
 import com.sportcenter.shift_manager.service.FeriadoService;
 import org.springframework.http.ResponseEntity;
@@ -21,8 +22,10 @@ public class FeriadoController {
 
     // Endpoint para obtener todos los feriados
     @GetMapping
-    public List<Feriado> getAllFeriados() {
-        return feriadoService.getAllFeriados();
+    public List<FeriadoDTO> getAllFeriados() {
+        return feriadoService.getAllFeriados().stream()
+                .map(f -> new FeriadoDTO(f.getFecha(), f.getDescripcion()))
+                .toList();
     }
 
     // Endpoint para verificar si una fecha es feriado
