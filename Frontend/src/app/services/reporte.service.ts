@@ -6,29 +6,52 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ReporteService {
-  private apiUrl = 'http://localhost:8080/api/turnos/reporte'; // ✅ URL corregida
+  private apiUrl = 'http://localhost:8080/api/turnos/reporte'; // Base URL para reportes
 
   constructor(private http: HttpClient) { }
 
+  // Reporte de horas trabajadas por colaboradores (sin cambios)
   getHorasTrabajadas(fechaInicio: string, fechaFin: string, colaboradores: number[]): Observable<any[]> {
     let params = new HttpParams()
       .set('fechaInicio', fechaInicio)
       .set('fechaFin', fechaFin);
 
     if (colaboradores.length > 0) {
-      params = params.set('colaboradores', colaboradores.join(','));  // 🔥 Convertimos los IDs a string separados por comas
+      params = params.set('colaboradores', colaboradores.join(','));
     }
 
-    console.log('✅ Parámetros enviados al backend:', { fechaInicio, fechaFin, colaboradores: colaboradores.join(',') });
+    console.log('✅ Parámetros enviados al backend (Horas Trabajadas):', { fechaInicio, fechaFin, colaboradores: colaboradores.join(',') });
 
     return this.http.get<any[]>(this.apiUrl, { params });
   }
 
-  getTurnosFeriados(fechaInicio: string, fechaFin: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/feriados?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+  // Reporte de turnos en feriados (MODIFICADO)
+  getTurnosFeriados(fechaInicio: string, fechaFin: string, colaboradores: number[]): Observable<any[]> {
+    let params = new HttpParams()
+      .set('fechaInicio', fechaInicio)
+      .set('fechaFin', fechaFin);
+
+    if (colaboradores.length > 0) {
+      params = params.set('colaboradores', colaboradores.join(','));
+    }
+
+    console.log('✅ Parámetros enviados al backend (Turnos Feriados):', { fechaInicio, fechaFin, colaboradores: colaboradores.join(',') });
+
+    return this.http.get<any[]>(`${this.apiUrl}/feriados`, { params });
   }
 
-  getHorasExtras(fechaInicio: string, fechaFin: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/horas-extra?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+  // Reporte de horas extra (MODIFICADO)
+  getHorasExtras(fechaInicio: string, fechaFin: string, colaboradores: number[]): Observable<any[]> {
+    let params = new HttpParams()
+      .set('fechaInicio', fechaInicio)
+      .set('fechaFin', fechaFin);
+
+    if (colaboradores.length > 0) {
+      params = params.set('colaboradores', colaboradores.join(','));
+    }
+
+    console.log('✅ Parámetros enviados al backend (Horas Extras):', { fechaInicio, fechaFin, colaboradores: colaboradores.join(',') });
+
+    return this.http.get<any[]>(`${this.apiUrl}/horas-extra`, { params });
   }
 }
