@@ -1,33 +1,23 @@
 package com.sportcenter.shift_manager.service;
 
 import com.sportcenter.shift_manager.dto.ColaboradorDTO;
-import com.sportcenter.shift_manager.dto.EmpresaDTO;
-import com.sportcenter.shift_manager.service.CloudinaryService;
 import com.sportcenter.shift_manager.model.Colaborador;
 import com.sportcenter.shift_manager.model.Empresa;
 import com.sportcenter.shift_manager.repository.ColaboradorRepository;
 import com.sportcenter.shift_manager.repository.EmpresaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.sportcenter.shift_manager.config.ImageController.IMAGE_DIRECTORY;
-
 @Service
 public class ColaboradorService {
     private final ColaboradorRepository colaboradorRepository;
     private final EmpresaRepository empresaRepository;
     private final CloudinaryService cloudinaryService;
-
-    // Ruta de almacenamiento de la imagen
-    private static final String IMAGE_URL_BASE = "http://localhost:8080/images/";
 
     public ColaboradorService(ColaboradorRepository colaboradorRepository, EmpresaRepository empresaRepository, CloudinaryService cloudinaryService) {
         this.colaboradorRepository = colaboradorRepository;
@@ -83,13 +73,6 @@ public class ColaboradorService {
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new IllegalArgumentException("Solo se permiten archivos de imagen.");
         }
-    }
-
-    // Genera un nombre único para la imagen
-    private String generateNewFileName(String nombre, String apellido, String originalFileName) {
-        String extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-        String uniqueId = UUID.randomUUID().toString();
-        return "colaborador_" + nombre + "_" + apellido + "_" + uniqueId + extension;
     }
 
     // Obtener todos los colaboradores
