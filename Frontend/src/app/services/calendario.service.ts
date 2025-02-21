@@ -3,6 +3,7 @@ import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, ad
 import { es } from 'date-fns/locale';
 import { TurnoService } from './turno.service';
 import { TurnoStateService } from './turno-state.service';
+import { from, map, Observable, of, switchMap, toArray } from 'rxjs';
 
 export interface DiaSemana {
   fecha: string;
@@ -23,45 +24,51 @@ export class CalendarioService {
     private turnoStateService: TurnoStateService) { }
 
   // ✅ Obtiene los días de una semana formateados como `DiaSemana[]`
-  obtenerSemana(fecha: Date): DiaSemana[] {
+  obtenerSemana(fecha: Date): Observable<DiaSemana[]> {
     const inicioSemana = startOfWeek(fecha, { weekStartsOn: 1 });
     const finSemana = endOfWeek(fecha, { weekStartsOn: 1 });
-
-    console.log('Inicio de la semana:', inicioSemana);
-    console.log('Fin de la semana:', finSemana);
 
     const diasSemana = eachDayOfInterval({ start: inicioSemana, end: finSemana }).map((dia) => this.formatearDia(dia));
     console.log('Días de la semana:', diasSemana);
 
-    return diasSemana;
+    return of(diasSemana); // Envuelve el resultado en un Observable
   }
 
   // ✅ Obtiene todas las semanas del mes formateadas como `DiaSemana[][]`
-  obtenerSemanasDelMes(fecha: Date): DiaSemana[][] {
+  obtenerSemanasDelMes(fecha: Date): Observable<DiaSemana[][]> {
     const inicioMes = startOfMonth(fecha);
     const finMes = endOfMonth(fecha);
 
     console.log('Inicio del mes:', inicioMes);
     console.log('Fin del mes:', finMes);
 
-    let semanas: DiaSemana[][] = [];
     let inicioSemana = startOfWeek(inicioMes, { weekStartsOn: 1 });
+    const semanas: Date[] = [];
 
+    // Generar las fechas de inicio de cada semana
     while (inicioSemana <= finMes || inicioSemana.getMonth() === fecha.getMonth()) {
-      const semana = this.obtenerSemana(inicioSemana).map((dia) => ({
-        ...dia,
-        esSobrante: dia.fecha < format(inicioMes, 'yyyy-MM-dd') || dia.fecha > format(finMes, 'yyyy-MM-dd'),
-      }));
-
-      console.log('Semana:', semana);
-
-      semanas.push(semana);
-      inicioSemana = addDays(inicioSemana, 7); // ✅ Pasar a la siguiente semana
+      semanas.push(inicioSemana);
+      inicioSemana = addDays(inicioSemana, 7);
     }
 
-    console.log('Semanas del mes:', semanas);
-
-    return semanas;
+    // Convertir cada fecha en una semana Observable y combinarlas
+    return from(semanas).pipe(
+      switchMap((fechaSemana) =>
+        this.obtenerSemana(fechaSemana).pipe(
+          map((dias) =>
+            dias.map((dia) => ({
+              ...dia,
+              esSobrante: dia.fecha < format(inicioMes, 'yyyy-MM-dd') || dia.fecha > format(finMes, 'yyyy-MM-dd'),
+            }))
+          )
+        )
+      ),
+      toArray(), // Agrupa todas las semanas en un array
+      map((semanasCompletas) => {
+        console.log('Semanas del mes:', semanasCompletas);
+        return semanasCompletas;
+      })
+    );
   }
 
   // ✅ Formatea un `Date` en un objeto `DiaSemana`
