@@ -48,7 +48,7 @@ export class TurnoService {
   getTurnosPorSemana(fecha: Date): Observable<Turno[]> {
     const formattedDate = format(fecha, 'yyyy-MM-dd');
     return this.http.get<Turno[]>(`${this.apiUrl}?fecha=${formattedDate}`).pipe(
-      tap((turnos) => console.log('🔄 Turnos recibidos del backend:', turnos)), // Debugging
+      tap((turnos) => console.log('🔄 Turnos recibidos del backend por Semana:', turnos)), // Debugging
       catchError((error) => {
         console.error('❌ Error al obtener turnos:', error);
         return throwError(() => new Error('No se pudieron cargar los turnos. Intente más tarde.'));
@@ -161,7 +161,6 @@ export class TurnoService {
                 monthNombre: format(fecha, 'MMMM', { locale: es }),
                 yearName: format(fecha, 'yyyy'),
               };
-              console.log('Día de la semana procesado:', diaSemana);
               return diaSemana;
             })
           )
@@ -174,8 +173,14 @@ export class TurnoService {
   }
 
   // ✅ Método para obtener turnos semanales según las semanas del mes
-  getTurnosPorSemanaEstricta(mes: number, anio: number): Observable<Turno[]> {
-    return this.http.get<Turno[]>(`${this.apiUrl}/semanal-estricto?mes=${mes}&anio=${anio}`);
+  getTurnosPorSemanaEstricta(mes: number, anio: number, semana: number): Observable<Turno[]> {
+    return this.http.get<Turno[]>(`${this.apiUrl}/semanal-estricto?mes=${mes}&anio=${anio}&semana=${semana}`).pipe(
+      tap((turnos) => console.log('🔄 Turnos recibidos del backend por Semana Estricta:', turnos)), // Debugging
+      catchError((error) => {
+        console.error('❌ Error al obtener turnos por semana estricta:', error);
+        return throwError(() => new Error('No se pudieron cargar los turnos. Intente más tarde.'));
+      })
+    );
   }
 
   /**
