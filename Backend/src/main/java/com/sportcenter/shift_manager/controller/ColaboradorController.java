@@ -62,4 +62,11 @@ public class ColaboradorController {
     public void deleteColaborador(@PathVariable Long id) {
         colaboradorService.deleteColaborador(id);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ColaboradorDTO> getColaboradorById(@PathVariable Long id) {
+        Colaborador colaborador = colaboradorService.getColaboradorById(id);
+        ColaboradorDTO dto = colaboradorService.convertToDTO(colaborador);
+        return ResponseEntity.ok(dto);
+    }
 }
