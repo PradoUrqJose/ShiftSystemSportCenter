@@ -46,7 +46,7 @@ export class ColaboradorProfileComponent implements OnInit {
   pieChartData: number[] = [];
   pieChartOptions: ChartOptions<'pie'> = {
     responsive: true,
-    plugins: { legend: { position: 'top' }, tooltip: { enabled: true } },
+    plugins: { legend: { position: 'bottom' }, tooltip: { enabled: true } },
     animation: { animateScale: true, animateRotate: true }
   };
 
