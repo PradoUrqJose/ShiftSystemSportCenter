@@ -89,6 +89,11 @@ public class ColaboradorService {
                 .toList();
     }
 
+    public Colaborador getColaboradorById(Long id) {
+        return colaboradorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Colaborador con ID " + id + " no encontrado"));
+    }
+    
     // Actualizar un colaborador
     public Colaborador updateColaborador(Long id, ColaboradorDTO colaboradorDTO, MultipartFile file) throws IOException {
         // Buscar colaborador existente
