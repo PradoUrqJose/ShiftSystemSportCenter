@@ -29,7 +29,6 @@ export class TurnoStateService {
   }
 
   setSemanaActual(nuevaFecha: Date): void {
-    console.log('🔄 Nueva semana establecida en TurnoStateService:', nuevaFecha);
     this.semanaActualSubject.next(nuevaFecha);
   }
 
