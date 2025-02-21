@@ -3,7 +3,6 @@ import { DiaSemana } from './../../services/calendario.service';
 import {
   Component,
   OnInit,
-  AfterViewInit,
   ChangeDetectorRef,
 } from '@angular/core';
 
@@ -57,7 +56,7 @@ import { RouterModule } from '@angular/router';
   styleUrls: ['./turnos.component.css'],
   imports: [CommonModule, FormsModule, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent],
 })
-export default class TurnosComponent implements OnInit, AfterViewInit {
+export default class TurnosComponent implements OnInit {
   //! Variables de estado
   feriados: Feriado[] = []; // Lista de feriados
   isLoading$!: Observable<boolean>;
@@ -136,13 +135,7 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     this.cargarSemana();
     this.cargarTiendas();
     this.actualizarNombreMes();
-  }
 
-  ngAfterViewInit(): void {
-    this.cdr.detectChanges();
-    setTimeout(() => {
-      this.inicializarTooltips();
-    }, 0);
   }
 
   cargarMes(): void {
