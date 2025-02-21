@@ -275,36 +275,43 @@ public class TurnoService {
         return semanas;
     }
 
-    public List<TurnoDTO> getTurnosPorSemanaEstricta(int mes, int anio) {
+    public List<TurnoDTO> getTurnosPorSemanaEstricta(int mes, int anio, int numeroSemana) {
         List<List<String>> semanasDelMes = calcularSemanasDelMes(mes, anio);
         List<TurnoDTO> turnosDTO = new ArrayList<>();
 
-        for (List<String> semana : semanasDelMes) {
-            if (!semana.isEmpty()) {
-                LocalDate inicioSemana = LocalDate.parse(semana.get(0));
-                LocalDate finSemana = LocalDate.parse(semana.get(semana.size() - 1));
+        // Validar que el número de semana sea válido
+        if (numeroSemana < 1 || numeroSemana > semanasDelMes.size()) {
+            throw new IllegalArgumentException("El número de semana " + numeroSemana + " no es válido para el mes " + mes + "/" + anio + ". Hay " + semanasDelMes.size() + " semanas.");
+        }
 
-                List<Turno> turnos = turnoRepository.findByFechaBetween(inicioSemana, finSemana);
+        // Obtener la semana específica (el índice es numeroSemana - 1 porque las listas empiezan en 0)
+        List<String> semana = semanasDelMes.get(numeroSemana - 1);
 
-                // Mapa para almacenar la suma de horas trabajadas por colaborador en la semana
-                Map<Long, Double> horasSemanalesPorColaborador = new HashMap<>();
+        if (!semana.isEmpty()) {
+            LocalDate inicioSemana = LocalDate.parse(semana.get(0));
+            LocalDate finSemana = LocalDate.parse(semana.get(semana.size() - 1));
 
-                for (Turno turno : turnos) {
-                    double horasTrabajadas = calcularHorasTrabajadas(turno);
-                    horasSemanalesPorColaborador.put(
-                            turno.getColaborador().getId(),
-                            horasSemanalesPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0) + horasTrabajadas
-                    );
-                }
+            List<Turno> turnos = turnoRepository.findByFechaBetween(inicioSemana, finSemana);
 
-                // Convertir turnos a DTO y asignar horas semanales
-                for (Turno turno : turnos) {
-                    TurnoDTO dto = convertToDTO(turno);
-                    dto.setHorasTotalesSemana(horasSemanalesPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0));
-                    turnosDTO.add(dto);
-                }
+            // Mapa para almacenar la suma de horas trabajadas por colaborador en la semana
+            Map<Long, Double> horasSemanalesPorColaborador = new HashMap<>();
+
+            for (Turno turno : turnos) {
+                double horasTrabajadas = calcularHorasTrabajadas(turno);
+                horasSemanalesPorColaborador.put(
+                        turno.getColaborador().getId(),
+                        horasSemanalesPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0) + horasTrabajadas
+                );
+            }
+
+            // Convertir turnos a DTO y asignar horas semanales
+            for (Turno turno : turnos) {
+                TurnoDTO dto = convertToDTO(turno);
+                dto.setHorasTotalesSemana(horasSemanalesPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0));
+                turnosDTO.add(dto);
             }
         }
+
         return turnosDTO;
     }
 
