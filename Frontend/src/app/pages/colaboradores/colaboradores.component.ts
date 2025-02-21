@@ -15,11 +15,12 @@ import { EmpresaService, Empresa } from '../../services/empresa.service';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { Router, RouterLink, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-colaboradores',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
   templateUrl: './colaboradores.component.html',
   styleUrls: ['./colaboradores.component.css'],
 })
@@ -54,6 +55,7 @@ export default class ColaboradoresComponent implements OnInit {
     private colaboradorService: ColaboradorService,
     private empresaService: EmpresaService,
     private modalService: ModalService,
+    private router: Router, // Inyecta el Router aquí
     private http: HttpClient // Inyecta HttpClient aquí
   ) {
     this.colaboradorForm = this.fb.group({
@@ -353,5 +355,12 @@ export default class ColaboradoresComponent implements OnInit {
     this.isEditing = false; // Desactiva el modo edición
     this.selectedColaboradorId = null; // Restablece el ID seleccionado
     this.colaboradorForm.reset(); // Limpia el formulario
+  }
+
+  viewProfile(colaboradorId: number | null): void {
+    if (colaboradorId) {
+      this.router.navigate(['/reportes/colaborador-profile', colaboradorId]);
+      this.closeModal(); // Cierra el modal después de redirigir
+    }
   }
 }
