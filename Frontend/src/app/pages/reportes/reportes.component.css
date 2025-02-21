@@ -1,0 +1,47 @@
+::ng-deep .ng-select {
+  width: 100% !important;
+}
+
+::ng-deep .ng-select .ng-select-container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important; /* Para que el ícono de flecha quede bien alineado */
+  min-height: 2.75rem !important; /* Ajuste para mantener altura similar a input */
+  width: 100% !important;
+  padding: 0.60rem !important; /* p-3 */
+  border: 1px solid #cbd5e1 !important; /* border-gray-300 */
+  border-radius: 0.5rem !important; /* rounded-lg */
+  background: white !important;
+  outline: none !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+::ng-deep .ng-placeholder {
+  display: flex;
+  color: #a0aec0 !important; /* text-gray-500 */
+  height: 90%!important;
+  align-items: center !important;
+  font-size: 1rem;
+}
+
+::ng-deep .ng-select .ng-select-container:hover,
+::ng-deep .ng-select.ng-select-opened .ng-select-container {
+  border-color: #3f51b5 !important; /* focus:border-indigo-500 */
+  box-shadow: 0 0 0 2px #3f51b5 !important; /* focus:ring-2 focus:ring-indigo-500 */
+}
+
+::ng-deep .ng-select .ng-dropdown-panel{
+  border-radius: 0.5rem !important;
+  border: none;
+}
+
+::ng-deep .ng-select .ng-dropdown-panel .ng-dropdown-panel-items {
+  border-radius: 0.5rem !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+::ng-deep .ng-value-container {
+  flex-wrap: nowrap !important;  /* 🔥 Evita el salto de línea */
+  overflow-x: auto !important;  /* 🔥 Permite desplazamiento horizontal */
+  white-space: nowrap !important;
+}
