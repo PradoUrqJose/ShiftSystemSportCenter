@@ -8,6 +8,7 @@ import { HorasTrabajadasComponent } from './pages/reportes/horas-trabajadas/hora
 import { TurnosFeriadosComponent } from './pages/reportes/turnos-feriados/turnos-feriados.component';
 import { HorasExtrasComponent } from './pages/reportes/horas-extras/horas-extras.component';
 import { SemanaNormalComponent } from './pages/reportes/semana-normal/semana-normal.component';
+import { ColaboradorProfileComponent } from './pages/reportes/colaborador-profile/colaborador-profile.component';
 
 export const routes: Routes = [
   { path: 'empresas', component: EmpresasComponent },
@@ -18,6 +19,7 @@ export const routes: Routes = [
     component: ReportesComponent,
     children: [
       { path: 'horas-trabajadas', component: HorasTrabajadasComponent },
+      { path: 'colaborador-profile/:id', component: ColaboradorProfileComponent },
       { path: 'turnos-feriados', component: TurnosFeriadosComponent },
       { path: 'horas-extras', component: HorasExtrasComponent },
       { path: 'semana-normal', component: SemanaNormalComponent },
