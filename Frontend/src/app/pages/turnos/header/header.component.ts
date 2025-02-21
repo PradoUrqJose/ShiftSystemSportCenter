@@ -12,6 +12,7 @@ export class HeaderComponent {
   // Inputs para recibir datos del componente padre
   @Input() vistaMensual: boolean = false; // Estado de la vista (semana/mes)
   @Input() nombreMesActual: string = ''; // Nombre del mes actual
+  @Input() opcionMes: boolean = true; // Opción para cambiar entre vista semanal/mensual
 
   // Outputs para emitir eventos al componente padre
   @Output() cambiarVista = new EventEmitter<string>(); // Cambiar entre vista semanal/mensual
