@@ -1,4 +1,4 @@
-<div class="p-6 min-h-screen w-11/12 mx-auto bg-gray-50">
+<div class="min-h-screen w-11/12 mx-auto bg-gray-50">
   <div class="flex items-center justify-between mb-6">
     <h2 class="text-2xl font-bold text-gray-800">📊 Perfil de {{ colaborador?.nombre }} {{ colaborador?.apellido }}</h2>
     <button (click)="goBack()" class="text-blue-600 hover:text-blue-800 transition">
@@ -10,8 +10,7 @@
     <input type="date" [(ngModel)]="fechaInicio" (change)="loadStatistics(colaborador!.id!)"
       class="p-2 border rounded-lg">
     <span>-</span>
-    <input type="date" [(ngModel)]="fechaFin" (change)="loadStatistics(colaborador!.id!)"
-      class="p-2 border rounded-lg">
+    <input type="date" [(ngModel)]="fechaFin" (change)="loadStatistics(colaborador!.id!)" class="p-2 border rounded-lg">
   </div>
   <div *ngIf="colaborador; else loading" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="card p-6 fade-in">
@@ -48,29 +47,24 @@
           <p class="text-gray-600">Horas Trabajadas</p>
         </div>
         <div>
-          <p class="text-3xl font-bold text-indigo-600" [countUp]="totalHorasExtras"
-            [options]="{ duration: 2, decimalPlaces: 1 }">{{ totalHorasExtras }}</p>
-          <p class="text-gray-600">Horas Extras</p>
-        </div>
-        <div>
           <p class="text-3xl font-bold text-indigo-600" [countUp]="totalTurnosFeriados" [options]="{ duration: 2 }">{{
             totalTurnosFeriados }}</p>
           <p class="text-gray-600">Turnos en Feriados</p>
         </div>
       </div>
     </div>
-
     <div class="card p-6 fade-in">
+      <h4 class="text-lg font-semibold text-gray-800 mb-4">Horas en Feriados vs. Normales</h4>
+      <canvas baseChart [datasets]="[{ data: pieChartData }]" [labels]="['Días Normales', 'Feriados']"
+        [options]="pieChartOptions" [type]="'pie'"></canvas>
+    </div>
+
+    <div class="card p-6 fade-in lg:col-span-2">
       <h4 class="text-lg font-semibold text-gray-800 mb-4">Horas por Mes</h4>
       <canvas baseChart [datasets]="barChartData.datasets" [labels]="barChartData.labels" [options]="barChartOptions"
         [type]="'bar'"></canvas>
     </div>
 
-    <div class="card p-6 fade-in">
-      <h4 class="text-lg font-semibold text-gray-800 mb-4">Horas Normales vs. Extras</h4>
-      <canvas baseChart [datasets]="[{ data: doughnutChartData }]" [labels]="doughnutChartLabels"
-        [options]="doughnutChartOptions" [type]="'doughnut'"></canvas>
-    </div>
 
     <div class="card p-6 fade-in lg:col-span-3">
       <h4 class="text-lg font-semibold text-gray-800 mb-4">Turnos Recientes</h4>
@@ -96,13 +90,6 @@
           </tbody>
         </table>
       </div>
-    </div>
-
-
-    <div class="card p-6 fade-in lg:col-span-2">
-      <h4 class="text-lg font-semibold text-gray-800 mb-4">Horas en Feriados vs. Normales</h4>
-      <canvas baseChart [datasets]="[{ data: pieChartData }]" [labels]="['Días Normales', 'Feriados']"
-        [options]="pieChartOptions" [type]="'pie'"></canvas>
     </div>
 
     <div class="card p-6 fade-in">

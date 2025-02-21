@@ -6,7 +6,6 @@ import TurnosComponent from './pages/turnos/turnos.component';
 import ReportesComponent from './pages/reportes/reportes.component';
 import { HorasTrabajadasComponent } from './pages/reportes/horas-trabajadas/horas-trabajadas.component';
 import { TurnosFeriadosComponent } from './pages/reportes/turnos-feriados/turnos-feriados.component';
-import { HorasExtrasComponent } from './pages/reportes/horas-extras/horas-extras.component';
 import { SemanaNormalComponent } from './pages/reportes/semana-normal/semana-normal.component';
 import { ColaboradorProfileComponent } from './pages/reportes/colaborador-profile/colaborador-profile.component';
 
@@ -21,7 +20,6 @@ export const routes: Routes = [
       { path: 'horas-trabajadas', component: HorasTrabajadasComponent },
       { path: 'colaborador-profile/:id', component: ColaboradorProfileComponent },
       { path: 'turnos-feriados', component: TurnosFeriadosComponent },
-      { path: 'horas-extras', component: HorasExtrasComponent },
       { path: 'semana-normal', component: SemanaNormalComponent },
       { path: '', redirectTo: 'horas-trabajadas', pathMatch: 'full' }
     ]

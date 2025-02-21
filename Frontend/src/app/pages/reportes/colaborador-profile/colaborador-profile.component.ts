@@ -8,6 +8,8 @@ import { CountUpModule } from 'ngx-countup';
 import { ColaboradorService, Colaborador } from '../../../services/colaborador.service';
 import { ReporteService } from '../../../services/reporte.service';
 import { CalendarioService } from '../../../services/calendario.service';
+import { parseISO } from 'date-fns';
+import { forkJoin } from 'rxjs';
 
 Chart.register(...registerables);
 @Component({
@@ -23,7 +25,6 @@ export class ColaboradorProfileComponent implements OnInit {
   fechaFin: string = this.getDefaultFechaFin();
   totalTurnos: number = 0;
   totalHoras: number = 0;
-  totalHorasExtras: number = 0;
   totalTurnosFeriados: number = 0;
   turnosRecientes: any[] = [];
   horasPorMes: number[] = [];
@@ -41,18 +42,11 @@ export class ColaboradorProfileComponent implements OnInit {
     plugins: { legend: { display: false } }
   };
 
-  // Datos para el gráfico de dona (horas normales vs. extras)
-  doughnutChartData: number[] = [];
-  doughnutChartLabels: string[] = ['Horas Normales', 'Horas Extras'];
-  doughnutChartOptions: ChartOptions<'doughnut'> = {
-    responsive: true,
-    plugins: { legend: { position: 'top' } }
-  };
 
   pieChartData: number[] = [];
   pieChartOptions: ChartOptions<'pie'> = {
     responsive: true,
-    plugins: { legend: { position: 'right' }, tooltip: { enabled: true } },
+    plugins: { legend: { position: 'top' }, tooltip: { enabled: true } },
     animation: { animateScale: true, animateRotate: true }
   };
 
@@ -83,12 +77,16 @@ export class ColaboradorProfileComponent implements OnInit {
 
   getDefaultFechaInicio(): string {
     const date = new Date();
-    date.setMonth(date.getMonth() - 6);
+    date.setMonth(date.getMonth() - 4);
+    date.setDate(1);
     return date.toISOString().split('T')[0];
   }
 
   getDefaultFechaFin(): string {
-    return new Date().toISOString().split('T')[0];
+    const date = new Date();
+    date.setMonth(date.getMonth() + 2);
+    date.setDate(0);
+    return date.toISOString().split('T')[0];
   }
 
   // Métodos para cargar datos se implementarán en los pasos siguientes
@@ -102,53 +100,57 @@ export class ColaboradorProfileComponent implements OnInit {
   loadStatistics(colaboradorId: number): void {
     const colaboradores = [colaboradorId];
 
-    this.colaboradorService.getTurnosByColaboradorId(colaboradorId).subscribe({
-      next: (turnos) => {
+    forkJoin({
+      turnos: this.colaboradorService.getTurnosByColaboradorId(colaboradorId),
+      horasTrabajadas: this.reporteService.getHorasTrabajadas(this.fechaInicio, this.fechaFin, colaboradores),
+      turnosFeriados: this.reporteService.getTurnosFeriados(this.fechaInicio, this.fechaFin, colaboradores)
+    }).subscribe({
+      next: ({ turnos, horasTrabajadas, turnosFeriados }) => {
+        // Turnos recientes y total de turnos
         this.totalTurnos = turnos.length;
         this.turnosRecientes = turnos.slice(0, 5);
-      }
-    });
+        console.log('Turnos recientes:', turnos);
 
-    this.reporteService.getHorasTrabajadas(this.fechaInicio, this.fechaFin, colaboradores).subscribe({
-      next: (data) => {
-        this.totalHoras = data.reduce((sum, turno) => sum + (turno.horasTrabajadas || 0), 0);
-        this.horasPorMes = this.calcularHorasPorMes(data);
+        // Total de horas trabajadas
+        this.totalHoras = horasTrabajadas.reduce((sum, turno) => sum + (turno.horasTrabajadas || 0), 0);
+        console.log('Datos de getHorasTrabajadas:', horasTrabajadas);
+        console.log('Total horas calculado:', this.totalHoras);
+
+        // Horas por mes
+        this.horasPorMes = this.calcularHorasPorMes(horasTrabajadas);
         this.barChartData = {
           labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
           datasets: [{ data: this.horasPorMes, backgroundColor: '#4f46e5', hoverBackgroundColor: '#6366f1' }]
         };
-        this.horasNormales = this.totalHoras - this.totalHorasExtras;
-        this.loadTiendasTrabajadas(data);
-      }
-    });
 
-    this.reporteService.getHorasExtras(this.fechaInicio, this.fechaFin, colaboradores).subscribe({
-      next: (data) => {
-        this.totalHorasExtras = data.reduce((sum, turno) => sum + (turno.horasTotalesSemana || 0), 0);
-        this.doughnutChartData = [this.totalHoras - this.totalHorasExtras, this.totalHorasExtras];
-      }
-    });
+        // Turnos feriados y horas feriados
+        this.totalTurnosFeriados = turnosFeriados.length;
+        this.horasFeriados = turnosFeriados.reduce((sum, turno) => sum + (turno.horasTrabajadas || 0), 0);
+        this.turnosFeriados = turnosFeriados;
+        console.log('Turnos feriados:', turnosFeriados);
 
-    this.reporteService.getTurnosFeriados(this.fechaInicio, this.fechaFin, colaboradores).subscribe({
-      next: (data) => {
-        this.totalTurnosFeriados = data.length;
-        this.horasFeriados = data.reduce((sum, turno) => sum + (turno.horasTotalesSemana || 0), 0);
-        this.pieChartData = [this.totalHoras - this.horasFeriados, this.horasFeriados];
-        this.turnosFeriados = data;
-      }
+        // Horas normales y gráfico de pastel
+        this.horasNormales = this.totalHoras - this.horasFeriados;
+        this.pieChartData = [this.horasNormales, this.horasFeriados];
+        console.log('TotalHoras:', this.totalHoras, 'HorasFeriados:', this.horasFeriados);
+
+        // Tiendas trabajadas
+        this.loadTiendasTrabajadas(horasTrabajadas);
+      },
+      error: (err) => console.error('Error al cargar estadísticas:', err)
     });
   }
 
   calcularHorasPorMes(turnos: any[]): number[] {
     const horasPorMes = new Array(12).fill(0);
     turnos.forEach(turno => {
-      const fecha = new Date(turno.fecha);
+      const fecha = parseISO(turno.fecha); // "2025-01-01" → Date sin ajuste de zona horaria
       const mes = fecha.getMonth();
       horasPorMes[mes] += turno.horasTrabajadas || 0;
+      console.log(`Fecha: ${turno.fecha}, Mes calculado: ${mes}, Horas: ${turno.horasTrabajadas}`);
     });
     return horasPorMes;
   }
-
 
   formatTime(time: string): string {
     return this.calendarioService.formatearHoras(parseFloat(time));
