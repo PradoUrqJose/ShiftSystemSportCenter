@@ -80,8 +80,9 @@ public class TurnoController {
     @GetMapping("/semanal-estricto")
     public List<TurnoDTO> getTurnosPorSemanaEstricta(
             @RequestParam("mes") int mes,
-            @RequestParam("anio") int anio) {
-        return turnoService.getTurnosPorSemanaEstricta(mes, anio);
+            @RequestParam("anio") int anio,
+            @RequestParam("semana") int numeroSemana) {
+        return turnoService.getTurnosPorSemanaEstricta(mes, anio, numeroSemana);
     }
 
     // ----------------- REPORTES ---------------
