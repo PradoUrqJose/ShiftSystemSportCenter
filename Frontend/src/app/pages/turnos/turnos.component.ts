@@ -52,6 +52,7 @@ import { SemanaService } from '../../services/semana.service';
 import { HeaderComponent } from './header/header.component';
 import { WeeklyViewComponent } from './weekly-view/weekly-view.component';
 import { MonthlyViewComponent } from './monthly-view/monthly-view.component';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-turnos',
@@ -153,10 +154,20 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     this.turnoStateService.setLoading(true);
 
     const semanaActual = this.turnoStateService.getSemanaActual();
-    this.semanasDelMes = this.calendarioService.obtenerSemanasDelMes(semanaActual); // ✅ Ahora devuelve `DiaSemana[][]`
-    this.diasMes = this.semanasDelMes.flat();
-
-    this.turnoStateService.setLoading(false);
+    this.calendarioService.obtenerSemanasDelMesConCompletado(semanaActual).subscribe({
+      next: (semanas) => {
+        this.semanasDelMes = semanas;
+        this.diasMes = this.semanasDelMes.flat();
+        this.turnoStateService.setLoading(false);
+        this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
+      },
+      error: (error) => {
+        console.error('Error al cargar las semanas del mes:', error);
+        this.semanasDelMes = [];
+        this.diasMes = [];
+        this.turnoStateService.setLoading(false);
+      }
+    });
   }
 
   //? Mostrar Turnos mensuales
@@ -164,7 +175,6 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     if (colaboradorId !== null) {
       this.colaboradorSeleccionado = colaboradorId;
 
-      // ✅ Obtener la semana actual desde TurnoStateService
       const semanaActual = this.turnoStateService.getSemanaActual();
 
       this.turnosMensuales$ = this.turnoService.getTurnosMensualesPorColaborador(
@@ -174,8 +184,8 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
       );
 
       this.turnosMensuales$.subscribe(() => {
-        // 📌 Volver a completar las semanas para restaurar días sobrantes
-        this.semanasDelMes = this.completarSemanasDelMes(
+        // Usar el servicio en lugar de método local
+        this.semanasDelMes = this.calendarioService.completarSemanasDelMes(
           this.semanasDelMes,
           semanaActual.getMonth() + 1,
           semanaActual.getFullYear()
@@ -187,7 +197,6 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
       this.inicializarTooltips();
     }, 500);
   }
-
 
   //? Cambio de vista
   toggleVistaMensual(data: string): void {
@@ -214,76 +223,38 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
     this.turnoStateService.setLoading(true);
 
     const semanaActual = this.turnoStateService.getSemanaActual();
-    this.diasSemana$.next(this.calendarioService.obtenerSemana(semanaActual)); // ✅ Ahora devuelve `DiaSemana[]`
+    const mes = semanaActual.getMonth() + 1;
+    const anio = semanaActual.getFullYear();
 
-    this.turnos$ = this.turnoService.getTurnosPorSemana(semanaActual);
-    this.turnos$.subscribe(() => {
-      setTimeout(() => this.inicializarTooltips(), 500);
-      this.turnoStateService.setLoading(false);
-    });
-  }
-
-
-  //? ----------------------> Método Completar Semana y mes con celdas Vacías
-
-  completarSemanasDelMes(semanas: DiaSemana[][], mesActual: number, anioActual: number): DiaSemana[][] {
-    if (!semanas || semanas.length === 0) return [];
-
-    return semanas.map((semana, index) => {
-      let nuevaSemana = [...semana];
-
-      // 📌 Agregar días del mes anterior si la primera semana no empieza en lunes
-      if (index === 0) {
-        const primerDiaReal = new Date(semana[0].fecha);
-        const diaSemana = primerDiaReal.getDay(); // 0 (Domingo) - 6 (Sábado)
-
-        if (diaSemana > 0) { // Si no es lunes
-          const mesPrevio = mesActual === 1 ? 12 : mesActual - 1;
-          const anioPrevio = mesActual === 1 ? anioActual - 1 : anioActual;
-          const diasMesPrevio = new Date(anioPrevio, mesPrevio, 0).getDate(); // Último día del mes anterior
-
-          const diasSobrantes = [];
-          for (let i = diaSemana - 1; i >= 0; i--) {
-            diasSobrantes.push({
-              fecha: `${anioPrevio}-${String(mesPrevio).padStart(2, "0")}-${String(diasMesPrevio - i).padStart(2, "0")}`,
-              nombre: format(new Date(anioPrevio, mesPrevio - 1, diasMesPrevio - i), "EEE", { locale: es }),
-              dayNumber: String(diasMesPrevio - i),
-              monthNombre: format(new Date(anioPrevio, mesPrevio - 1, 1), "MMMM", { locale: es }),
-              yearName: String(anioPrevio),
-              esSobrante: true, // 🔴 Indica que es del mes anterior
-            });
+    this.turnoService.getSemanasDelMes(mes, anio).subscribe({
+      next: (semanas) => {
+        const numeroSemana = this.calcularNumeroSemana(semanaActual, semanas);
+        this.calendarioService.obtenerSemana(semanaActual).subscribe({
+          next: (dias) => this.diasSemana$.next(dias),
+          error: (error) => console.error('Error al obtener semana:', error)
+        });
+        this.turnoService.getTurnosPorSemanaEstricta(mes, anio, numeroSemana).subscribe({
+          next: (turnos) => {
+            this.turnos$ = of(turnos);
+            setTimeout(() => this.inicializarTooltips(), 500);
+            this.turnoStateService.setLoading(false);
+          },
+          error: (error) => {
+            console.error('Error al cargar turnos:', error);
+            this.turnos$ = of([]);
+            this.turnoStateService.setLoading(false);
           }
-          nuevaSemana = [...diasSobrantes, ...nuevaSemana]; // Asegura el orden correcto
-        }
+        });
+      },
+      error: (error) => {
+        console.error('Error al obtener semanas del mes:', error);
+        this.turnos$ = of([]);
+        this.turnoStateService.setLoading(false);
       }
-
-      // 📌 Agregar días del mes siguiente si la última semana no termina en domingo
-      if (index === semanas.length - 1) {
-        const ultimoDiaReal = new Date(nuevaSemana[nuevaSemana.length - 1].fecha);
-        let siguienteDia = new Date(ultimoDiaReal);
-        siguienteDia.setDate(1); // 📌 Asegurar que empieza en el primer día del mes siguiente
-
-        const mesSiguiente = mesActual === 12 ? 1 : mesActual + 1;
-        const anioSiguiente = mesActual === 12 ? anioActual + 1 : anioActual;
-
-        while (nuevaSemana.length < 7) {
-          nuevaSemana.push({
-            fecha: `${anioSiguiente}-${String(mesSiguiente).padStart(2, "0")}-${String(siguienteDia.getDate()).padStart(2, "0")}`,
-            nombre: format(siguienteDia, "EEE", { locale: es }),
-            dayNumber: format(siguienteDia, "d"),
-            monthNombre: format(siguienteDia, "MMMM", { locale: es }),
-            yearName: format(siguienteDia, "yyyy"),
-            esSobrante: true, // 🔴 Indica que es del mes siguiente
-          });
-          siguienteDia.setDate(siguienteDia.getDate() + 1);
-        }
-      }
-
-      return nuevaSemana;
     });
-  }
 
-  //? ---------------------->
+    this.actualizarNombreMes();
+  }
 
   cargarTiendas(): void {
     this.tiendas$ = this.tiendaService
@@ -370,19 +341,54 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
 
 
   cambiarSemana(direccion: 'anterior' | 'siguiente'): void {
+    this.turnoStateService.setLoading(true); // Indicar que está cargando
     this.semanaService.cambiarSemana(direccion).subscribe({
       next: ({ nuevaSemana, turnos }) => {
-        this.diasSemana$.next(nuevaSemana); // Actualizar los días de la semana
-        this.turnos$ = this.turnoService.getTurnosPorSemana(this.turnoStateService.getSemanaActual()); // Actualizar los turnos
-        this.actualizarNombreMes(); // Actualizar el nombre del mes
-        setTimeout(() => this.inicializarTooltips(), 500);
-        this.turnoStateService.setLoading(false);
+        // Actualizar los días de la semana
+        this.diasSemana$.next(nuevaSemana);
+
+        // Obtener la fecha actualizada del estado
+        const semanaActual = this.turnoStateService.getSemanaActual();
+        const mes = semanaActual.getMonth() + 1; // getMonth() devuelve 0-11, sumamos 1 para 1-12
+        const anio = semanaActual.getFullYear();
+
+        // Calcular el número de semana dentro del mes
+        this.turnoService.getSemanasDelMes(mes, anio).subscribe({
+          next: (semanas) => {
+            const numeroSemana = this.calcularNumeroSemana(semanaActual, semanas);
+
+            console.log("Cambiar Semana");
+            // Actualizar los turnos con getTurnosPorSemanaEstricta
+            this.turnos$ = this.turnoService.getTurnosPorSemanaEstricta(mes, anio, numeroSemana);
+
+            // Actualizar el nombre del mes y tooltips
+            this.actualizarNombreMes();
+            setTimeout(() => this.inicializarTooltips(), 500);
+            this.turnoStateService.setLoading(false);
+          },
+          error: (error) => {
+            console.error('Error al obtener semanas del mes:', error);
+            this.turnoStateService.setLoading(false);
+          }
+        });
       },
       error: (error) => {
         console.error('Error al cambiar la semana:', error);
         this.turnoStateService.setLoading(false);
       },
     });
+  }
+
+  // Método auxiliar para calcular el número de semana
+  private calcularNumeroSemana(fecha: Date, semanas: DiaSemana[][]): number {
+    const fechaStr = format(fecha, 'yyyy-MM-dd');
+    for (let i = 0; i < semanas.length; i++) {
+      const semana = semanas[i];
+      if (semana.some(dia => dia.fecha === fechaStr)) {
+        return i + 1; // +1 porque las semanas empiezan en 1, no en 0
+      }
+    }
+    return 1; // Valor por defecto si no se encuentra (puedes ajustar esto)
   }
 
   // Método para manejar el cambio de semana o mes
