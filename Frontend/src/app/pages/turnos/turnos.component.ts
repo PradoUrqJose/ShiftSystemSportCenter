@@ -22,18 +22,14 @@ import { FeriadoService, Feriado } from '../../services/feriado.service';
 
 // -------------- Date-fns and Date-fns-TZ Imports --------------
 import {
-  addMonths,
-  subMonths,
   startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
   format,
+  startOfWeek,
 } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz'; // Función para convertir a la zona horaria especificada
 import { es } from 'date-fns/locale'; // Importación de la localización para español
 
 // -------------- RxJS Imports --------------
-import { BehaviorSubject, finalize, map, Observable, of, switchMap } from 'rxjs';
+import { BehaviorSubject, catchError, finalize, map, Observable, of, switchMap, tap } from 'rxjs';
 
 // -------------- Angular Modules Imports --------------
 import { CommonModule } from '@angular/common';
@@ -148,7 +144,6 @@ export default class TurnosComponent implements OnInit, AfterViewInit {
       this.inicializarTooltips();
     }, 0);
   }
-
 
   cargarMes(): void {
     this.turnoStateService.setLoading(true);
