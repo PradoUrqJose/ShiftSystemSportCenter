@@ -22,10 +22,13 @@ export class WeeklyViewComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarFeriados(); // Cargar los feriados al inicializar
+    this.completarSemana(this.diasSemana); // Completar la semana con días vacíos si es necesario
   }
 
+  // Variable interna para almacenar los feriados
+  feriados: Feriado[] = []; // Lista de feriados
+
   // Inputs para recibir datos del componente padre
-  @Input() feriados: Feriado[] = []; // Lista de feriados
   @Input() diasSemana: DiaSemana[] = []; // Días de la semana
   @Input() colaboradores: Colaborador[] = []; // Lista de colaboradores
   @Input() turnos: Turno[] = []; // Lista de turnos
