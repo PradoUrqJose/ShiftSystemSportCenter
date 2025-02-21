@@ -316,49 +316,37 @@ public class TurnoService {
     }
 
     // --------------------- REPORTES ------------------------
-    // Método para obtener colaboradores que comparten la misma tienda y rango de fechas
-    public List<TurnoDTO> getColaboradoresPorTiendaYRangoFechas(
-            Long tiendaId,
-            String fechaInicio,
-            String fechaFin) {
+// Reporte 1: Colaboradores por tienda y rango de fechas
+    public List<TurnoDTO> getColaboradoresPorTiendaYRangoFechas(Long tiendaId, String fechaInicio, String fechaFin) {
         try {
             LocalDate parsedFechaInicio = LocalDate.parse(fechaInicio);
             LocalDate parsedFechaFin = LocalDate.parse(fechaFin);
-
-            // Buscar turnos ordenados por fecha
             List<Turno> turnos = turnoRepository.findByTienda_IdAndFechaBetweenOrderByFechaAsc(tiendaId, parsedFechaInicio, parsedFechaFin);
 
-            // Convertir los turnos a DTOs
+            // Calcular horas totales por colaborador en el rango de fechas
+            Map<Long, Double> horasTotalesPorColaborador = new HashMap<>();
+            for (Turno turno : turnos) {
+                double horasTrabajadas = calcularHorasTrabajadas(turno);
+                horasTotalesPorColaborador.put(
+                        turno.getColaborador().getId(),
+                        horasTotalesPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0) + horasTrabajadas
+                );
+            }
+
+            // Convertir a DTO con horas totales acumuladas
             return turnos.stream()
-                    .map(this::convertToDTO)
-                    .toList();
+                    .map(turno -> {
+                        TurnoDTO dto = convertToDTO(turno);
+                        dto.setHorasTotalesSemana(horasTotalesPorColaborador.get(turno.getColaborador().getId()));
+                        return dto;
+                    })
+                    .distinct() // Evitar duplicados por colaborador si se desea
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             throw new RuntimeException("Error al parsear las fechas: " + fechaInicio + " - " + fechaFin, e);
         }
     }
 
-    public List<TurnoDTO> getHorasTrabajadasPorColaborador(String fechaInicio, String fechaFin) {
-        LocalDate inicio = LocalDate.parse(fechaInicio);
-        LocalDate fin = LocalDate.parse(fechaFin);
-
-        List<Turno> turnos = turnoRepository.findByFechaBetween(inicio, fin);
-
-        // Mapa para acumular horas trabajadas por colaborador
-        Map<Long, Double> horasTotales = new HashMap<>();
-
-        for (Turno turno : turnos) {
-            horasTotales.put(
-                    turno.getColaborador().getId(),
-                    horasTotales.getOrDefault(turno.getColaborador().getId(), 0.0) + turno.getHorasTrabajadas()
-            );
-        }
-
-        return turnos.stream().map(turno -> {
-            TurnoDTO dto = convertToDTO(turno);
-            dto.setHorasTotalesSemana(horasTotales.get(turno.getColaborador().getId())); // Asignamos total
-            return dto;
-        }).distinct().toList();
-    }
 
     public List<TurnoDTO> getHorasTrabajadasPorColaboradores(List<Long> colaboradores, String fechaInicio, String fechaFin) {
         LocalDate inicio = LocalDate.parse(fechaInicio);
@@ -382,29 +370,48 @@ public class TurnoService {
         }).distinct().toList();
     }
 
-    public List<TurnoDTO> getTurnosEnFeriados(String fechaInicio, String fechaFin) {
+    // Reporte 3: Turnos en feriados (MODIFICADO)
+    public List<TurnoDTO> getTurnosEnFeriados(List<Long> colaboradores, String fechaInicio, String fechaFin) {
         LocalDate inicio = LocalDate.parse(fechaInicio);
         LocalDate fin = LocalDate.parse(fechaFin);
-
-        List<Turno> turnos = turnoRepository.findByFechaBetween(inicio, fin)
+        // Filtrar por colaboradores y rango de fechas, luego por feriados
+        List<Turno> turnos = turnoRepository.findByColaborador_IdInAndFechaBetween(colaboradores, inicio, fin)
                 .stream()
-                .filter(Turno::isEsFeriado) // Solo filtrar turnos en feriados
-                .toList();
+                .filter(Turno::isEsFeriado)
+                .collect(Collectors.toList());
 
-        return turnos.stream().map(this::convertToDTO).toList();
+        // Calcular horas totales en feriados por colaborador
+        Map<Long, Double> horasFeriadosPorColaborador = new HashMap<>();
+        for (Turno turno : turnos) {
+            double horasTrabajadas = calcularHorasTrabajadas(turno);
+            horasFeriadosPorColaborador.put(
+                    turno.getColaborador().getId(),
+                    horasFeriadosPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0) + horasTrabajadas
+            );
+        }
+
+        return turnos.stream()
+                .map(turno -> {
+                    TurnoDTO dto = convertToDTO(turno);
+                    dto.setHorasTotalesSemana(horasFeriadosPorColaborador.get(turno.getColaborador().getId()));
+                    return dto;
+                })
+                .distinct()
+                .collect(Collectors.toList());
     }
 
-    public List<TurnoDTO> getColaboradoresConMasHorasExtra(String fechaInicio, String fechaFin) {
+    // Reporte 4: Colaboradores con más horas extra (MODIFICADO)
+    public List<TurnoDTO> getColaboradoresConMasHorasExtra(List<Long> colaboradores, String fechaInicio, String fechaFin) {
         LocalDate inicio = LocalDate.parse(fechaInicio);
         LocalDate fin = LocalDate.parse(fechaFin);
+        // Filtrar por colaboradores y rango de fechas
+        List<Turno> turnos = turnoRepository.findByColaborador_IdInAndFechaBetween(colaboradores, inicio, fin);
 
-        List<Turno> turnos = turnoRepository.findByFechaBetween(inicio, fin);
-
+        // Calcular horas extra por colaborador
         Map<Long, Double> horasExtraPorColaborador = new HashMap<>();
-
         for (Turno turno : turnos) {
             double horasTrabajadas = turno.getHorasTrabajadas();
-            double horasExtra = horasTrabajadas > 8 ? horasTrabajadas - 8 : 0; // Más de 8h es extra
+            double horasExtra = horasTrabajadas > 8 ? horasTrabajadas - 8 : 0;
             horasExtraPorColaborador.put(
                     turno.getColaborador().getId(),
                     horasExtraPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0) + horasExtra
@@ -412,13 +419,14 @@ public class TurnoService {
         }
 
         return turnos.stream()
-                .filter(turno -> horasExtraPorColaborador.get(turno.getColaborador().getId()) > 0) // Solo con horas extra
+                .filter(turno -> horasExtraPorColaborador.get(turno.getColaborador().getId()) > 0)
                 .map(turno -> {
                     TurnoDTO dto = convertToDTO(turno);
-                    dto.setHorasTotalesSemana(horasExtraPorColaborador.get(turno.getColaborador().getId())); // Guardar total extra
+                    dto.setHorasTotalesSemana(horasExtraPorColaborador.get(turno.getColaborador().getId()));
                     return dto;
-                }).distinct().toList();
+                })
+                .distinct()
+                .collect(Collectors.toList());
     }
-
 
 }
