@@ -22,10 +22,6 @@ public class Colaborador {
     @Column(unique = true, nullable = true)
     private String email;    // Nuevo campo
 
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    private byte[] foto;     // Nuevo campo (opcional)
-
     // Nuevo campo para la URL de la foto
     private String fotoUrl;  // Nuevo campo
 
