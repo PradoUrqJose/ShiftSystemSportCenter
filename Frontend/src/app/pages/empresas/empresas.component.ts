@@ -33,6 +33,11 @@ export default class EmpresasComponent implements OnInit {
   isModalVisible$!: Observable<boolean>; // Controla la visibilidad con animación
   errorMessage: string | null = null; // Almacena mensajes de error
 
+
+  // Propiedades para controlar el ordenamiento
+  sortColumn: string = 'id';  // Columna por la que se ordenará
+  sortDirection: 'asc' | 'desc' = 'asc';  // Dirección de orden (ascendente o descendente)
+
   constructor(
     private fb: FormBuilder,
     private modalService: ModalService,
@@ -41,17 +46,52 @@ export default class EmpresasComponent implements OnInit {
 
 
   ngOnInit(): void {
-    // Inicialización segura del FormGroup
     this.empresaForm = this.fb.group({
       nombre: ['', [Validators.required]],
       ruc: ['', [Validators.required, Validators.pattern(/^\d{11}$/)]],
-      habilitada: [true] // Valor por defecto true
+      habilitada: [true]
     });
 
     this.mostrarModal$ = this.modalService.mostrarModal$;
     this.isModalVisible$ = this.modalService.isModalVisible$;
 
-    this.getEmpresas();
+    this.getEmpresas(); // Esto cargará y ordenará las empresas
+  }
+
+  // Método para ordenar las empresas
+  ordenarEmpresas() {
+    const compare = (a: Empresa, b: Empresa) => {
+      let valueA = a[this.sortColumn as keyof Empresa];
+      let valueB = b[this.sortColumn as keyof Empresa];
+
+      // Convertir a número si es 'id' o 'numeroEmpleados'
+      if (this.sortColumn === 'id' || this.sortColumn === 'numeroEmpleados') {
+        valueA = Number(valueA);
+        valueB = Number(valueB);
+      }
+
+      if (this.sortDirection === 'asc') {
+        return valueA > valueB ? 1 : (valueA < valueB ? -1 : 0);
+      } else {
+        return valueA < valueB ? 1 : (valueA > valueB ? -1 : 0);
+      }
+    };
+
+    this.empresasHabilitadas.sort(compare);
+    this.empresasDeshabilitadas.sort(compare);
+  }
+
+  // Cambiar la columna por la que se ordena y la dirección
+  sortTable(column: string) {
+    if (this.sortColumn === column) {
+      // Si ya está ordenado por esa columna, cambia la dirección
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      // Si se hace clic en una columna diferente, ordena ascendente por esa columna
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.ordenarEmpresas();
   }
 
   // Getters para controles del formulario
@@ -69,6 +109,7 @@ export default class EmpresasComponent implements OnInit {
       this.empresas = data;
       this.empresasHabilitadas = this.empresas.filter((e) => e.habilitada);
       this.empresasDeshabilitadas = this.empresas.filter((e) => !e.habilitada);
+      this.ordenarEmpresas(); // Reaplica el ordenamiento después de cargar los datos
     });
   }
 
@@ -80,16 +121,14 @@ export default class EmpresasComponent implements OnInit {
   addEmpresa(): void {
     if (this.empresaForm.valid) {
       const empresaData = this.empresaForm.value;
-
       this.empresaService.addEmpresa(empresaData).subscribe({
         next: () => {
-          this.getEmpresas();
-          this.closeModal(); // Cierra el modal si se agrega exitosamente
+          this.getEmpresas(); // Esto recarga y ordena
+          this.closeModal();
         },
         error: (err) => {
-          this.errorMessage =
-            err.error?.message || 'Ocurrió un error al agregar la empresa.';
-        },
+          this.errorMessage = err.error?.message || 'Ocurrió un error al agregar la empresa.';
+        }
       });
     } else {
       this.errorMessage = 'Por favor, complete todos los campos correctamente.';
@@ -114,24 +153,19 @@ export default class EmpresasComponent implements OnInit {
   updateEmpresa(): void {
     if (this.empresaForm.valid && this.selectedEmpresaId) {
       const empresaData = this.empresaForm.value;
-
-      this.empresaService
-        .updateEmpresa(this.selectedEmpresaId, empresaData)
-        .subscribe({
-          next: () => {
-            this.getEmpresas(); // Actualiza la lista de empresas
-            this.closeModal(); // Cierra el modal tras la actualización
-            Notiflix.Notify.success('Empresa actualizada con éxito', {
-              position: 'right-bottom',
-              cssAnimationStyle: 'from-right',
-            }); // Mostrar notificación de éxito en la esquina inferior derecha con animación de derecha a izquierda
-          },
-          error: (err) => {
-            this.errorMessage =
-              err.error?.message ||
-              'Ocurrió un error al actualizar la empresa.';
-          },
-        });
+      this.empresaService.updateEmpresa(this.selectedEmpresaId, empresaData).subscribe({
+        next: () => {
+          this.getEmpresas(); // Esto recarga y ordena
+          this.closeModal();
+          Notiflix.Notify.success('Empresa actualizada con éxito', {
+            position: 'right-bottom',
+            cssAnimationStyle: 'from-right'
+          });
+        },
+        error: (err) => {
+          this.errorMessage = err.error?.message || 'Ocurrió un error al actualizar la empresa.';
+        }
+      });
     } else {
       this.errorMessage = 'Por favor, complete todos los campos correctamente.';
     }
