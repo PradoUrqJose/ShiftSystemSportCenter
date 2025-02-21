@@ -1,7 +1,18 @@
 <div class="px-6 pr-3 py-4 w-full min-h-screen flex flex-col">
-  <app-header [vistaMensual]="vistaMensual" [nombreMesActual]="nombreMesActual"
-    (cambiarVista)="toggleVistaMensual($event)" (cambiarSemanaOMes)="cambiarSemanaOMesHandler($event)">
-  </app-header>
+  <div class="flex flex-wrap items-center justify-between mb-6 gap-5 w-full">
+    <!-- Título -->
+    <div class="flex flex-wrap items-center justify-start gap-5 w-1/2">
+      <app-header class="w-full pb-4" [vistaMensual]="vistaMensual" [nombreMesActual]="nombreMesActual"
+        (cambiarVista)="toggleVistaMensual($event)" (cambiarSemanaOMes)="cambiarSemanaOMesHandler($event)">
+      </app-header>
+    </div>
+
+    <!-- Button para Turnos Estritos -->
+    <!-- <a routerLink="/reportes/semana-normal"
+      class="cursor-pointer buttonStyle blue-button font-bold py-2 px-3 rounded-md transition transform hover:scale-105">
+      Semana Normal
+    </a> -->
+  </div>
 
 
   <!-- Spinner de carga  -->
@@ -72,7 +83,6 @@
     <!-- Tabla de turnos mensual -->
     <div class="w-full sm:w-[76%]">
       <app-monthly-view
-      [feriados]="feriados"
       [semanasDelMes]="semanasDelMes"
       [colaboradorSeleccionado]="colaboradorSeleccionado"
       [turnosMensuales$]="turnosMensuales$"
