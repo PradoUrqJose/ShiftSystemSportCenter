@@ -1,0 +1,45 @@
+<!-- semana-normal.component.html -->
+<div class="flex flex-wrap items-center justify-between mb-6 gap-5">
+  <!-- Título -->
+  <div class="flex flex-wrap items-center justify-start gap-5">
+    <h2 class="text-xl font-bold text-gray-800 sm:mb-0 sm:mr-4 border-b-2 border-blue-400 pb-1">
+      Semana Habitual
+    </h2>
+
+    <app-header class="w-96" [nombreMesActual]="nombreMesActual" [opcionMes]=false
+      (cambiarSemanaOMes)="cambiarSemana($event)">
+    </app-header>
+  </div>
+
+  <!-- Button para Turnos Estritos -->
+  <a routerLink="/turnos" class="cursor-pointer buttonStyle blue-button font-bold py-2 px-3 rounded-md transition transform hover:scale-105">
+    Semana Estricta
+  </a>
+</div>
+
+
+
+<!-- Spinner de carga  -->
+<div *ngIf="isLoading$ | async" class="sk-circle">
+  <div class="sk-circle1 sk-child"></div>
+  <div class="sk-circle2 sk-child"></div>
+  <div class="sk-circle3 sk-child"></div>
+  <div class="sk-circle4 sk-child"></div>
+  <div class="sk-circle5 sk-child"></div>
+  <div class="sk-circle6 sk-child"></div>
+  <div class="sk-circle7 sk-child"></div>
+  <div class="sk-circle8 sk-child"></div>
+  <div class="sk-circle9 sk-child"></div>
+  <div class="sk-circle10 sk-child"></div>
+  <div class="sk-circle11 sk-child"></div>
+  <div class="sk-circle12 sk-child"></div>
+</div>
+
+<!-- Tabla de turnos semanal -->
+<div *ngIf="!(isLoading$ | async)">
+  <app-weekly-view *ngIf="!(isLoading$ | async)" [diasSemana]="(diasSemana$ | async) || []"
+    [colaboradores]="colaboradores" [turnos]="(turnos$ | async) || []" (abrirModal)="abrirModal($event)"
+    (abrirModalEdicion)="abrirModalEdicion($event)">
+  </app-weekly-view>
+
+</div>
