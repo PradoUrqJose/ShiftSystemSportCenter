@@ -16,9 +16,18 @@
     <table class="w-full bg-white shadow rounded-lg overflow-hidden">
       <thead>
         <tr class="bg-blue-50 text-gray-800">
-          <th class="p-4 w-1/12 text-left">ID</th> <!-- Columna pequeña -->
-          <th class="p-4 w-3/12 text-left">Razón Social</th> <!-- Columna grande -->
-          <th class="p-4 w-2/12 text-left">RUC</th> <!-- Columna mediana -->
+          <th class="p-4 w-1/12 text-left cursor-pointer" (click)="sortTable('id')">
+            ID
+            <i *ngIf="sortColumn === 'id'" class="ml-2" [ngClass]="{'fa-solid fa-arrow-up': sortDirection === 'asc', 'fa-solid fa-arrow-down': sortDirection === 'desc'}"></i>
+          </th>
+          <th class="p-4 w-3/12 text-left cursor-pointer" (click)="sortTable('nombre')">
+            Razón Social
+            <i *ngIf="sortColumn === 'nombre'" class="ml-2" [ngClass]="{'fa-solid fa-arrow-up': sortDirection === 'asc', 'fa-solid fa-arrow-down': sortDirection === 'desc'}"></i>
+          </th>
+          <th class="p-4 w-2/12 text-left cursor-pointer" (click)="sortTable('ruc')">
+            RUC
+            <i *ngIf="sortColumn === 'ruc'" class="ml-2" [ngClass]="{'fa-solid fa-arrow-up': sortDirection === 'asc', 'fa-solid fa-arrow-down': sortDirection === 'desc'}"></i>
+          </th>
           <th class="p-4 w-1/12 text-center">
             <i class="fa-solid fa-users"></i> <!-- Ícono para Número de Empleados -->
           </th>
@@ -35,9 +44,6 @@
             <button (click)="editEmpresa(empresa)" class="text-blue-600 hover:text-blue-800 transition">
               <i class="fa-solid fa-pen-to-square"></i> <!--Editar-->
             </button>
-            <!-- <button (click)="deleteEmpresa(empresa.id)" class="text-red-600 hover:text-red-800 transition">
-              <i class="fa-solid fa-trash fa-flip-horizontal"></i>
-            </button> -->
           </td>
         </tr>
         <!-- Separador para empresas deshabilitadas -->
@@ -68,6 +74,7 @@
       </tbody>
     </table>
   </div>
+
 
   <!-- Modal -->
   <div *ngIf="(mostrarModal$ | async) === true"
