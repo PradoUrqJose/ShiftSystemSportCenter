@@ -193,8 +193,8 @@ public class TurnoService {
                 turno.getHoraSalida(),
                 turno.getHorasTrabajadas(),
                 tomoAlmuerzo,
-                0.0, // Inicializar horas totales en 0
-                esFeriado // ✅ Solo marcamos si es feriado, sin cálculo de horas extra
+                0.0, // horasTotalesSemana inicializado en 0
+                esFeriado
         );
     }
 
@@ -394,35 +394,6 @@ public class TurnoService {
                 .map(turno -> {
                     TurnoDTO dto = convertToDTO(turno);
                     dto.setHorasTotalesSemana(horasFeriadosPorColaborador.get(turno.getColaborador().getId()));
-                    return dto;
-                })
-                .distinct()
-                .collect(Collectors.toList());
-    }
-
-    // Reporte 4: Colaboradores con más horas extra (MODIFICADO)
-    public List<TurnoDTO> getColaboradoresConMasHorasExtra(List<Long> colaboradores, String fechaInicio, String fechaFin) {
-        LocalDate inicio = LocalDate.parse(fechaInicio);
-        LocalDate fin = LocalDate.parse(fechaFin);
-        // Filtrar por colaboradores y rango de fechas
-        List<Turno> turnos = turnoRepository.findByColaborador_IdInAndFechaBetween(colaboradores, inicio, fin);
-
-        // Calcular horas extra por colaborador
-        Map<Long, Double> horasExtraPorColaborador = new HashMap<>();
-        for (Turno turno : turnos) {
-            double horasTrabajadas = turno.getHorasTrabajadas();
-            double horasExtra = horasTrabajadas > 8 ? horasTrabajadas - 8 : 0;
-            horasExtraPorColaborador.put(
-                    turno.getColaborador().getId(),
-                    horasExtraPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0) + horasExtra
-            );
-        }
-
-        return turnos.stream()
-                .filter(turno -> horasExtraPorColaborador.get(turno.getColaborador().getId()) > 0)
-                .map(turno -> {
-                    TurnoDTO dto = convertToDTO(turno);
-                    dto.setHorasTotalesSemana(horasExtraPorColaborador.get(turno.getColaborador().getId()));
                     return dto;
                 })
                 .distinct()

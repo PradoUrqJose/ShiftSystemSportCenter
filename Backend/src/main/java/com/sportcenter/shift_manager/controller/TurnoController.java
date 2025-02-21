@@ -124,17 +124,4 @@ public class TurnoController {
                 : new ArrayList<>();
         return turnoService.getTurnosEnFeriados(colaboradoresIds, fechaInicio, fechaFin);
     }
-
-    @CrossOrigin(origins = "http://localhost:4200")
-    @GetMapping("/reporte/horas-extra")
-    public List<TurnoDTO> getColaboradoresConMasHorasExtra(
-            @RequestParam("fechaInicio") String fechaInicio,
-            @RequestParam("fechaFin") String fechaFin,
-            @RequestParam(value = "colaboradores", required = false) String colaboradores) {
-        List<Long> colaboradoresIds = (colaboradores != null && !colaboradores.isEmpty())
-                ? Arrays.stream(colaboradores.split(",")).map(Long::parseLong).toList()
-                : new ArrayList<>();
-        return turnoService.getColaboradoresConMasHorasExtra(colaboradoresIds, fechaInicio, fechaFin);
-    }
-
 }
