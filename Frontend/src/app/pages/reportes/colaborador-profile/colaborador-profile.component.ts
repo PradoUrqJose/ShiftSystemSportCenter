@@ -18,7 +18,7 @@ Chart.register(...registerables, ChartDataLabels);
 @Component({
   selector: 'app-colaborador-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective, CountUpModule ],
+  imports: [CommonModule, FormsModule, BaseChartDirective, CountUpModule],
   templateUrl: './colaborador-profile.component.html',
   styleUrls: ['./colaborador-profile.component.css']
 })
@@ -71,8 +71,11 @@ export class ColaboradorProfileComponent implements OnInit {
   horizontalBarChartData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
   horizontalBarChartOptions: ChartOptions<'bar'> = {
     responsive: true,
+    maintainAspectRatio: false,
     indexAxis: 'y',
-    scales: { x: { beginAtZero: true, title: { display: false, text: 'Horas' } } },
+    scales: {
+      x: { beginAtZero: true, title: { display: false, text: 'Horas' } },
+    },
     plugins: {
       legend: { display: false },
       datalabels: {
@@ -309,7 +312,7 @@ export class ColaboradorProfileComponent implements OnInit {
         data: this.tiendasTrabajadas.map(t => t.horas),
         backgroundColor: backgroundColors,
         borderWidth: 0,
-        barThickness: 25 // Mantener barras delgadas
+        barThickness: 18 // Mantener barras delgadas
       }]
     };
   }
