@@ -1,3 +1,7 @@
+::ng-deep .container {
+  padding: 0 !important;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -19,6 +23,15 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+.card {
+  overflow: hidden; /* Evitar desbordamiento */
+}
+
+.card canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -26,4 +39,27 @@ table {
 
 th, td {
   border: 1px solid #e5e7eb;
+}
+
+.square-card  {
+  aspect-ratio: 1 / 1;
+}
+
+.gradient-empresa {
+  background: linear-gradient(
+    to top right,  /* De izquierda-abajo hacia derecha-arriba */
+    var(--empresa-color, #e5e7eb) 0%,
+    transparent 50%
+  ),
+  radial-gradient(
+    circle at left bottom,
+    var(--empresa-color, #e5e7eb) 0%,
+    transparent 60%
+  ),
+  radial-gradient(
+    circle at right bottom,
+    var(--empresa-color, #e5e7eb) 0%,
+    transparent 60%
+  ),
+  #f9fafb; /* Color base */
 }

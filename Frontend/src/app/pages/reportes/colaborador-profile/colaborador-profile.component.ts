@@ -2,16 +2,19 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Chart, ChartConfiguration, ChartOptions, registerables } from 'chart.js'; // Importa registerables
+import { Chart, ChartConfiguration, ChartOptions, registerables } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { CountUpModule } from 'ngx-countup';
 import { ColaboradorService, Colaborador } from '../../../services/colaborador.service';
 import { ReporteService } from '../../../services/reporte.service';
 import { CalendarioService } from '../../../services/calendario.service';
-import { parseISO } from 'date-fns';
+import { eachDayOfInterval, endOfWeek, format, isToday, parseISO, startOfWeek } from 'date-fns';
+import { es } from 'date-fns/locale'; // Importar localización en español
 import { forkJoin } from 'rxjs';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(...registerables);
+Chart.register(...registerables, ChartDataLabels);
+
 @Component({
   selector: 'app-colaborador-profile',
   standalone: true,
@@ -32,16 +35,14 @@ export class ColaboradorProfileComponent implements OnInit {
   horasNormales: number = 0;
   turnosFeriados: any[] = [];
   tiendasTrabajadas: { nombre: string, horas: number }[] = [];
+  totalHorasSemanaActual: number = 0;
 
-  // Datos para el gráfico de barras (horas por mes)
   barChartData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
-  barChartLabels: string[] = [];
   barChartOptions: ChartOptions<'bar'> = {
     responsive: true,
     scales: { y: { beginAtZero: true, title: { display: true, text: 'Horas' } } },
     plugins: { legend: { display: false } }
   };
-
 
   pieChartData: number[] = [];
   pieChartOptions: ChartOptions<'pie'> = {
@@ -58,6 +59,57 @@ export class ColaboradorProfileComponent implements OnInit {
     plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
     animation: { duration: 1500, easing: 'easeOutBounce' }
   };
+
+  barChartSemanaActualData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
+  barChartSemanaActualOptions: ChartOptions<'bar'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        display: true,
+        grid: { display: false },
+        ticks: { color: '#6b7280', font: { size: 12 } }
+      },
+      y: {
+        display: false,
+        beginAtZero: true, // Comienza en 0
+        max: 13 // Límite máximo para reducir la altura de las barras (ajústalo según necesites)
+      }
+    },
+    plugins: {
+      legend: { display: false },
+      title: { display: false },
+      tooltip: { enabled: false },
+      datalabels: {
+        display: (context) => isToday(parseISO(`2025-02-${context.dataIndex + 17}`)),
+        anchor: 'end',
+        align: 'top',
+        color: '#fff',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        padding: 6,
+        borderRadius: 10,
+        font: { size: 10, weight: 'bold' },
+        formatter: (value) => `${value} h`
+      }
+    },
+    elements: {
+      bar: {
+        borderRadius: 20
+      }
+    }
+  };
+
+  private coloresEmpresas: string[] = [
+    '#fff3cc',
+    '#bdbdbd',
+    '#cce5ff',
+    '#cce5cc',
+    '#e0e0e0',
+    '#d9e2ec',
+    '#f0e5de',
+    '#e3e3e3',
+    '#d1d1d1'
+  ];
 
   constructor(
     private route: ActivatedRoute,
@@ -89,65 +141,78 @@ export class ColaboradorProfileComponent implements OnInit {
     return date.toISOString().split('T')[0];
   }
 
-  // Métodos para cargar datos se implementarán en los pasos siguientes
   loadProfile(colaboradorId: number): void {
     this.colaboradorService.getColaboradorById(colaboradorId).subscribe({
-      next: (data: Colaborador) => this.colaborador = data, // Tipado explícito
+      next: (data: Colaborador) => this.colaborador = data,
       error: () => console.error('Error al cargar perfil del colaborador')
     });
   }
 
   loadStatistics(colaboradorId: number): void {
     const colaboradores = [colaboradorId];
-
     forkJoin({
       turnos: this.colaboradorService.getTurnosByColaboradorId(colaboradorId),
       horasTrabajadas: this.reporteService.getHorasTrabajadas(this.fechaInicio, this.fechaFin, colaboradores),
       turnosFeriados: this.reporteService.getTurnosFeriados(this.fechaInicio, this.fechaFin, colaboradores)
     }).subscribe({
       next: ({ turnos, horasTrabajadas, turnosFeriados }) => {
-        // Turnos recientes y total de turnos
         this.totalTurnos = turnos.length;
         this.turnosRecientes = turnos.slice(0, 5);
-        console.log('Turnos recientes:', turnos);
-
-        // Total de horas trabajadas
         this.totalHoras = horasTrabajadas.reduce((sum, turno) => sum + (turno.horasTrabajadas || 0), 0);
-        console.log('Datos de getHorasTrabajadas:', horasTrabajadas);
-        console.log('Total horas calculado:', this.totalHoras);
-
-        // Horas por mes
         this.horasPorMes = this.calcularHorasPorMes(horasTrabajadas);
         this.barChartData = {
           labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
           datasets: [{ data: this.horasPorMes, backgroundColor: '#4f46e5', hoverBackgroundColor: '#6366f1' }]
         };
-
-        // Turnos feriados y horas feriados
         this.totalTurnosFeriados = turnosFeriados.length;
         this.horasFeriados = turnosFeriados.reduce((sum, turno) => sum + (turno.horasTrabajadas || 0), 0);
         this.turnosFeriados = turnosFeriados;
-        console.log('Turnos feriados:', turnosFeriados);
-
-        // Horas normales y gráfico de pastel
         this.horasNormales = this.totalHoras - this.horasFeriados;
         this.pieChartData = [this.horasNormales, this.horasFeriados];
-        console.log('TotalHoras:', this.totalHoras, 'HorasFeriados:', this.horasFeriados);
-
-        // Tiendas trabajadas
         this.loadTiendasTrabajadas(horasTrabajadas);
+        this.loadSemanaActual(horasTrabajadas);
       },
       error: (err) => console.error('Error al cargar estadísticas:', err)
     });
   }
 
+  loadSemanaActual(horasTrabajadas: any[]): void {
+    const today = new Date('2025-02-21'); // Fecha fija para consistencia
+    const start = startOfWeek(today, { weekStartsOn: 1 }); // Lunes 17 de febrero
+    const end = endOfWeek(today, { weekStartsOn: 1 }); // Domingo 23 de febrero
+    const daysOfWeek = eachDayOfInterval({ start, end });
+
+    // Usar localización en español para los días de la semana
+    const labels = daysOfWeek.map(day => format(day, 'EEE', { locale: es })); // "Lun", "Mar", "Mié", etc.
+    const data = daysOfWeek.map(day => {
+      const dayString = format(day, 'yyyy-MM-dd');
+      const horasDia = horasTrabajadas
+        .filter(turno => turno.fecha === dayString)
+        .reduce((sum, turno) => sum + (turno.horasTrabajadas || 0), 0);
+      return horasDia;
+    });
+
+    this.totalHorasSemanaActual = data.reduce((sum, horas) => sum + horas, 0);
+    const empresaColor = this.getEmpresaColor(this.colaborador?.empresaNombre);
+    const backgroundColors = daysOfWeek.map(day => isToday(day) ? empresaColor : '#000000');
+
+    this.barChartSemanaActualData = {
+      labels, // Ahora en español: "Lun", "Mar", "Mié", etc.
+      datasets: [{
+        data,
+        backgroundColor: backgroundColors,
+        borderWidth: 0,
+        barThickness: 18 // Mover barThickness aquí para hacer las barras más delgadas
+      }]
+    };
+  }
+
   calcularHorasPorMes(turnos: any[]): number[] {
     const horasPorMes = new Array(12).fill(0);
     turnos.forEach(turno => {
-      const fecha = parseISO(turno.fecha); // "2025-01-01" → Date sin ajuste de zona horaria
+      const fecha = parseISO(turno.fecha);
       const mes = fecha.getMonth();
       horasPorMes[mes] += turno.horasTrabajadas || 0;
-      console.log(`Fecha: ${turno.fecha}, Mes calculado: ${mes}, Horas: ${turno.horasTrabajadas}`);
     });
     return horasPorMes;
   }
@@ -175,5 +240,60 @@ export class ColaboradorProfileComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/colaboradores']);
+  }
+
+  getEmpresaColor(empresaNombre: string | undefined): string {
+    if (!empresaNombre || empresaNombre === 'N/A') {
+      return '#e5e7eb'; // Color gris claro por defecto
+    }
+    let hash = 0;
+    for (let i = 0; i < empresaNombre.length; i++) {
+      hash = empresaNombre.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash % this.coloresEmpresas.length);
+    return this.coloresEmpresas[index];
+  }
+
+  getWallpStyles(empresaNombre: string | undefined): any {
+    if (!empresaNombre || empresaNombre === 'N/A') {
+      return { 'background-color': '#e5e7eb' };
+    }
+    let hash = 0;
+    for (let i = 0; i < empresaNombre.length; i++) {
+      hash = empresaNombre.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash % this.coloresEmpresas.length);
+    const backgroundColor = this.coloresEmpresas[index];
+    const rgb = this.hexToRgb(backgroundColor);
+    const darkerColor = this.darkenColor(rgb.r, rgb.g, rgb.b, 0.09);
+    const darkerHex = this.rgbToHex(darkerColor.r, darkerColor.g, darkerColor.b);
+    const pattern = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='20'><text x='5' y='12' font-size='14' fill='%23${darkerHex.slice(1)}' font-weight='bold' font-family='Quicksand, sans-serif'>${encodeURIComponent(empresaNombre)}</text></svg>")`;
+    return {
+      'background-color': backgroundColor,
+      'background-image': pattern,
+      'background-repeat': 'repeat',
+      'background-size': '170px 20px'
+    };
+  }
+
+  private hexToRgb(hex: string): { r: number, g: number, b: number } {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 0, g: 0, b: 0 };
+  }
+
+  private darkenColor(r: number, g: number, b: number, factor: number): { r: number, g: number, b: number } {
+    return {
+      r: Math.max(0, Math.floor(r * (1 - factor))),
+      g: Math.max(0, Math.floor(g * (1 - factor))),
+      b: Math.max(0, Math.floor(b * (1 - factor)))
+    };
+  }
+
+  private rgbToHex(r: number, g: number, b: number): string {
+    return `#${Math.round(r).toString(16).padStart(2, '0')}${Math.round(g).toString(16).padStart(2, '0')}${Math.round(b).toString(16).padStart(2, '0')}`;
   }
 }
