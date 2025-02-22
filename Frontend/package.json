@@ -23,6 +23,7 @@
     "@material-tailwind/html": "^2.3.2",
     "@ng-select/ng-select": "^13.9.1",
     "chart.js": "^4.4.8",
+    "chartjs-plugin-datalabels": "^2.2.0",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "ng2-charts": "^7.0.0",
