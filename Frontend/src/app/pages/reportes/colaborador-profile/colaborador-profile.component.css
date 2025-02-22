@@ -103,3 +103,7 @@ td {
   background: var(--empresa-color);
   background: linear-gradient(315deg, var(--empresa-color) 20%, rgba(255, 255, 255, 1) 100%);
 }
+
+.gradient-to-diag {
+  background: linear-gradient(315deg, rgba(255, 255, 255, 0.505) 50%, rgb(255, 255, 255) 100%);
+}
