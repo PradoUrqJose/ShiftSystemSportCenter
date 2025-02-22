@@ -19,10 +19,10 @@
   <div *ngIf="colaborador; else loading" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
     <div class="card fade-in order-1 aspect-square overflow-hidden">
       <div class="flex items-center justify-center">
-        <div class="wallp w-full flex justify-center items-center p-3"
+        <div class="wallp w-full flex justify-center items-center p-1"
         [ngStyle]="getWallpStyles(colaborador.empresaNombre)">
         <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'" alt="Foto de perfil"
-          class="w-36 h-36 rounded-full bg-[#ffffff9c] object-cover shadow-md">
+          class="w-36 h-36 rounded-full bg-[#ffffffcf] object-cover shadow-md">
       </div>
       </div>
 
@@ -104,7 +104,7 @@
 
     <div class="card p-6 fade-in order-5 lg:order-2 xl:order-5 lg:col-span-2">
       <h4 class="text-lg font-semibold text-gray-800 mb-4">Horas por Mes</h4>
-      <div class="relative w-full h-64">
+      <div class="relative w-full">
         <canvas baseChart [datasets]="barChartData.datasets" [labels]="barChartData.labels" [options]="barChartOptions"
           [type]="'bar'"></canvas>
       </div>

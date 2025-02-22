@@ -40,8 +40,25 @@ export class ColaboradorProfileComponent implements OnInit {
   barChartData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
   barChartOptions: ChartOptions<'bar'> = {
     responsive: true,
-    scales: { y: { beginAtZero: true, title: { display: true, text: 'Horas' } } },
-    plugins: { legend: { display: false } }
+    scales: {
+      x: {
+
+      },
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: 'Horas' }
+      }
+    },
+    plugins: {
+
+      legend: { display: false },
+      datalabels: { display: false } // Desactivar etiquetas en las barras
+    },
+    elements: {
+      bar: {
+        borderRadius: 10
+      }
+    }
   };
 
   pieChartData: number[] = [];
@@ -56,7 +73,26 @@ export class ColaboradorProfileComponent implements OnInit {
     responsive: true,
     indexAxis: 'y',
     scales: { x: { beginAtZero: true, title: { display: true, text: 'Horas' } } },
-    plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+    plugins: {
+      legend: { display: false },
+      datalabels: {
+        display: true,
+        anchor: 'end',
+        align: 'right',
+        color: '#fff',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        padding: 6,
+        borderRadius: 10,
+        font: { size: 10, weight: 'bold' },
+        formatter: (value) => `${value} h`
+      }, // Desactivar etiquetas en las barras
+      tooltip: { mode: 'index', intersect: false }
+    },
+    elements: {
+      bar: {
+        borderRadius: 20
+      }
+    },
     animation: { duration: 1500, easing: 'easeOutBounce' }
   };
 
@@ -73,7 +109,7 @@ export class ColaboradorProfileComponent implements OnInit {
       y: {
         display: false,
         beginAtZero: true, // Comienza en 0
-        max: 13 // Límite máximo para reducir la altura de las barras (ajústalo según necesites)
+        max: 14 // Límite máximo para reducir la altura de las barras (ajústalo según necesites)
       }
     },
     plugins: {
@@ -100,16 +136,21 @@ export class ColaboradorProfileComponent implements OnInit {
   };
 
   private coloresEmpresas: string[] = [
-    '#fff3cc',
-    '#bdbdbd',
-    '#cce5ff',
-    '#cce5cc',
-    '#e0e0e0',
-    '#d9e2ec',
-    '#f0e5de',
-    '#e3e3e3',
-    '#d1d1d1'
+    '#fff3cc', // Amarillo pastel
+    '#cce5ff', // Azul pastel
+    '#e0e0e0', // Gris claro (ya existente)
+    '#d9e2ec', // Azul grisáceo pastel (ya existente)
+    '#f0e5de', // Beige claro (ya existente)
+    '#ffebcc', // Durazno claro
+    '#d4f4dd', // Verde menta suave
+    '#b3e0ff', // Celeste pastel
+    '#ffccd9', // Rosa empolvado
+    '#e6ccff', // Lila suave
+    '#fff2b3', // Amarillo mantequilla
+    '#cce5cc', // Verde pastel
+    '#ffddcc', // Melocotón pastel
   ];
+
 
   constructor(
     private route: ActivatedRoute,
@@ -126,18 +167,17 @@ export class ColaboradorProfileComponent implements OnInit {
       this.loadStatistics(+colaboradorId);
     }
   }
-
   getDefaultFechaInicio(): string {
     const date = new Date();
-    date.setMonth(date.getMonth() - 4);
-    date.setDate(1);
+    date.setMonth(0); // Enero
+    date.setDate(1); // Primer día del mes
     return date.toISOString().split('T')[0];
   }
 
   getDefaultFechaFin(): string {
     const date = new Date();
-    date.setMonth(date.getMonth() + 2);
-    date.setDate(0);
+    date.setMonth(11); // Diciembre
+    date.setDate(31); // Último día del mes
     return date.toISOString().split('T')[0];
   }
 
@@ -160,10 +200,26 @@ export class ColaboradorProfileComponent implements OnInit {
         this.turnosRecientes = turnos.slice(0, 5);
         this.totalHoras = horasTrabajadas.reduce((sum, turno) => sum + (turno.horasTrabajadas || 0), 0);
         this.horasPorMes = this.calcularHorasPorMes(horasTrabajadas);
+
+        // Determinar el mes actual (febrero en este contexto: índice 1)
+        const mesActual = 1; // Febrero (0-based: Ene=0, Feb=1, etc.)
+        const empresaColor = this.getEmpresaColor(this.colaborador?.empresaNombre);
+
+        // Asignar colores: empresa para el mes actual, gris oscuro para los demás
+        const backgroundColors = this.horasPorMes.map((_, index) =>
+          index === mesActual ? this.lightenDarkenColor(empresaColor, -100) : 'rgba(0, 0, 0, 0.7)'
+        );
         this.barChartData = {
           labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-          datasets: [{ data: this.horasPorMes, backgroundColor: '#4f46e5', hoverBackgroundColor: '#6366f1' }]
+          datasets: [{
+            data: this.horasPorMes,
+            backgroundColor: backgroundColors,
+            hoverBackgroundColor: backgroundColors.map(color =>
+              color === this.lightenDarkenColor(empresaColor, -100) ? this.lightenDarkenColor(empresaColor, -70) : 'rgba(0, 0, 0, 0.9)'
+            )
+          }]
         };
+
         this.totalTurnosFeriados = turnosFeriados.length;
         this.horasFeriados = turnosFeriados.reduce((sum, turno) => sum + (turno.horasTrabajadas || 0), 0);
         this.turnosFeriados = turnosFeriados;
@@ -174,6 +230,16 @@ export class ColaboradorProfileComponent implements OnInit {
       },
       error: (err) => console.error('Error al cargar estadísticas:', err)
     });
+  }
+
+  // Nueva función para aclarar u oscurecer un color (para hover)
+  private lightenDarkenColor(color: string, percent: number): string {
+    const rgb = this.hexToRgb(color);
+    const factor = percent / 100;
+    const r = Math.min(255, Math.max(0, rgb.r + (255 - rgb.r) * factor));
+    const g = Math.min(255, Math.max(0, rgb.g + (255 - rgb.g) * factor));
+    const b = Math.min(255, Math.max(0, rgb.b + (255 - rgb.b) * factor));
+    return this.rgbToHex(r, g, b);
   }
 
   loadSemanaActual(horasTrabajadas: any[]): void {
@@ -194,7 +260,7 @@ export class ColaboradorProfileComponent implements OnInit {
 
     this.totalHorasSemanaActual = data.reduce((sum, horas) => sum + horas, 0);
     const empresaColor = this.getEmpresaColor(this.colaborador?.empresaNombre);
-    const backgroundColors = daysOfWeek.map(day => isToday(day) ? empresaColor : '#000000');
+    const backgroundColors = daysOfWeek.map(day => isToday(day) ? empresaColor : 'rgba(0, 0, 0, 0.7)');
 
     this.barChartSemanaActualData = {
       labels, // Ahora en español: "Lun", "Mar", "Mié", etc.
@@ -228,12 +294,15 @@ export class ColaboradorProfileComponent implements OnInit {
       tiendasMap.set(tienda, (tiendasMap.get(tienda) || 0) + (turno.horasTrabajadas || 0));
     });
     this.tiendasTrabajadas = Array.from(tiendasMap, ([nombre, horas]) => ({ nombre, horas }));
+    const empresaColor = this.getEmpresaColor(this.colaborador?.empresaNombre);
+    const backgroundColors =  this.lightenDarkenColor(empresaColor, -100);
     this.horizontalBarChartData = {
       labels: this.tiendasTrabajadas.map(t => t.nombre),
       datasets: [{
         data: this.tiendasTrabajadas.map(t => t.horas),
-        backgroundColor: '#10b981',
-        hoverBackgroundColor: '#34d399'
+        backgroundColor: backgroundColors,
+        borderWidth: 0,
+        barThickness: 25 // Mover barThickness aquí para hacer las barras más delgadas
       }]
     };
   }
