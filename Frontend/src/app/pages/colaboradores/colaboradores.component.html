@@ -1,14 +1,17 @@
 <div class="p-6 rounded-lg min-h-screen w-11/12 mx-auto">
   <!-- Contenedor principal -->
   <div class="flex flex-wrap items-center justify-between mb-6">
-    <!-- Título -->
-    <h2 class="font-bold text-gray-800 sm:mr-6 border-b-2 border-blue-400 pb-1">
-      Gestión de Colaboradores
-    </h2>
-    <!-- Botón para abrir el modal -->
-    <button (click)="openModal()" class=" buttonStyle blue-button font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">
+    <h2 class="font-bold text-gray-800 sm:mr-6 border-b-2 border-blue-400 pb-1">Gestión de Colaboradores</h2>
+    <div class="flex gap-4">
+      <a class="buttonStyle gray-button font-bold py-2 px-3 rounded-lg transition transform hover:scale-105"
+      [routerLink]="['/puestos']">
+      Puestos
+    </a>
+    <button (click)="openModal()"
+      class="buttonStyle blue-button font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">
       Agregar
     </button>
+    </div>
   </div>
 
   <!-- Tabla -->
@@ -69,7 +72,6 @@
             </button>
           </td>
         </tr>
-        <!-- Empresas deshabilitadas (mostradas si mostrarDeshabilitadas = true) -->
         <ng-container *ngIf="mostrarDeshabilitados">
           <tr *ngFor="let colaborador of colaboradoresDeshabilitados"
             class="border-t bg-gray-50 hover:bg-gray-100 transition">
@@ -98,7 +100,7 @@
   <div *ngIf="(mostrarModal$ | async) === true"
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeModal()">
     <div
-      class="bg-white rounded-2xl shadow-xl transform transition-all duration-300 w-full max-w-lg relative overflow-hidden border-4 border-white"
+      class="min-w-[40rem] bg-white rounded-2xl shadow-xl transform transition-all duration-300 w-full max-w-lg relative overflow-hidden border-4 border-white"
       [ngClass]="{
         'opacity-0 -translate-y-10': !(isModalVisible$ | async),
         'opacity-100 translate-y-0': (isModalVisible$ | async)
@@ -127,7 +129,7 @@
         <!-- Contenedor de dos columnas -->
         <div class="flex items-center mb-4 -mt-12">
           <!-- Columna izquierda -->
-          <div class="flex flex-col justify-center gap-2">
+          <div class="flex justify-center items-center gap-4">
             <div class="relative">
               <!-- Spinner -->
               <div *ngIf="isPhotoLoading"
@@ -143,7 +145,7 @@
             </div>
 
             <!-- Mostrar nombre y email del usuario en modo edición -->
-            <div *ngIf="isEditing" class="text-lg font-semibold text-gray-800 m-0">
+            <div *ngIf="isEditing" class="text-lg font-semibold text-gray-800 flex flex-col justify-between gap-1">
               <p class="text-left">{{ colaboradorForm.get('nombre')?.value }} {{ colaboradorForm.get('apellido')?.value
                 }}</p>
               <p class="text-left font-light text-xs text-gray-500">{{ colaboradorForm.get('email')?.value }}</p>
@@ -154,7 +156,7 @@
           <div *ngIf="isEditing" class="ml-auto">
             <button (click)="viewProfile(selectedColaboradorId)"
               class="inline-flex items-center justify-center border align-middle select-none font-sans font-medium text-center duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus:shadow-none text-sm py-2 px-4 shadow-sm hover:shadow-md bg-stone-200 hover:bg-stone-100 relative bg-gradient-to-b from-white to-white border-stone-200 text-stone-700 rounded-lg hover:bg-gradient-to-b hover:from-stone-50 hover:to-stone-50 hover:border-stone-200 after:absolute after:inset-0 after:rounded-[inherit] after:box-shadow after:shadow-[inset_0_1px_0px_rgba(255,255,255,0.35),inset_0_-1px_0px_rgba(0,0,0,0.20)] after:pointer-events-none transition antialiased">
-              View Profile
+              Ver Perfil
             </button>
           </div>
         </div>
@@ -166,7 +168,7 @@
           {{ errorMessage }}
         </div>
         <!-- Resto del formulario -->
-        <div class="py-4 grid grid-cols-2 gap-4 bg-gray-50 px-4 rounded-lg mb-4">
+        <div class="py-4 grid grid-cols-3 gap-4 bg-gray-50 px-4 rounded-lg mb-4">
           <div>
             <input id="nombre" type="text" formControlName="nombre" placeholder="Nombre"
               class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" />
@@ -180,22 +182,35 @@
               class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" />
           </div>
           <div>
-            <input id="email" type="email" formControlName="email" placeholder="Email"
+            <input id="fechaNacimiento" type="date" formControlName="fechaNacimiento" placeholder="Fecha de Nacimiento"
               class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+          <div>
+            <select formControlName="puestoId"
+              class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 h-full">
+              <option [ngValue]="null" selected>Sin Puesto</option>
+              <option *ngFor="let puesto of puestos" [value]="puesto.id">{{ puesto.nombre }}</option>
+            </select>
           </div>
           <div>
             <input id="dni" type="text" formControlName="dni" placeholder="DNI"
               class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" />
           </div>
-          <div>
-            <select (change)="onEmpresaSelected($event)" formControlName="empresaId"
-              class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <div class="grid grid-cols-2 col-span-3 gap-4">
+            <div class="flex items-center">
+              <select (change)="onEmpresaSelected($event)" formControlName="empresaId"
+              class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 h-full">
               <option [ngValue]="null" disabled selected>Seleccione una Empresa</option>
               <option *ngFor="let empresa of empresas" [value]="empresa.id">
                 {{ empresa.nombre }}
               </option>
-            </select>
-          </div>
+              </select>
+            </div>
+            <div class="flex items-center">
+              <input id="email" type="email" formControlName="email" placeholder="Email"
+              class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 h-full" />
+            </div>
+            </div>
         </div>
         <!-- Línea divisora -->
         <hr class="border-gray-200 my-4">
@@ -207,7 +222,6 @@
             <span class="text-sm font-medium text-gray-700">Colaborador habilitado</span>
           </label>
         </div>
-
         <!-- Botones -->
         <div class="flex justify-end space-x-4 mt-4">
           <button type="button" (click)="closeModal()"
