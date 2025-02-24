@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -41,4 +43,10 @@ public class Colaborador {
 
     @Column(nullable = false)
     private boolean habilitado = true; // Nueva propiedad
-}
+
+    // Nuevos atributos
+    private LocalDate fechaNacimiento;
+    // Relación con la nueva entidad Puesto
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "puesto_id", nullable = true)
+    private Puesto puesto;}
