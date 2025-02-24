@@ -71,8 +71,11 @@ export class ColaboradorProfileComponent implements OnInit {
   horizontalBarChartData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
   horizontalBarChartOptions: ChartOptions<'bar'> = {
     responsive: true,
+    maintainAspectRatio: false,
     indexAxis: 'y',
-    scales: { x: { beginAtZero: true, title: { display: true, text: 'Horas' } } },
+    scales: {
+      x: { beginAtZero: true, title: { display: false, text: 'Horas' } },
+    },
     plugins: {
       legend: { display: false },
       datalabels: {
@@ -289,24 +292,30 @@ export class ColaboradorProfileComponent implements OnInit {
 
   loadTiendasTrabajadas(turnos: any[]): void {
     const tiendasMap = new Map<string, number>();
+
     turnos.forEach(turno => {
       const tienda = turno.nombreTienda || 'Sin Tienda';
       tiendasMap.set(tienda, (tiendasMap.get(tienda) || 0) + (turno.horasTrabajadas || 0));
     });
-    this.tiendasTrabajadas = Array.from(tiendasMap, ([nombre, horas]) => ({ nombre, horas }));
+
+    // Ordenar tiendas por horas trabajadas y tomar solo las 5 más altas
+    this.tiendasTrabajadas = Array.from(tiendasMap, ([nombre, horas]) => ({ nombre, horas }))
+      .sort((a, b) => b.horas - a.horas)
+      .slice(0, 6); // Limitar a las 5 más trabajadas
+
     const empresaColor = this.getEmpresaColor(this.colaborador?.empresaNombre);
-    const backgroundColors =  this.lightenDarkenColor(empresaColor, -100);
+    const backgroundColors = this.lightenDarkenColor(empresaColor, -100);
+
     this.horizontalBarChartData = {
       labels: this.tiendasTrabajadas.map(t => t.nombre),
       datasets: [{
         data: this.tiendasTrabajadas.map(t => t.horas),
         backgroundColor: backgroundColors,
         borderWidth: 0,
-        barThickness: 25 // Mover barThickness aquí para hacer las barras más delgadas
+        barThickness: 18 // Mantener barras delgadas
       }]
     };
   }
-
   goBack(): void {
     this.router.navigate(['/colaboradores']);
   }
