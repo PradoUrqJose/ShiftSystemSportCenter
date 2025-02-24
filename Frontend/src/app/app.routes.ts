@@ -8,10 +8,12 @@ import { HorasTrabajadasComponent } from './pages/reportes/horas-trabajadas/hora
 import { TurnosFeriadosComponent } from './pages/reportes/turnos-feriados/turnos-feriados.component';
 import { SemanaNormalComponent } from './pages/reportes/semana-normal/semana-normal.component';
 import { ColaboradorProfileComponent } from './pages/reportes/colaborador-profile/colaborador-profile.component';
+import GestionarPuestosComponent from './pages/colaboradores/gestionar-puestos/gestionar-puestos.component';
 
 export const routes: Routes = [
   { path: 'empresas', component: EmpresasComponent },
   { path: 'colaboradores', component: ColaboradoresComponent },
+  { path: 'puestos', component: GestionarPuestosComponent},
   { path: 'turnos', component: TurnosComponent },
   {
     path: 'reportes',
