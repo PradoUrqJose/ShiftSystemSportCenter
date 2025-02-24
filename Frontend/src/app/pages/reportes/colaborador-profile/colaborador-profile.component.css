@@ -1,5 +1,6 @@
-::ng-deep .container {
+::ng-deep .container1 {
   padding: 0 !important;
+  width: 100% !important;
 }
 
 @keyframes fadeIn {
@@ -12,6 +13,11 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Asegurar que los cards en la fila se alineen en altura */
+.grid {
+  display: grid;
 }
 
 .fade-in {
@@ -51,11 +57,53 @@ td {
   border: 1px solid #e5e7eb;
 }
 
-.square-card {
-  aspect-ratio: 1 / 1;
+
+/* Restringir la altura del card order-3 a la de los cuadrados */
+.card.order-3 {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hacer que el contenedor del gráfico ocupe el espacio disponible */
+.card.order-3 .relative {
+  min-height: 0; /* Evita problemas con flex */
+}
+/* Asegurar que el canvas se ajuste al contenedor */
+.card.order-3 canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (min-width: 640px)
+{
+  .card.order-4 {
+    max-height: auto !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .card.order-3 {
+    max-height: auto;
+  }
+}
+
+@media (min-width: 1280px) {
+  .card.order-3 {
+    max-height: calc(40vw / 2)!important;
+  }
+}
+
+@media (min-width: 1536px) {
+  .card.order-3 {
+    max-height: calc(40vw / 2)!important;
+  }
 }
 
 .gradient-empresa {
   background: var(--empresa-color);
   background: linear-gradient(315deg, var(--empresa-color) 20%, rgba(255, 255, 255, 1) 100%);
+}
+
+.gradient-to-diag {
+  background: linear-gradient(315deg, rgba(255, 255, 255, 0.505) 50%, rgb(255, 255, 255) 100%);
 }
