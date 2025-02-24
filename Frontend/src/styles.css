@@ -48,6 +48,12 @@
   border: 1px solid #4a708b4d;
 }
 
+.gray-button {
+  background-color: #eeeeee;
+  color: #616161 ;
+  border: 1px solid #61616177 ;
+}
+
 .poiret-one {
   font-family: "Poiret One", serif;
 }
