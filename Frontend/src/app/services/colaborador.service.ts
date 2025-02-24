@@ -10,9 +10,12 @@ export interface Colaborador {
   email: string;
   telefono: string;
   empresaId: number;
-  empresaNombre: string; // Campo opcional para el nombre de la empresa
-  fotoUrl?: string; // URL de la foto
-  habilitado: boolean; // Campo de estado del colaborador
+  empresaNombre: string;
+  fotoUrl?: string;
+  habilitado: boolean;
+  fechaNacimiento?: string; // Usamos string porque JSON serializa LocalDate como "YYYY-MM-DD"
+  puestoId?: number;        // ID del puesto asignado
+  puestoNombre?: string;    // Nombre del puesto
 }
 
 @Injectable({
