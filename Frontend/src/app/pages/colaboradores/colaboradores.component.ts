@@ -16,11 +16,13 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Router, RouterLink, RouterModule } from '@angular/router';
+import { Puesto, PuestoService } from '../../services/puesto.service';
+import { AgregarPuestoModalComponent } from './agregar-puesto-modal/agregar-puesto-modal.component';
 
 @Component({
   selector: 'app-colaboradores',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, RouterModule],
   templateUrl: './colaboradores.component.html',
   styleUrls: ['./colaboradores.component.css'],
 })
@@ -49,14 +51,19 @@ export default class ColaboradoresComponent implements OnInit {
     'assets/user-circle-svgrepo-com.svg'; // Inicializar con una imagen por defecto
   @ViewChild('fileInput', { static: false }) fileInput!: ElementRef; // Referencia al input de archivos
 
+  puestos: Puesto[] = [];
+  mostrarModalAgregarPuesto: boolean = false;
+  mostrarModalGestionarPuestos: boolean = false;
+  puestoActual: Puesto = { nombre: '', descripcion: '' };
 
   constructor(
     private fb: FormBuilder,
     private colaboradorService: ColaboradorService,
     private empresaService: EmpresaService,
+    private puestoService: PuestoService,
     private modalService: ModalService,
-    private router: Router, // Inyecta el Router aquí
-    private http: HttpClient // Inyecta HttpClient aquí
+    private router: Router,
+    private http: HttpClient
   ) {
     this.colaboradorForm = this.fb.group({
       nombre: ['', Validators.required],
@@ -67,6 +74,8 @@ export default class ColaboradoresComponent implements OnInit {
       empresaId: ['', Validators.required],
       foto: [null], // Para manejar la imagen
       habilitado: [true], // Valor por defecto true
+      fechaNacimiento: [''], // Nuevo campo
+      puestoId: [null]       // Nuevo campo
     });
   }
 
@@ -79,6 +88,7 @@ export default class ColaboradoresComponent implements OnInit {
     this.mostrarModal$ = this.modalService.mostrarModal$;
     this.isModalVisible$ = this.modalService.isModalVisible$;
     this.getEmpresasAndColaboradores();
+    this.puestoService.getPuestos().subscribe(puestos => this.puestos = puestos); // Cargar puestos al inicio
   }
 
   validateForm(): void {
@@ -251,7 +261,6 @@ export default class ColaboradoresComponent implements OnInit {
     this.selectedColaboradorId = colaborador.id || null;
     this.openModal();
 
-    // Asignar valores al formulario
     this.colaboradorForm.patchValue({
       nombre: colaborador.nombre,
       apellido: colaborador.apellido,
@@ -259,51 +268,44 @@ export default class ColaboradoresComponent implements OnInit {
       telefono: colaborador.telefono,
       email: colaborador.email,
       empresaId: colaborador.empresaId,
-      foto: null, // Para forzar una nueva subida si es necesario
-      habilitado: colaborador.habilitado, // Valor por defecto
+      foto: null,
+      habilitado: colaborador.habilitado,
+      fechaNacimiento: colaborador.fechaNacimiento,
+      puestoId: colaborador.puestoId
     });
 
-    // Asignar la foto actual del colaborador a la vista previa
-    this.fotoPreview =
-      colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg';
+    this.fotoPreview = colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg';
   }
 
   updateColaborador(): void {
     if (this.colaboradorForm.valid && this.selectedColaboradorId !== null) {
-      this.clearValidationErrors(); // Limpia mensajes previos
-      this.isLoading = true; // Activa el spinner de carga
+      this.clearValidationErrors();
+      this.isLoading = true;
 
       const colaborador: Colaborador = {
         ...this.colaboradorForm.value,
-        id: this.selectedColaboradorId,
+        id: this.selectedColaboradorId
       };
 
       const file = this.colaboradorForm.get('foto')?.value;
 
-      this.colaboradorService
-        .updateColaborador(this.selectedColaboradorId, colaborador, file)
-        .subscribe({
-          next: () => {
-            this.getColaboradores(); // Actualiza la tabla
-
-            // Limpia el formulario y las variables asociadas
-            this.colaboradorForm.reset();
-            this.fotoPreview = 'assets/user-circle-svgrepo-com.svg';
-            this.selectedColaboradorId = null;
-
-            this.isLoading = false; // Desactiva el spinner
-            this.closeModal(); // Cierra el modal
-
-            this.clearImageCache(); // Evita que se muestre la imagen en caché
-          },
-          error: (err) => {
-            this.errorMessage =
-              err.error?.message || 'Error al actualizar colaborador.';
-            this.isLoading = false; // Desactiva el spinner en caso de error
-          },
-        });
+      this.colaboradorService.updateColaborador(this.selectedColaboradorId, colaborador, file).subscribe({
+        next: () => {
+          this.getColaboradores();
+          this.colaboradorForm.reset();
+          this.fotoPreview = 'assets/user-circle-svgrepo-com.svg';
+          this.selectedColaboradorId = null;
+          this.isLoading = false;
+          this.closeModal();
+          this.clearImageCache();
+        },
+        error: (err) => {
+          this.errorMessage = err.error?.message || 'Error al actualizar colaborador.';
+          this.isLoading = false;
+        }
+      });
     } else {
-      this.validateForm(); // Valida y muestra los errores
+      this.validateForm();
     }
   }
 
