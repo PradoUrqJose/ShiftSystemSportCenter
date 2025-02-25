@@ -153,3 +153,22 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   z-index: 10;
 }
+
+/* Ajustar el encabezado para alinear los elementos */
+.colaborador-column {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.relative {
+  position: relative;
+}
+.absolute {
+  position: absolute;
+  z-index: 50;
+}
+
+thead {
+  overflow: hidden;
+}

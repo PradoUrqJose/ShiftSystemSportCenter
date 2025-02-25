@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { CalendarioService, DiaSemana } from './../../../services/calendario.service';
 import { Colaborador } from './../../../services/colaborador.service';
 import { Turno, TurnoService } from './../../../services/turno.service';
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
 
 @Component({
@@ -16,13 +16,27 @@ export class WeeklyViewComponent implements OnInit {
 
   constructor(
     private turnoService: TurnoService,
-    private feriadoService: FeriadoService, // Inyectar el servicio de feriados
-    private calendarioService: CalendarioService // Inyectar el servicio de calendario
+    private feriadoService: FeriadoService,
+    private calendarioService: CalendarioService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
-    this.cargarFeriados(); // Cargar los feriados al inicializar
-    this.completarSemana(this.diasSemana); // Completar la semana con días vacíos si es necesario
+    console.log('ngOnInit ejecutado');
+    this.cargarFeriados();
+    this.completarSemana(this.diasSemana);
+
+    // Inicializar filteredColaboradores con todos los colaboradores
+    this.filteredColaboradores = [...this.colaboradores];
+    this.applySortAndFilter(); // Aplicar ordenamiento/filtro inicial si aplica
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['colaboradores'] && changes['colaboradores'].currentValue) {
+      console.log('colaboradores cambió:', this.colaboradores);
+      this.filteredColaboradores = [...this.colaboradores]; // Inicializar con todos
+      this.applySortAndFilter(); // Aplicar filtro y ordenamiento
+    }
   }
 
   // Variable interna para almacenar los feriados
@@ -36,6 +50,12 @@ export class WeeklyViewComponent implements OnInit {
   // Outputs para emitir eventos al componente padre
   @Output() abrirModal = new EventEmitter<{ colaboradorId: number; fecha: string }>();
   @Output() abrirModalEdicion = new EventEmitter<Turno>();
+
+  showFilterDropdown: boolean = false; // Controlar visibilidad del flotante
+  // Estado para ordenar y filtrar
+  sortByCompany: boolean = false; // Ordenar por empresa
+  selectedCompany: string = 'all'; // Empresa seleccionada para filtrar ('all' para mostrar todas)
+  filteredColaboradores: Colaborador[] = []; // Lista filtrada y ordenada
 
   // Método para obtener el turno de un colaborador en una fecha específica
   obtenerTurno(
@@ -131,4 +151,53 @@ export class WeeklyViewComponent implements OnInit {
     return semanaCompleta;
   }
 
+  // Obtener lista única de empresas para el filtro
+  get empresas(): string[] {
+    const empresas = Array.from(new Set(this.colaboradores.map(col => col.empresaNombre || 'Sin Empresa')));
+    return ['all', ...empresas.sort()];
+  }
+
+  applySortAndFilter(): void {
+    console.log('applySortAndFilter llamado');
+    console.log('colaboradores:', this.colaboradores);
+    let result = [...this.colaboradores];
+    if (this.selectedCompany !== 'all') {
+      result = result.filter(col => col.empresaNombre === this.selectedCompany);
+      console.log('selectedCompany:', this.selectedCompany, 'filtered result:', result);
+    }
+    if (this.sortByCompany) {
+      result.sort((a, b) => {
+        const empresaA = a.empresaNombre || 'Sin Empresa';
+        const empresaB = b.empresaNombre || 'Sin Empresa';
+        return empresaA.localeCompare(empresaB);
+      });
+      console.log('sortByCompany:', this.sortByCompany, 'sorted result:', result);
+    }
+    this.filteredColaboradores = [...result];
+    console.log('filteredColaboradores actualizado:', this.filteredColaboradores);
+    this.cdr.detectChanges();
+  }
+
+  toggleSortByCompany(): void {
+    this.sortByCompany = !this.sortByCompany;
+    this.applySortAndFilter();
+  }
+
+  filterByCompany(empresa: string): void {
+    this.selectedCompany = empresa;
+    this.applySortAndFilter();
+    this.showFilterDropdown = false; // Cerrar el flotante tras seleccionar
+  }
+  filterDropdownPosition = { x: 0, y: 0 };
+
+  toggleFilterDropdown(event?: MouseEvent) {
+    this.showFilterDropdown = !this.showFilterDropdown;
+    if (event) {
+      const rect = (event.target as HTMLElement).getBoundingClientRect();
+      this.filterDropdownPosition = {
+        x: rect.left,
+        y: rect.bottom + window.scrollY
+      };
+    }
+  }
 }
