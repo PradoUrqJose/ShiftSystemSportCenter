@@ -32,7 +32,7 @@ export class WeeklyViewComponent implements OnInit {
   @Input() diasSemana: DiaSemana[] = []; // Días de la semana
   @Input() colaboradores: Colaborador[] = []; // Lista de colaboradores
   @Input() turnos: Turno[] = []; // Lista de turnos
-
+  @Input() hideTotal: boolean = false;
   // Outputs para emitir eventos al componente padre
   @Output() abrirModal = new EventEmitter<{ colaboradorId: number; fecha: string }>();
   @Output() abrirModalEdicion = new EventEmitter<Turno>();

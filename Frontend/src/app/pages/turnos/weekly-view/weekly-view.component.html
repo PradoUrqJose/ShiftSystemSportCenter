@@ -12,7 +12,7 @@
           <span class="dayNumber font-normal">{{ dia.nombre }}</span>
         </span>
       </th>
-      <th class="bg-blue-50 px-2 py-4 w-[6%] text-center">Total</th>
+      <th [ngClass]="{'hidden': hideTotal}" class="bg-blue-50 px-2 py-4 w-[6%] text-center">Total</th>
     </tr>
   </thead>
 
@@ -68,7 +68,7 @@
           <ng-template #emptyCell></ng-template>
         </td>
         <!-- Columna de total de horas -->
-        <td class="p-2 text-center font-bold semana-column relative">
+        <td [ngClass]="{'hidden': hideTotal}" class="p-2 text-center font-bold semana-column relative">
           <div class="flex items-center justify-center">
             <span> {{ getHorasTotalesSemanaFormateadas(colaborador.id) }}
             </span>
