@@ -47,17 +47,6 @@
   height: 100% !important;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  border: 1px solid #e5e7eb;
-}
-
-
 /* Restringir la altura del card order-3 a la de los cuadrados */
 .card.order-3 {
   display: flex;
@@ -106,4 +95,47 @@ td {
 
 .gradient-to-diag {
   background: linear-gradient(315deg, rgba(255, 255, 255, 0.505) 50%, rgb(255, 255, 255) 100%);
+}
+
+/* Estilos para el contenedor del datepicker */
+.shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Estilizar el datepicker */
+input[type="date"] {
+  position: relative;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* Quitar flechas predeterminadas y personalizar el ícono */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* Transiciones suaves */
+.transition {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Asegurar que el contenedor sea consistente */
+.relative {
+  position: relative;
+}
+
+/* Personalizar el fondo y borde al enfocar */
+input[type="date"]:focus {
+  outline: none;
+}
+
+
+.trHead:hover {
+  background-color: var(--empresa);
 }
