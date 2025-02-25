@@ -49,12 +49,14 @@ import { WeeklyViewComponent } from './weekly-view/weekly-view.component';
 import { MonthlyViewComponent } from './monthly-view/monthly-view.component';
 import { RouterModule } from '@angular/router';
 
+import { TurnoModalComponent } from './turno-modal/turno-modal.component'; // Nuevo componente
+
 @Component({
   selector: 'app-turnos',
   templateUrl: './turnos.component.html',
   standalone: true,
   styleUrls: ['./turnos.component.css'],
-  imports: [CommonModule, FormsModule, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent],
+  imports: [CommonModule, FormsModule, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent],
 })
 export default class TurnosComponent implements OnInit {
   //! Variables de estado
@@ -85,7 +87,6 @@ export default class TurnosComponent implements OnInit {
   errorHoraEntrada: string | null = null; // Error de hora de entrada
   errorHoraSalida: string | null = null; // Error de hora de salida
   turnoOriginal: Turno | null = null; // Almacena los datos originales del turno
-  tiendaActual: Tienda = this.resetTienda(); // Tienda actual
   turnoActual: Turno = this.resetTurno(); // Turno actual
 
   //! Variables de vista
@@ -120,6 +121,8 @@ export default class TurnosComponent implements OnInit {
     this.nombreMesActual = format(this.turnoStateService.getSemanaActual(), 'MMMM yyyy', {
       locale: es,
     });
+    this.mostrarModal$ = this.modalService.mostrarModal$;
+    this.isModalVisible$ = this.modalService.isModalVisible$;
   }
 
   //! Métodos del ciclo de vida
@@ -245,9 +248,7 @@ export default class TurnosComponent implements OnInit {
   }
 
   cargarTiendas(): void {
-    this.tiendas$ = this.tiendaService
-      .getTiendas()
-      .pipe(map((tiendas) => tiendas.sort((a, b) => this.customSort(a, b))));
+    this.tiendas$ = this.tiendaService.getTiendas(); // Sin ordenamiento aquí
   }
 
   //! Métodos de utilidad
@@ -278,38 +279,6 @@ export default class TurnosComponent implements OnInit {
       horasTrabajadas: 0,
       tiendaId: null,
     };
-  }
-
-  resetTienda(): Tienda {
-    return { id: 0, nombre: '', direccion: '' };
-  }
-
-  //! Métodos de ordenamiento
-  private customSort(a: Tienda, b: Tienda): number {
-    const numA = this.extractNumber(a.nombre);
-    const numB = this.extractNumber(b.nombre);
-
-    // Caso 1: Ambos son Tienda numerada
-    if (numA !== null && numB !== null) {
-      return numA - numB;
-    }
-    // Caso 2: Solo A es Tienda numerada
-    else if (numA !== null) {
-      return -1;
-    }
-    // Caso 3: Solo B es Tienda numerada
-    else if (numB !== null) {
-      return 1;
-    }
-    // Caso 4: Ninguno es Tienda numerada - orden alfabético
-    else {
-      return a.nombre.localeCompare(b.nombre);
-    }
-  }
-
-  private extractNumber(nombre: string): number | null {
-    const match = nombre.match(/Tienda (\d+)/);
-    return match ? parseInt(match[1], 10) : null;
   }
 
   //! Métodos de navegación
@@ -430,45 +399,6 @@ export default class TurnosComponent implements OnInit {
     this.modalService.abrirModal(50); // ✅ Usamos el servicio
   }
 
-  abrirModalAgregarTienda(): void {
-    // Cerrar primero el modal de gestión si está abierto
-    if (this.mostrarModalGestionarTiendas) {
-      this.cerrarModalGestionarTiendas();
-    }
-
-    this.mostrarModalAgregarTienda = true;
-    setTimeout(() => {
-      this.isModalAgregarTiendaVisible = true;
-    }, 50);
-  }
-
-  cerrarModalAgregarTienda(): void {
-    this.isModalAgregarTiendaVisible = false;
-    setTimeout(() => {
-      this.mostrarModalAgregarTienda = false;
-      this.tiendaActual = this.resetTienda(); // Resetear formulario
-    }, 300);
-  }
-
-  abrirModalGestionarTiendas(): void {
-    // Cerrar primero el modal de agregar si está abierto
-    if (this.mostrarModalAgregarTienda) {
-      this.cerrarModalAgregarTienda();
-    }
-
-    this.mostrarModalGestionarTiendas = true;
-    setTimeout(() => {
-      this.isModalGestionarTiendasVisible = true;
-    }, 50);
-  }
-
-  cerrarModalGestionarTiendas(): void {
-    this.isModalGestionarTiendasVisible = false;
-    setTimeout(() => {
-      this.mostrarModalGestionarTiendas = false;
-    }, 300);
-  }
-
   cerrarModal(): void {
     this.isSubmitting = true; // Deshabilitar el botón durante la animación
     this.modalService.cerrarModal(300); // ✅ Cerrar modal usando el servicio
@@ -485,185 +415,17 @@ export default class TurnosComponent implements OnInit {
     this.turnoActual = this.resetTurno();
   }
 
-  //! Métodos de guardado y eliminación
-  guardarTurno(): void {
-    if (this.isSubmitting) return; // ✅ Evitar múltiples envíos
-    this.isSubmitting = true;
-
-    this.errorHoraEntrada = null;
-    this.errorHoraSalida = null;
-
-    this.validarHorarioEntrada();
-    this.validarHorarioSalida();
-
-    if (!this.turnoActual.tiendaId) {
-      this.isSubmitting = false;
-      Notiflix.Notify.failure('Debes seleccionar una tienda', {
-        position: 'right-bottom',
-        cssAnimationStyle: 'from-right',
-      });
-      return;
-    }
-
-    if (this.errorHoraEntrada || this.errorHoraSalida) {
-      this.isSubmitting = false;
-      return;
-    }
-
-    // ✅ Validación adicional de horas
-    const horaEntrada = this.formatearHora(this.turnoActual.horaEntrada);
-    const horaSalida = this.formatearHora(this.turnoActual.horaSalida);
-    if (horaEntrada >= horaSalida) {
-      this.errorHoraSalida = 'La hora de salida debe ser posterior a la hora de entrada.';
-      this.isSubmitting = false;
-      return;
-    }
-
-    // ✅ Preparar datos para enviar al backend
-    const turnoParaGuardar: TurnoPayload = {
-      colaborador: { id: this.turnoActual.colaboradorId },
-      fecha: this.turnoActual.fecha,
-      horaEntrada: this.turnoActual.horaEntrada,
-      horaSalida: this.turnoActual.horaSalida,
-      empresa: { id: this.turnoActual.empresaId! },
-      tienda: { id: this.turnoActual.tiendaId! },
-    };
-
-    console.log('Datos enviados al backend:', turnoParaGuardar);
-
-    // ✅ Determinar si es creación o actualización
-    const operacion = this.turnoActual.id
-      ? this.turnoService.updateTurno(this.turnoActual.id, turnoParaGuardar)
-      : this.turnoService.addTurno(turnoParaGuardar);
-
-    operacion
-      .pipe(finalize(() => (this.isSubmitting = false)))
-      .subscribe({
-        next: () => {
-          const vistaMensual = this.vistaMensual; // ✅ Usamos la variable local
-
-          if (vistaMensual) {
-            this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
-          } else {
-            this.turnos$ = this.turnoService.getTurnosPorSemana(
-              this.turnoStateService.getSemanaActual()
-            );
-          }
-
-          setTimeout(() => this.inicializarTooltips(), 500);
-          this.cerrarModal();
-
-          Notiflix.Notify.success(
-            this.turnoActual.id ? 'Turno actualizado con éxito' : 'Turno creado con éxito',
-            {
-              position: 'right-bottom',
-              cssAnimationStyle: 'from-right',
-            }
-          );
-        },
-        error: (error: any) => {
-          console.log('Detalles del error:', error);
-          Notiflix.Notify.failure(error.error?.message || 'Error desconocido', {
-            position: 'right-bottom',
-            cssAnimationStyle: 'from-right',
-          });
-        },
-      });
-  }
-
-  eliminarTurno(): void {
-    if (!this.turnoActual.id) return;
-
-    Notiflix.Confirm.show(
-      'Confirmar Eliminación',
-      '¿Estás seguro de que deseas eliminar este turno?',
-      'Eliminar',
-      'Cancelar',
-      () => {
-        // ✅ Eliminar el turno
-        this.turnoService.deleteTurno(this.turnoActual.id!).subscribe({
-          next: () => {
-            if (this.vistaMensual) {
-              this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
-            } else {
-              this.turnos$ = this.turnoService.getTurnosPorSemana(
-                this.turnoStateService.getSemanaActual()
-              );
-              this.turnos$.subscribe(() => {
-                setTimeout(() => this.inicializarTooltips(), 500);
-              });
-            }
-
-            this.cerrarModal();
-
-            Notiflix.Notify.success('Turno eliminado con éxito', {
-              position: 'right-bottom',
-              cssAnimationStyle: 'from-right',
-            });
-          },
-          error: (error) => {
-            console.error('❌ Error al eliminar el turno:', error);
-            Notiflix.Notify.failure('Error al eliminar el turno', {
-              position: 'right-bottom',
-              cssAnimationStyle: 'from-right',
-            });
-          },
-        });
-      },
-      () => {
-        console.log('Eliminación cancelada');
-      }
-    );
-  }
-
-  //! Métodos de validación
-  validarHorarioEntrada(): void {
-    let hora = this.turnoActual.horaEntrada;
-    if (!hora) {
-      this.errorHoraEntrada = 'La hora de entrada es obligatoria.';
-      return;
-    }
-
-    hora = this.formatearHora(hora); // Limpiar segundos
-    const [horas, minutos] = hora.split(':').map(Number);
-
-    if (horas < 5 || horas > 22 || (horas === 22 && minutos > 0)) {
-      this.errorHoraEntrada =
-        'La hora de entrada debe ser entre las 5:00 AM y las 10:00 PM.';
+  manejarTurnoGuardado(): void {
+    if (this.vistaMensual) {
+      this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
     } else {
-      this.errorHoraEntrada = null; // Sin errores
+      this.turnos$ = this.turnoService.getTurnosPorSemana(this.turnoStateService.getSemanaActual());
+      this.turnos$.subscribe(() => setTimeout(() => this.inicializarTooltips(), 500));
     }
   }
 
-  validarHorarioSalida(): void {
-    let hora = this.turnoActual.horaSalida;
-    if (!hora) {
-      this.errorHoraSalida = 'La hora de salida es obligatoria.';
-      return;
-    }
-
-    hora = this.formatearHora(hora); // Limpiar segundos
-    const [horas, minutos] = hora.split(':').map(Number);
-
-    if (horas < 10 || (horas === 0 && minutos > 0) || horas > 24) {
-      this.errorHoraSalida =
-        'La hora de salida debe ser entre las 10:00 AM y las 12:00 AM.';
-    } else {
-      this.errorHoraSalida = null; // Sin errores
-    }
-  }
-
-  seRealizaronCambios(): boolean {
-    if (!this.turnoOriginal) {
-      return true; // Si no hay un turno original (modo agregar), se permite guardar
-    }
-
-    return (
-      this.turnoActual.horaEntrada !== this.turnoOriginal.horaEntrada ||
-      this.turnoActual.horaSalida !== this.turnoOriginal.horaSalida ||
-      this.turnoActual.fecha !== this.turnoOriginal.fecha ||
-      this.turnoActual.tiendaId !== this.turnoOriginal.tiendaId
-    );
+  manejarTurnoEliminado(): void {
+    this.manejarTurnoGuardado();
   }
 
   //! Métodos de cálculo de horas
@@ -685,82 +447,6 @@ export default class TurnosComponent implements OnInit {
       .padStart(2, '0')}`;
   }
 
-  //! Métodos de gestión de tiendas
-  guardarTienda(): void {
-    if (this.isSubmitting) return;
-    this.isSubmitting = true;
-
-    if (this.tiendaActual.id) {
-      this.tiendaService
-        .updateTienda(this.tiendaActual.id, this.tiendaActual)
-        .subscribe({
-          next: () => {
-            this.cargarTiendas();
-            this.cerrarModalAgregarTienda();
-            this.isSubmitting = false;
-            Notiflix.Notify.success('Tienda actualizada con éxito', {
-              position: 'right-bottom',
-              cssAnimationStyle: 'from-right',
-            });
-          },
-          error: (error) => {
-            this.isSubmitting = false;
-            Notiflix.Notify.failure(
-              error.error?.message || 'Error desconocido',
-              {
-                position: 'right-bottom',
-                cssAnimationStyle: 'from-right',
-              }
-            );
-          },
-        });
-    } else {
-      this.tiendaService.addTienda(this.tiendaActual).subscribe({
-        next: () => {
-          this.cargarTiendas();
-          this.cerrarModalAgregarTienda();
-          this.isSubmitting = false;
-          Notiflix.Notify.success('Tienda creada con éxito', {
-            position: 'right-bottom',
-            cssAnimationStyle: 'from-right',
-          });
-        },
-        error: (error) => {
-          this.isSubmitting = false;
-          Notiflix.Notify.failure(error.error?.message || 'Error desconocido', {
-            position: 'right-bottom',
-            cssAnimationStyle: 'from-right',
-          });
-        },
-      });
-    }
-  }
-
-  editarTienda(tienda: Tienda): void {
-    this.tiendaActual = { ...tienda };
-    this.abrirModalAgregarTienda();
-  }
-
-  eliminarTienda(id: number): void {
-    Notiflix.Confirm.show(
-      'Confirmar Eliminación',
-      '¿Estás seguro de que deseas eliminar esta tienda?',
-      'Eliminar',
-      'Cancelar',
-      () => {
-        this.tiendaService.deleteTienda(id).subscribe(() => {
-          this.cargarTiendas();
-          Notiflix.Notify.success('Tienda eliminada con éxito', {
-            position: 'right-bottom',
-            cssAnimationStyle: 'from-right',
-          });
-        });
-      },
-      () => {
-        console.log('Eliminación cancelada');
-      }
-    );
-  }
 
   //! Métodos de actualización de UI
   actualizarNombreMes(): void {
