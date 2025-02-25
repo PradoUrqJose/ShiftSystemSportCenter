@@ -72,8 +72,11 @@
         </p>
       </div>
       <div class="relative w-full h-0 grow-[3] shrink-0 p-6">
-        <canvas baseChart [datasets]="barChartSemanaActualData.datasets" [labels]="barChartSemanaActualData.labels"
-          [options]="barChartSemanaActualOptions" [type]="'bar'">
+        <canvas baseChart
+                [datasets]="barChartSemanaActualData.datasets"
+                [labels]="barChartSemanaActualData.labels"
+                [options]="barChartSemanaActualOptions"
+                [type]="'bar'">
         </canvas>
       </div>
     </div>
@@ -81,8 +84,11 @@
     <div class="card p-6 fade-in order-3 md:col-span-2 lg:col-span-2"> <!-- Automático -->
       <h4 class="text-lg font-semibold text-gray-800 mb-4">Tiendas Trabajadas</h4>
       <div class="relative w-full h-full">
-        <canvas baseChart [datasets]="horizontalBarChartData.datasets" [labels]="horizontalBarChartData.labels"
-          [options]="horizontalBarChartOptions" [type]="'bar'"></canvas>
+        <canvas baseChart
+                [datasets]="horizontalBarChartData.datasets"
+                [labels]="horizontalBarChartData.labels"
+                [options]="horizontalBarChartOptions"
+                [type]="'bar'"></canvas>
       </div>
     </div>
 
