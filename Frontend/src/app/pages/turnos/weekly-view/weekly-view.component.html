@@ -1,7 +1,33 @@
-<table class="w-full shadow bg-white rounded-lg overflow-hidden">
+<table class="w-full shadow bg-white rounded-lg">
   <thead>
     <tr class="text-gray-800">
-      <th class="bg-blue-50 text-center px-2 py-4 colaborador-column w-[30%] sm:w-[21%]">Colaborador</th>
+      <th class="bg-blue-50 text-center px-2 py-4 colaborador-column w-[100%]">
+        <div class="w-full flex justify-around items-center">
+          <!-- Botón de ordenamiento -->
+          <button (click)="toggleSortByCompany()" class="text-blue-200 hover:text-blue-300 transition p-1" title="Ordenar por empresa">
+            <i class="fa-solid fa-sort text-sm" [ngClass]="{'text-blue-700': sortByCompany}"></i>
+          </button>
+          <!-- Encabezado -->
+          <span>Colaborador</span>
+          <!-- Botón de filtro con flotante -->
+          <div class="relative">
+            <button (click)="toggleFilterDropdown()" class="text-blue-200 hover:text-blue-300 transition p-1" title="Filtrar por empresa">
+              <i class="fa-solid fa-filter text-sm"></i>
+            </button>
+            <div *ngIf="showFilterDropdown"
+            class="absolute left-0 top-full mt-2 w-60 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+            [ngStyle]="{ 'left': filterDropdownPosition.x + 'px', 'top': filterDropdownPosition.y + 'px' }">
+            <ul class="py-1">
+              <li *ngFor="let empresa of empresas"
+                (click)="filterByCompany(empresa)"
+                class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer text-left">
+                {{ empresa === 'all' ? 'Todas las empresas' : empresa }}
+              </li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </th>
       <th *ngFor="let dia of completarSemana(diasSemana)"
         class="bg-blue-50 text-center px-2 py-4 capitalize font-normal semana-column w-[20%] sm:w-[10.57%]">
         <span class="text-lg font-bold py-2 px-4 rounded-full" [ngClass]="{
@@ -17,7 +43,7 @@
   </thead>
 
   <tbody>
-    <ng-container *ngIf="colaboradores as colaboradores">
+    <ng-container *ngIf="filteredColaboradores as colaboradores">
       <tr *ngFor="let colaborador of colaboradores" class="hover:bg-gray-50 transition">
         <!-- Columna de colaborador -->
         <td class="py-4 px-4 flex justify-start items-center gap-3 w-full">
