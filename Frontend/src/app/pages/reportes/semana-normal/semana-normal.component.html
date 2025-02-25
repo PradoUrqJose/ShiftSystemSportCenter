@@ -43,7 +43,8 @@
     [colaboradores]="colaboradores"
     [turnos]="(turnos$ | async) || []"
     (abrirModal)="abrirModal($event)"
-    (abrirModalEdicion)="abrirModalEdicion($event)">
+    (abrirModalEdicion)="abrirModalEdicion($event)"
+    [hideTotal]=true>
   </app-weekly-view>
 
 </div>
