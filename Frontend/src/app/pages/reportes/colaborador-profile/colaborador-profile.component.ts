@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -36,6 +36,9 @@ export class ColaboradorProfileComponent implements OnInit {
   turnosFeriados: any[] = [];
   tiendasTrabajadas: { nombre: string, horas: number }[] = [];
   totalHorasSemanaActual: number = 0;
+  @ViewChild('fechaInicioInput') fechaInicioInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('fechaFinInput') fechaFinInput!: ElementRef<HTMLInputElement>;
+
 
   barChartData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
   barChartOptions: ChartOptions<'bar'> = {
@@ -120,7 +123,7 @@ export class ColaboradorProfileComponent implements OnInit {
       title: { display: false },
       tooltip: { enabled: false },
       datalabels: {
-        display: (context) => isToday(parseISO(`2025-02-${context.dataIndex + 17}`)),
+        display: (context) => isToday(new Date()) && context.dataIndex === new Date().getDay() - 1,
         anchor: 'end',
         align: 'top',
         color: '#fff',
@@ -141,16 +144,11 @@ export class ColaboradorProfileComponent implements OnInit {
   private coloresEmpresas: string[] = [
     '#fff3cc', // Amarillo pastel
     '#cce5ff', // Azul pastel
-    '#e0e0e0', // Gris claro (ya existente)
-    '#d9e2ec', // Azul grisáceo pastel (ya existente)
     '#f0e5de', // Beige claro (ya existente)
-    '#ffebcc', // Durazno claro
-    '#d4f4dd', // Verde menta suave
     '#b3e0ff', // Celeste pastel
+    '#d4f4dd', // Verde menta suave
     '#ffccd9', // Rosa empolvado
     '#e6ccff', // Lila suave
-    '#fff2b3', // Amarillo mantequilla
-    '#cce5cc', // Verde pastel
     '#ffddcc', // Melocotón pastel
   ];
 
@@ -246,7 +244,7 @@ export class ColaboradorProfileComponent implements OnInit {
   }
 
   loadSemanaActual(horasTrabajadas: any[]): void {
-    const today = new Date('2025-02-21'); // Fecha fija para consistencia
+    const today = new Date();
     const start = startOfWeek(today, { weekStartsOn: 1 }); // Lunes 17 de febrero
     const end = endOfWeek(today, { weekStartsOn: 1 }); // Domingo 23 de febrero
     const daysOfWeek = eachDayOfInterval({ start, end });
@@ -332,7 +330,7 @@ export class ColaboradorProfileComponent implements OnInit {
     return this.coloresEmpresas[index];
   }
 
-  getWallpStyles(empresaNombre: string | undefined): any {
+  getWallpStyles(empresaNombre: string | undefined, patternBool: boolean): any {
     if (!empresaNombre || empresaNombre === 'N/A') {
       return { 'background-color': '#e5e7eb' };
     }
@@ -345,13 +343,21 @@ export class ColaboradorProfileComponent implements OnInit {
     const rgb = this.hexToRgb(backgroundColor);
     const darkerColor = this.darkenColor(rgb.r, rgb.g, rgb.b, 0.09);
     const darkerHex = this.rgbToHex(darkerColor.r, darkerColor.g, darkerColor.b);
-    const pattern = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='20'><text x='5' y='12' font-size='14' fill='%23${darkerHex.slice(1)}' font-weight='bold' font-family='Quicksand, sans-serif'>${encodeURIComponent(empresaNombre)}</text></svg>")`;
-    return {
-      'background-color': backgroundColor,
-      'background-image': pattern,
-      'background-repeat': 'repeat',
-      'background-size': '170px 20px'
-    };
+    if( patternBool === true) {
+      const pattern = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='20'><text x='5' y='12' font-size='14' fill='%23${darkerHex.slice(1)}' font-weight='bold' font-family='Quicksand, sans-serif'>${encodeURIComponent(empresaNombre)}</text></svg>")`;
+      return {
+        'background-color': backgroundColor,
+        'background-image': pattern,
+        'background-repeat': 'repeat',
+        'background-size': '170px 20px'
+      };
+    }else {
+      return {
+        'background-color': backgroundColor,
+        'color': this.lightenDarkenColor(darkerHex, -300),
+        'font-weight:': 800,
+      };
+    }
   }
 
   private hexToRgb(hex: string): { r: number, g: number, b: number } {
@@ -373,5 +379,9 @@ export class ColaboradorProfileComponent implements OnInit {
 
   private rgbToHex(r: number, g: number, b: number): string {
     return `#${Math.round(r).toString(16).padStart(2, '0')}${Math.round(g).toString(16).padStart(2, '0')}${Math.round(b).toString(16).padStart(2, '0')}`;
+  }
+
+  abrirCalendario(state: string): void {
+    state === 'inicio' ? this.fechaInicioInput.nativeElement.showPicker() : this.fechaFinInput.nativeElement.showPicker();
   }
 }
