@@ -60,13 +60,18 @@ export class SemanaNormalComponent implements OnInit {
   // Método para cargar datos iniciales
   cargarDatos(): void {
     this.turnoStateService.setLoading(true);
-
     const semanaActual = this.turnoStateService.getSemanaActual();
     this.cargarSemanaNormal(semanaActual);
 
     this.colaboradorService.getColaboradoresPorHabilitacion(true).subscribe({
-      next: (colaboradores) => this.colaboradores = colaboradores,
-      error: (error) => console.error('Error al cargar colaboradores:', error)
+      next: (colaboradores) => {
+        this.colaboradores = colaboradores;
+        this.turnoStateService.setLoading(false);
+      },
+      error: (error) => {
+        console.error('Error al cargar colaboradores:', error);
+        this.turnoStateService.setLoading(false);
+      }
     });
   }
 
