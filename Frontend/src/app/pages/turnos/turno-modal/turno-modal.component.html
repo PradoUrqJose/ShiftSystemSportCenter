@@ -1,0 +1,109 @@
+<div *ngIf="mostrarModal"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm"
+  (click)="cerrarModal()">
+  <div
+    class="bg-white p-8 rounded-2xl shadow-2xl transform transition-all duration-200 w-11/12 sm:w-2/3 md:w-1/2 lg:w-1/3 relative"
+    [ngClass]="{'opacity-0 -translate-y-10': !isModalVisible, 'opacity-100 translate-y-0': isModalVisible}"
+    (click)="$event.stopPropagation()">
+    <!-- Botón de cierre -->
+    <button (click)="cerrarModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition"
+      aria-label="Cerrar">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+
+    <!-- Encabezado -->
+    <div class="text-center pb-6 border-b border-gray-100">
+      <h3 class="text-2xl font-bold text-gray-800 mb-2">
+        {{ turnoActual.id ? 'Editar Turno' : 'Agregar Turno' }}
+      </h3>
+      <p class="text-gray-500 text-sm">
+        {{ turnoActual.id ? 'Modifica los datos del turno seleccionado.' : 'Introduce datos para registrar un nuevo turno.' }}
+      </p>
+    </div>
+
+    <!-- Formulario -->
+    <form (ngSubmit)="guardarTurno()" class="mt-6 space-y-6">
+      <!-- Sección: Hora de Entrada -->
+      <div>
+        <label for="horaEntrada" class="block text-sm font-medium text-gray-700 mb-2">Hora de Entrada</label>
+        <input id="horaEntrada" type="time" [(ngModel)]="turnoActual.horaEntrada" name="horaEntrada"
+          class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          required (change)="validarHorarioEntrada()" />
+        <div *ngIf="errorHoraEntrada" class="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded-lg">
+          {{ errorHoraEntrada }}
+        </div>
+      </div>
+
+      <!-- Sección: Hora de Salida -->
+      <div>
+        <label for="horaSalida" class="block text-sm font-medium text-gray-700 mb-2">Hora de Salida</label>
+        <input id="horaSalida" type="time" [(ngModel)]="turnoActual.horaSalida" name="horaSalida"
+          class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          required (change)="validarHorarioSalida()" />
+        <div *ngIf="errorHoraSalida" class="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded-lg">
+          {{ errorHoraSalida }}
+        </div>
+      </div>
+
+      <!-- Sección: Tienda -->
+      <div>
+        <label for="tienda" class="block text-sm font-medium text-gray-700 mb-2">Tienda</label>
+        <select id="tienda" [(ngModel)]="turnoActual.tiendaId" name="tienda"
+          class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          required #tiendaSelect="ngModel">
+          <option [ngValue]="null" disabled>Seleccione una Tienda</option>
+          <option *ngFor="let tienda of tiendas$ | async" [value]="tienda.id">{{ tienda.nombre }}</option>
+        </select>
+        <div *ngIf="tiendaSelect.invalid && (tiendaSelect.dirty || tiendaSelect.touched)"
+          class="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded-lg">
+          La selección de tienda es obligatoria
+        </div>
+        <div class="flex justify-between mt-3">
+          <button type="button" class="text-blue-500 hover:text-blue-700 transition font-medium"
+            (click)="abrirModalAgregarTienda()">Agregar Tienda</button>
+          <button type="button" class="text-blue-500 hover:text-blue-700 transition font-medium"
+            (click)="abrirModalGestionarTiendas()">Gestionar Tiendas</button>
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex justify-between items-center mt-6">
+        <button type="submit"
+          class="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-6 rounded-xl hover:from-blue-600 hover:to-blue-700 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="isSubmitting || !seRealizaronCambios() || errorHoraEntrada || errorHoraSalida">
+          {{ turnoActual.id ? 'Actualizar' : 'Agregar' }}
+        </button>
+        <div *ngIf="turnoActual.id">
+          <button type="button" (click)="eliminarTurno()"
+            class="text-red-500 hover:text-red-700 transition transform hover:scale-110" title="Eliminar Turno">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+
+  <!-- Modales secundarios -->
+  <app-agregar-tienda-modal
+  [mostrarModal]="mostrarModalAgregarTienda"
+  [isModalVisible]="isModalAgregarTiendaVisible"
+  [tiendaActual]="tiendaActual"
+  (cerrarModalEvent)="cerrarModalAgregarTienda()"
+  (tiendaGuardada)="manejarTiendaGuardada()">
+  </app-agregar-tienda-modal>
+
+  <app-gestionar-tiendas-modal
+  [mostrarModal]="mostrarModalGestionarTiendas"
+  [isModalVisible]="isModalGestionarTiendasVisible"
+  [tiendas$]="tiendas$"
+  (cerrarModalEvent)="cerrarModalGestionarTiendas()"
+  (abrirAgregarTiendaEvent)="abrirModalAgregarTienda()"
+  (tiendaEditada)="manejarEditarTienda($event)"
+  (tiendaEliminada)="manejarTiendaEliminada()">
+  </app-gestionar-tiendas-modal>
+
+</div>
+
