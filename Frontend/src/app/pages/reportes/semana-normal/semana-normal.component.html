@@ -37,9 +37,25 @@
 
 <!-- Tabla de turnos semanal -->
 <div *ngIf="!(isLoading$ | async)">
-  <app-weekly-view *ngIf="!(isLoading$ | async)" [diasSemana]="(diasSemana$ | async) || []"
-    [colaboradores]="colaboradores" [turnos]="(turnos$ | async) || []" (abrirModal)="abrirModal($event)"
+  <app-weekly-view
+    *ngIf="!(isLoading$ | async)"
+    [diasSemana]="(diasSemana$ | async) || []"
+    [colaboradores]="colaboradores"
+    [turnos]="(turnos$ | async) || []"
+    (abrirModal)="abrirModal($event)"
     (abrirModalEdicion)="abrirModalEdicion($event)">
   </app-weekly-view>
 
 </div>
+
+<!-- Modal de turnos -->
+<app-turno-modal
+  [mostrarModal]="(mostrarModal$ | async) === true"
+  [isModalVisible]="(isModalVisible$ | async) === true"
+  [turnoActual]="turnoActual"
+  [turnoOriginal]="turnoOriginal"
+  [tiendas$]="tiendas$"
+  (cerrarModalEvent)="cerrarModal()"
+  (turnoGuardado)="manejarTurnoGuardado()"
+  (turnoEliminado)="manejarTurnoEliminado()">
+</app-turno-modal>
