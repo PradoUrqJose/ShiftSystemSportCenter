@@ -83,7 +83,6 @@ export class SemanaNormalComponent implements OnInit {
     this.turnos$ = this.turnoService.getTurnosPorSemana(fecha);
     this.turnos$.subscribe({
       next: (turnos) => {
-        console.log('Turnos cargados:', turnos);
         setTimeout(() => this.inicializarTooltips(), 500);
         this.turnoStateService.setLoading(false);
       },
