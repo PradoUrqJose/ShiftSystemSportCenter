@@ -29,8 +29,6 @@ export class CalendarioService {
     const finSemana = endOfWeek(fecha, { weekStartsOn: 1 });
 
     const diasSemana = eachDayOfInterval({ start: inicioSemana, end: finSemana }).map((dia) => this.formatearDia(dia));
-    console.log('Días de la semana:', diasSemana);
-
     return of(diasSemana); // Envuelve el resultado en un Observable
   }
 
@@ -38,9 +36,6 @@ export class CalendarioService {
   obtenerSemanasDelMes(fecha: Date): Observable<DiaSemana[][]> {
     const inicioMes = startOfMonth(fecha);
     const finMes = endOfMonth(fecha);
-
-    console.log('Inicio del mes:', inicioMes);
-    console.log('Fin del mes:', finMes);
 
     let inicioSemana = startOfWeek(inicioMes, { weekStartsOn: 1 });
     const semanas: Date[] = [];
@@ -65,7 +60,6 @@ export class CalendarioService {
       ),
       toArray(), // Agrupa todas las semanas en un array
       map((semanasCompletas) => {
-        console.log('Semanas del mes:', semanasCompletas);
         return semanasCompletas;
       })
     );
@@ -166,7 +160,6 @@ export class CalendarioService {
     return this.obtenerSemanasDelMes(fecha).pipe(
       map((semanas) => {
         const semanasCompletadas = this.completarSemanasDelMes(semanas, fecha.getMonth() + 1, fecha.getFullYear());
-        console.log("ObtenerSemanasDelMesConCompletado:", semanasCompletadas);
         return semanasCompletadas;
       })
     );
