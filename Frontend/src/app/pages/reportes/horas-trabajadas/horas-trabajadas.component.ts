@@ -66,8 +66,6 @@ export class HorasTrabajadasComponent implements OnInit {
               apellido: colaborador ? colaborador.apellido : "Desconocido" // 🛠 Agrega el apellido si existe
             };
           });
-
-          console.log("📊 Reportes obtenidos con apellidos:", this.reportes);
         },
         error: (error) => console.error("❌ Error al obtener reportes:", error)
       });
