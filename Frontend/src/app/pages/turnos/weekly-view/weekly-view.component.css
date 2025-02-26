@@ -109,6 +109,7 @@
   align-items: center;
   justify-content: center;
 }
+
 /* FERIADO */
 
 .feriado-semanal-encabezado {
@@ -129,13 +130,17 @@
 .dia-sobrante {
   color: #8d8d8d;
   opacity: 0.6;
-  pointer-events: none; /* Para que no sean clickeables */
+  pointer-events: none;
+  /* Para que no sean clickeables */
 }
 
 .empty-cell {
-  background-color: #f8fafc; /* Color de fondo */
-  min-height: 48px; /* Ajusta la altura para mantener uniformidad */
-  pointer-events: none; /* Evita interacción con la celda */
+  background-color: #f8fafc;
+  /* Color de fondo */
+  min-height: 48px;
+  /* Ajusta la altura para mantener uniformidad */
+  pointer-events: none;
+  /* Evita interacción con la celda */
 }
 
 /* Estilo para el borde rojo en turnos de feriados */
@@ -164,6 +169,7 @@
 .relative {
   position: relative;
 }
+
 .absolute {
   position: absolute;
   z-index: 50;
@@ -171,4 +177,9 @@
 
 thead {
   overflow: hidden;
+}
+
+.midHours {
+  background-color: #f9f7cb;
+  border: 2px solid #d9d5ab;
 }
