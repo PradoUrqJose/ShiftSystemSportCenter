@@ -70,7 +70,6 @@ export class TurnosFeriadosComponent implements OnInit {
               apellido: colaborador ? colaborador.apellido : "Desconocido"
             };
           });
-          console.log("📊 Reportes de turnos en feriados obtenidos:", this.reportes);
           this.errorMessage = null;
         },
         error: (error) => {
