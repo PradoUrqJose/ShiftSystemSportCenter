@@ -168,7 +168,6 @@ export default class ColaboradoresComponent implements OnInit {
   getEmpresasAndColaboradores(): void {
     this.empresaService.getEmpresasPorHabilitacion(true).subscribe({
       next: (empresas) => {
-        console.log(empresas);
         this.empresas = empresas;
         // Cargar colaboradores después de cargar las empresas
         this.getColaboradores();
