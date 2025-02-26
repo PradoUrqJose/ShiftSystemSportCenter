@@ -25,10 +25,19 @@ export class WeeklyViewComponent implements OnInit {
     console.log('ngOnInit ejecutado');
     this.cargarFeriados();
     this.completarSemana(this.diasSemana);
+    this.calcularHorasTotales();
 
     // Inicializar filteredColaboradores con todos los colaboradores
     this.filteredColaboradores = [...this.colaboradores];
     this.applySortAndFilter(); // Aplicar ordenamiento/filtro inicial si aplica
+  }
+
+  calcularHorasTotales() {
+    console.log("CALCULAR HORAS TOTALES");
+    this.horasTotalesSemana = {};
+    this.colaboradores.forEach(colaborador => {
+      this.horasTotalesSemana[colaborador.id] = this.getHorasTotalesSemana(colaborador.id);
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -39,6 +48,7 @@ export class WeeklyViewComponent implements OnInit {
     }
   }
 
+  horasTotalesSemana: { [colaboradorId: number]: number } = {};
   // Variable interna para almacenar los feriados
   feriados: Feriado[] = []; // Lista de feriados
 
@@ -94,19 +104,22 @@ export class WeeklyViewComponent implements OnInit {
     return this.turnoService.esFeriado(fecha, this.feriados);
   }
 
-  getHorasTotalesSemanaFormateadas(colaboradorId: number): string {
-    // 1️⃣ Filtrar turnos solo de la semana actual que se está mostrando en `diasSemana`
+  getHorasTotalesSemana(colaboradorId: number): number {
+    // Filtrar turnos solo de los días visibles en la semana actual
     const turnosSemana = this.turnos.filter(turno =>
       this.diasSemana.some(dia => dia.fecha === turno.fecha) && turno.colaboradorId === colaboradorId
     );
 
-    // 2️⃣ Sumar las horas trabajadas en esa semana estricta
+    // Sumar las horas trabajadas
     const horasTotales = turnosSemana.reduce((total, turno) => total + (turno.horasTrabajadas ?? 0), 0);
-
-    // 3️⃣ Formatear usando el servicio
-    return this.calendarioService.formatearHoras(horasTotales);
+    console.log(`Horas totales para colaborador ${colaboradorId}:`, horasTotales, 'Turnos:', turnosSemana);
+    return horasTotales;
   }
 
+  getHorasTotalesSemanaFormateadas(colaboradorId: number): string {
+    const horasTotales = this.getHorasTotalesSemana(colaboradorId);
+    return this.calendarioService.formatearHoras(horasTotales);
+  }
 
   // Método para verificar si un colaborador tiene turnos en feriados
   tieneTurnosFeriados(colaboradorId: number): boolean {
@@ -133,18 +146,35 @@ export class WeeklyViewComponent implements OnInit {
   completarSemana(semana: DiaSemana[] | null): DiaSemana[] {
     if (!semana) return [];
 
-    let semanaCompleta = [...semana]; // Copiar la semana
-    const diasFaltantes = 7 - semanaCompleta.length; // Días que faltan para completar la semana
+    let semanaCompleta = [...semana];
+    const diasFaltantes = 7 - semanaCompleta.length;
 
-    // Si hay días faltantes, agregarlos al inicio en lugar de al final
+    // Reemplazar días sobrantes con 'empty'
+    semanaCompleta = semanaCompleta.map(dia => {
+      if (dia.esSobrante) {
+        return {
+          fecha: 'empty',
+          nombre: '',
+          dayNumber: '',
+          monthNombre: '',
+          yearName: '',
+          esFeriado: false,
+          esSobrante: true,
+        };
+      }
+      return dia;
+    });
+
+    // Completar con días vacíos si faltan
     for (let i = 0; i < diasFaltantes; i++) {
-      semanaCompleta.unshift({
-        fecha: 'empty', // Indicador de celda vacía
+      semanaCompleta.push({
+        fecha: 'empty',
         nombre: '',
         dayNumber: '',
         monthNombre: '',
         yearName: '',
         esFeriado: false,
+        esSobrante: false,
       });
     }
 
