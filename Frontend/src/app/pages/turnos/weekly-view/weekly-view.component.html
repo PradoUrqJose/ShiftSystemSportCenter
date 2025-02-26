@@ -73,8 +73,10 @@
                 <div class="container-green cursor-pointer transition bg-green-100 p-2 rounded-lg m-auto text-center"
                   [ngClass]="{
                     'almuerzo-tomado': turno.tomoAlmuerzo,
-                    'border-2 border-red-500': esFeriado(dia.fecha)
-                  }" [attr.data-horas-trabajadas]="formatearHorasDia(turno.horasTrabajadas)"
+                    'border-2 border-red-500': esFeriado(dia.fecha),
+                    'midHours': (turno.horasTrabajadas ?? 0) > 8
+                  }"
+                  [attr.data-horas-trabajadas]="formatearHorasDia(turno.horasTrabajadas)"
                   [attr.data-tienda]="turno.nombreTienda" (click)="abrirModalEdicion.emit(turno)">
                   {{ formatearHora(turno.horaEntrada) }} - {{ formatearHora(turno.horaSalida) }}
                 </div>
@@ -94,13 +96,14 @@
           <ng-template #emptyCell></ng-template>
         </td>
         <!-- Columna de total de horas -->
-        <td [ngClass]="{'hidden': hideTotal, 'text-red-500': horasTotalesSemana[colaborador.id]>48}" class="p-2 text-center font-bold semana-column relative">
+        <td [ngClass]="{'hidden': hideTotal, 'text-red-500': horasTotalesSemana[colaborador.id] > 48}" class="p-2 text-center font-bold semana-column relative">
           <div class="flex items-center justify-center">
-            <span> {{ getHorasTotalesSemanaFormateadas(colaborador.id) }}
-            </span>
-            <!-- Signo de exclamación si hay turnos en feriados -->
+            <span>{{ getHorasTotalesSemanaFormateadas(colaborador.id) }}</span>
             <ng-container *ngIf="tieneTurnosFeriados(colaborador.id)">
               <span> ⚠️ </span>
+            </ng-container>
+            <ng-container *ngIf="horasTotalesSemana[colaborador.id] > 48">
+              <span class="absolute -right-1"> ❗ </span>
             </ng-container>
           </div>
         </td>

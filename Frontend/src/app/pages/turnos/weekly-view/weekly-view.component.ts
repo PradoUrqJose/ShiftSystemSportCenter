@@ -22,30 +22,42 @@ export class WeeklyViewComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    console.log('ngOnInit ejecutado');
     this.cargarFeriados();
-    this.completarSemana(this.diasSemana);
-    this.calcularHorasTotales();
-
-    // Inicializar filteredColaboradores con todos los colaboradores
+    this.diasSemana = this.completarSemana(this.diasSemana);
+    if (this.turnos && this.colaboradores) {
+      this.calcularHorasTotales();
+    }
     this.filteredColaboradores = [...this.colaboradores];
-    this.applySortAndFilter(); // Aplicar ordenamiento/filtro inicial si aplica
+    this.applySortAndFilter();
   }
 
-  calcularHorasTotales() {
-    console.log("CALCULAR HORAS TOTALES");
-    this.horasTotalesSemana = {};
-    this.colaboradores.forEach(colaborador => {
-      this.horasTotalesSemana[colaborador.id] = this.getHorasTotalesSemana(colaborador.id);
-    });
-  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['colaboradores'] && changes['colaboradores'].currentValue) {
-      console.log('colaboradores cambió:', this.colaboradores);
-      this.filteredColaboradores = [...this.colaboradores]; // Inicializar con todos
-      this.applySortAndFilter(); // Aplicar filtro y ordenamiento
+      console.log('Colaboradores cambiaron:', this.colaboradores);
+      this.filteredColaboradores = [...this.colaboradores];
+      if (this.turnos) {
+        this.calcularHorasTotales(); // Recalcular cuando colaboradores llegue
+      }
+      this.applySortAndFilter();
     }
+    if (changes['turnos'] && changes['turnos'].currentValue) {
+      console.log('Turnos cambiaron:', this.turnos);
+      if (this.colaboradores.length > 0) {
+        this.calcularHorasTotales(); // Recalcular cuando turnos llegue
+      }
+      this.cdr.detectChanges();
+    }
+  }
+
+  calcularHorasTotales() {
+    console.log("CALCULAR HORAS TOTALES", this.turnos, this.colaboradores);
+    this.horasTotalesSemana = {};
+    this.colaboradores.forEach(colaborador => {
+      const horas = this.getHorasTotalesSemana(colaborador.id);
+      this.horasTotalesSemana[colaborador.id] = horas;
+      console.log(`Colaborador ${colaborador.id}: ${horas} horas`);
+    });
   }
 
   horasTotalesSemana: { [colaboradorId: number]: number } = {};
@@ -84,9 +96,19 @@ export class WeeklyViewComponent implements OnInit {
 
   // Método para formatear la hora
   formatearHora(hora: string | undefined): string {
-    const horasTotales = hora ? parseFloat(hora) : 0;
+    if (!hora) return "00:00"; // Si no hay hora, devolver 00:00
+
+    // Verificar si el formato es HH:mm
+    if (hora.includes(":")) {
+      const [horas, minutos] = hora.split(":").map(Number);
+      return this.calendarioService.formatearHoras(horas + minutos / 60);
+    }
+
+    // Si solo es un número en string, convertirlo a float
+    const horasTotales = parseFloat(hora);
     return this.calendarioService.formatearHoras(horasTotales);
   }
+
 
   esDiaActual(fecha: string): boolean {
     const hoy = new Date();
@@ -112,7 +134,6 @@ export class WeeklyViewComponent implements OnInit {
 
     // Sumar las horas trabajadas
     const horasTotales = turnosSemana.reduce((total, turno) => total + (turno.horasTrabajadas ?? 0), 0);
-    console.log(`Horas totales para colaborador ${colaboradorId}:`, horasTotales, 'Turnos:', turnosSemana);
     return horasTotales;
   }
 
@@ -188,12 +209,9 @@ export class WeeklyViewComponent implements OnInit {
   }
 
   applySortAndFilter(): void {
-    console.log('applySortAndFilter llamado');
-    console.log('colaboradores:', this.colaboradores);
     let result = [...this.colaboradores];
     if (this.selectedCompany !== 'all') {
       result = result.filter(col => col.empresaNombre === this.selectedCompany);
-      console.log('selectedCompany:', this.selectedCompany, 'filtered result:', result);
     }
     if (this.sortByCompany) {
       result.sort((a, b) => {
@@ -201,10 +219,8 @@ export class WeeklyViewComponent implements OnInit {
         const empresaB = b.empresaNombre || 'Sin Empresa';
         return empresaA.localeCompare(empresaB);
       });
-      console.log('sortByCompany:', this.sortByCompany, 'sorted result:', result);
     }
     this.filteredColaboradores = [...result];
-    console.log('filteredColaboradores actualizado:', this.filteredColaboradores);
     this.cdr.detectChanges();
   }
 
