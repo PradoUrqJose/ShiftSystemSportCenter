@@ -183,7 +183,6 @@ export default class TurnosComponent implements OnInit {
         );
       });
     }
-    console.log("✅ Cargando turnos mensuales para colaborador ID:", colaboradorId);
     setTimeout(() => {
       this.inicializarTooltips();
     }, 500);
@@ -194,8 +193,6 @@ export default class TurnosComponent implements OnInit {
     const nuevaVistaMensual = data === 'month';
 
     this.turnoStateService.setVistaMensual(nuevaVistaMensual); // ✅ Guardamos la vista en el servicio
-
-    console.log(data);
 
     if (nuevaVistaMensual) {
       // ✅ Ajustamos la semana actual al primer día del mes
@@ -217,13 +214,19 @@ export default class TurnosComponent implements OnInit {
     const mes = semanaActual.getMonth() + 1;
     const anio = semanaActual.getFullYear();
 
-    this.turnoService.getSemanasDelMes(mes, anio).subscribe({
+    this.calendarioService.obtenerSemanasDelMes(semanaActual).subscribe({
       next: (semanas) => {
+        // Encontrar la semana que contiene la fecha actual
+        const semanaSeleccionada = semanas.find(semana =>
+          semana.some(dia => dia.fecha === format(semanaActual, 'yyyy-MM-dd'))
+        ) || semanas[0]; // Fallback a la primera semana si no se encuentra
+
+        // Actualizar diasSemana$ con la semana procesada
+        this.diasSemana$.next(semanaSeleccionada);
+        console.log('Semana cargada inicialmente:', semanaSeleccionada);
+
+        // Cargar los turnos
         const numeroSemana = this.calcularNumeroSemana(semanaActual, semanas);
-        this.calendarioService.obtenerSemana(semanaActual).subscribe({
-          next: (dias) => this.diasSemana$.next(dias),
-          error: (error) => console.error('Error al obtener semana:', error)
-        });
         this.turnoService.getTurnosPorSemanaEstricta(mes, anio, numeroSemana).subscribe({
           next: (turnos) => {
             this.turnos$ = of(turnos);
@@ -240,6 +243,7 @@ export default class TurnosComponent implements OnInit {
       error: (error) => {
         console.error('Error al obtener semanas del mes:', error);
         this.turnos$ = of([]);
+        this.diasSemana$.next([]); // Resetear en caso de error
         this.turnoStateService.setLoading(false);
       }
     });
@@ -419,8 +423,21 @@ export default class TurnosComponent implements OnInit {
     if (this.vistaMensual) {
       this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
     } else {
-      this.turnos$ = this.turnoService.getTurnosPorSemana(this.turnoStateService.getSemanaActual());
-      this.turnos$.subscribe(() => setTimeout(() => this.inicializarTooltips(), 500));
+      const semanaActual = this.turnoStateService.getSemanaActual();
+      const mes = semanaActual.getMonth() + 1;
+      const anio = semanaActual.getFullYear();
+
+      // Calcular el número de semana basado en las semanas del mes
+      this.calendarioService.obtenerSemanasDelMes(semanaActual).subscribe({
+        next: (semanas) => {
+          const numeroSemana = this.calcularNumeroSemana(semanaActual, semanas);
+          this.turnos$ = this.turnoService.getTurnosPorSemanaEstricta(mes, anio, numeroSemana);
+          this.turnos$.subscribe(() => setTimeout(() => this.inicializarTooltips(), 500));
+        },
+        error: (error) => {
+          console.error('Error al calcular semanas del mes:', error);
+        }
+      });
     }
   }
 
