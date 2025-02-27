@@ -145,7 +145,19 @@ export class ColaboradorProfileComponent implements OnInit {
     plugins: {
       legend: { display: false },
       title: { display: false },
-      tooltip: { enabled: false },
+      tooltip: {
+        mode: 'nearest',
+        intersect: false,
+        callbacks: {
+          label: (tooltipItem) => {
+            const value = tooltipItem.raw;
+            if (typeof value === 'number') {
+              return `${this.formatearHorasDia(value, true)} h`;
+            }
+            return ''; // En caso de que no sea un número, evitar errores
+          }
+        }
+      },
       datalabels: {
         display: (context) => isToday(new Date()) && context.dataIndex === new Date().getDay() - 1,
         anchor: 'end',
@@ -155,7 +167,9 @@ export class ColaboradorProfileComponent implements OnInit {
         padding: 6,
         borderRadius: 10,
         font: { size: 10, weight: 'bold' },
-        formatter: (value) => `${value} h`
+        formatter: (value) => {
+          return `${this.formatearHorasDia(value, true)} h`
+        }
       }
     },
     elements: {
