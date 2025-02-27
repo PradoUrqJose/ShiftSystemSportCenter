@@ -321,8 +321,22 @@ export class ColaboradorProfileComponent implements OnInit {
     return horasPorMes;
   }
 
-  formatTime(time: string): string {
-    return this.calendarioService.formatearHoras(parseFloat(time));
+  formatearHora(hora: string | undefined): string {
+    if (!hora) return "00:00"; // Si no hay hora, devolver 00:00
+
+    // Verificar si el formato es HH:mm
+    if (hora.includes(":")) {
+      const [horas, minutos] = hora.split(":").map(Number);
+      return this.calendarioService.formatearHoras(horas + minutos / 60);
+    }
+
+    // Si solo es un número en string, convertirlo a float
+    const horasTotales = parseFloat(hora);
+    return this.calendarioService.formatearHoras(horasTotales);
+  }
+
+  formatearHorasDia(horasTrabajadas: number | undefined, type: boolean): string {
+    return this.calendarioService.formatearHoras(horasTrabajadas ?? 0, type);
   }
 
   loadTiendasTrabajadas(turnos: any[]): void {
@@ -347,7 +361,7 @@ export class ColaboradorProfileComponent implements OnInit {
         data: this.tiendasTrabajadas.map(t => t.horas),
         backgroundColor: backgroundColors,
         borderWidth: 0,
-        barThickness: 18 // Mantener barras delgadas
+        barThickness: 19, // Mantener barras delgadas
       }]
     };
   }
