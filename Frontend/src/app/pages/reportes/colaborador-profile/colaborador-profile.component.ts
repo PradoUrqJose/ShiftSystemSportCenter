@@ -27,12 +27,10 @@ export class ColaboradorProfileComponent implements OnInit {
   fechaInicio: string = this.getDefaultFechaInicio();
   fechaFin: string = this.getDefaultFechaFin();
   totalTurnos: number = 0;
-  totalHoras: number = 0;
   totalTurnosFeriados: number = 0;
-  turnosRecientes: any[] = [];
+  turnosRecientes: Turno[] = [];
   horasPorMes: number[] = [];
   horasFeriados: number = 0;
-  horasNormales: number = 0;
   turnosFeriados: any[] = [];
   tiendasTrabajadas: { nombre: string, horas: number }[] = [];
   totalHorasSemanaActual: number = 0;
@@ -60,15 +58,8 @@ export class ColaboradorProfileComponent implements OnInit {
     elements: {
       bar: {
         borderRadius: 10
-      }
-    }
-  };
-
-  pieChartData: number[] = [];
-  pieChartOptions: ChartOptions<'pie'> = {
-    responsive: true,
-    plugins: { legend: { position: 'bottom' }, tooltip: { enabled: true } },
-    animation: { animateScale: true, animateRotate: true }
+      },
+    },
   };
 
   horizontalBarChartData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
@@ -197,9 +188,8 @@ export class ColaboradorProfileComponent implements OnInit {
       turnosFeriados: this.reporteService.getTurnosFeriados(this.fechaInicio, this.fechaFin, colaboradores)
     }).subscribe({
       next: ({ turnos, horasTrabajadas, turnosFeriados }) => {
-        this.totalTurnos = turnos.length;
-        this.turnosRecientes = turnos.slice(0, 5);
-        this.totalHoras = horasTrabajadas.reduce((sum, turno) => sum + (turno.horasTrabajadas || 0), 0);
+        const turnosOrdenados = this.ordenarTurnosPorFecha(turnos);
+        this.turnosRecientes = turnosOrdenados.slice(0, 5);
         this.horasPorMes = this.calcularHorasPorMes(horasTrabajadas);
 
         // Determinar el mes actual (febrero en este contexto: índice 1)
@@ -222,10 +212,6 @@ export class ColaboradorProfileComponent implements OnInit {
         };
 
         this.totalTurnosFeriados = turnosFeriados.length;
-        this.horasFeriados = turnosFeriados.reduce((sum, turno) => sum + (turno.horasTrabajadas || 0), 0);
-        this.turnosFeriados = turnosFeriados;
-        this.horasNormales = this.totalHoras - this.horasFeriados;
-        this.pieChartData = [this.horasNormales, this.horasFeriados];
         this.loadTiendasTrabajadas(horasTrabajadas);
         this.loadSemanaActual(horasTrabajadas);
       },
