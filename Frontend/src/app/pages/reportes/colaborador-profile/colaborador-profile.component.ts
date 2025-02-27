@@ -103,19 +103,24 @@ export class ColaboradorProfileComponent implements OnInit {
       datalabels: {
         display: true,
         anchor: 'end',
-        align: 'right',
+        align: 'end',
         color: '#fff',
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
         padding: 6,
         borderRadius: 10,
         font: { size: 10, weight: 'bold' },
-        formatter: (value) => `${value} h`
+        formatter: (value) => `${this.formatearHorasDia(value, true)} h`
       }, // Desactivar etiquetas en las barras
-      tooltip: { mode: 'index', intersect: false }
+      tooltip: { enabled: false }
     },
     elements: {
       bar: {
-        borderRadius: 20
+        borderRadius: 20,
+      }
+    },
+    layout: {
+      padding: {
+        right: 34,
       }
     },
     animation: { duration: 1500, easing: 'easeOutBounce' }
