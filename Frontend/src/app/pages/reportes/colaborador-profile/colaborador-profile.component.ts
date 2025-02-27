@@ -227,6 +227,10 @@ export class ColaboradorProfileComponent implements OnInit {
     });
   }
 
+  private ordenarTurnosPorFecha(turnos: Turno[]): Turno[] {
+    return turnos.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+  }
+
   loadStatistics(colaboradorId: number): void {
     const colaboradores = [colaboradorId];
     forkJoin({
