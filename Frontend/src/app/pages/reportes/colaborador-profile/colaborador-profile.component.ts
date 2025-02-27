@@ -12,6 +12,7 @@ import { eachDayOfInterval, endOfWeek, format, isToday, parseISO, startOfWeek } 
 import { es } from 'date-fns/locale'; // Importar localización en español
 import { forkJoin } from 'rxjs';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { Turno } from '../../../services/turno.service';
 
 Chart.register(...registerables, ChartDataLabels);
 
@@ -41,6 +42,7 @@ export class ColaboradorProfileComponent implements OnInit {
   barChartData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
   barChartOptions: ChartOptions<'bar'> = {
     responsive: true,
+    maintainAspectRatio: false,
     scales: {
       x: {
 
@@ -53,7 +55,33 @@ export class ColaboradorProfileComponent implements OnInit {
     plugins: {
 
       legend: { display: false },
-      datalabels: { display: false } // Desactivar etiquetas en las barras
+      datalabels: {
+        display: (context) => {
+          const value = context.dataset.data[context.dataIndex] as number; // Obtener el valor sin formatear
+          return value > 0; // Solo mostrar la etiqueta si el valor es mayor a 0
+        },
+        anchor: 'end',
+        align: 'end',
+        color: '#fff',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        padding: 6,
+        borderRadius: 10,
+        font: { size: 10, weight: 'bold' },
+        formatter: (value) => `${parseFloat(value).toFixed(0)} h`
+      }, // Desactivar etiquetas en las barras
+      tooltip: {
+        mode: 'nearest',
+        intersect: false,
+        callbacks: {
+          label: (tooltipItem) => {
+            const value = tooltipItem.raw;
+            if (typeof value === 'number') {
+              return `${this.formatearHorasDia(value, true)} h`;
+            }
+            return ''; // En caso de que no sea un número, evitar errores
+          }
+        }
+      },
     },
     elements: {
       bar: {
