@@ -65,13 +65,13 @@
       </div>
     </div>
     <div class="card fade-in order-2 aspect-square flex flex-col">
-      <div class="p-6">
+      <div class="p-6 pb-0">
         <h4 class="text-lg font-bold text-gray-800 text-left quicksand">Progreso</h4>
         <p class="text-2xl text-gray-800 mb-2 poiret-one font-extralight">
           <span [countUp]="totalHorasSemanaActual" [options]="{ duration: 1 }"></span> h
         </p>
       </div>
-      <div class="relative w-full h-0 grow-[3] shrink-0 p-6">
+      <div class="relative w-full h-0 grow-[3] shrink-0 p-6 pt-0">
         <canvas baseChart
                 [datasets]="barChartSemanaActualData.datasets"
                 [labels]="barChartSemanaActualData.labels"
@@ -81,8 +81,8 @@
       </div>
     </div>
 
-    <div class="card p-6 fade-in order-3 md:col-span-2 lg:col-span-2"> <!-- Automático -->
-      <h4 class="text-lg font-semibold text-gray-800 mb-4">Tiendas Trabajadas</h4>
+    <div class="card p-6 fade-in order-3 md:col-span-2 lg:col-span-2 grid gap-2"> <!-- Automático -->
+      <h4 class="text-lg font-semibold text-gray-800">Tiendas Trabajadas</h4>
       <div class="relative w-full h-full">
         <canvas baseChart
                 [datasets]="horizontalBarChartData.datasets"
@@ -92,7 +92,7 @@
       </div>
     </div>
 
-    <div class="card p-6 fade-in order-4 md:col-span-2 lg:order-2 xl:order-4 lg:col-span-2">
+    <div class="card p-6 pb-2 fade-in order-4 md:col-span-2 lg:order-2 xl:order-4 lg:col-span-2">
       <h4 class="text-lg font-semibold text-gray-800 mb-4">Horas por Mes</h4>
       <div class="relative w-full">
         <canvas baseChart [datasets]="barChartData.datasets" [labels]="barChartData.labels" [options]="barChartOptions"
@@ -121,11 +121,11 @@
                   <tr *ngFor="let turno of turnosRecientes" class="trHead bg-neutral-100 even:bg-gray-50 transition">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{{ turno.fecha }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ turno.nombreTienda }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ formatTime(turno.horaEntrada) }}
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ formatearHora(turno.horaEntrada) }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ formatTime(turno.horaSalida) }}
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ formatearHora(turno.horaSalida) }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ turno.horasTrabajadas }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ formatearHorasDia(turno.horasTrabajadas, false )}}</td>
                   </tr>
                 </tbody>
               </table>
