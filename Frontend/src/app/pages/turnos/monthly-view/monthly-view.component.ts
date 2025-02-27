@@ -10,7 +10,7 @@ import { Observable } from 'rxjs';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './monthly-view.component.html',
-  styleUrls: ['./monthly-view.component.css'],
+  styleUrls: ['./monthly-view.component.css', '../turnos.component.css'],
 })
 export class MonthlyViewComponent {
   // Inputs para recibir datos del componente padre
