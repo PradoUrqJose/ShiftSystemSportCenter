@@ -87,12 +87,14 @@ export class CalendarioService {
   }
 
   // ✅ Formatea un número decimal de horas a formato HH:MM
-  formatearHoras(horasTotales: number): string {
+  formatearHoras(horasTotales: number, type?: boolean): string {
     if (!horasTotales || horasTotales < 0) return '00:00';
 
     const horas = Math.floor(horasTotales);
     const minutos = Math.round((horasTotales - horas) * 60) % 60;
-
+    if(type){
+      return `${String(horas).padStart(1, '0')}.${String(minutos).padStart(2, '0')}`;
+    }
     return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
   }
 
