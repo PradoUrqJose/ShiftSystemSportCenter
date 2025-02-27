@@ -10,7 +10,7 @@ import { Feriado, FeriadoService } from '../../../services/feriado.service';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './weekly-view.component.html',
-  styleUrl: './weekly-view.component.css'
+  styleUrls: ['./weekly-view.component.css', '../turnos.component.css']
 })
 export class WeeklyViewComponent implements OnInit {
 
