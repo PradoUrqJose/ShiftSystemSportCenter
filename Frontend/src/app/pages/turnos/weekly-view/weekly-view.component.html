@@ -70,7 +70,7 @@
             <ng-container *ngIf="turnos as turnos">
               <ng-container *ngIf="obtenerTurno(turnos, colaborador.id, dia.fecha) as turno; else agregarBoton">
                 <!-- Turno existente -->
-                <div class="container-green cursor-pointer transition bg-green-100 p-2 rounded-lg m-auto text-center"
+                <div class="container-green cursor-pointer transition border-green-100 p-2 rounded-lg m-auto text-center"
                   [ngClass]="{
                     'almuerzo-tomado': turno.tomoAlmuerzo,
                     'border-2 border-red-500': esFeriado(dia.fecha),
