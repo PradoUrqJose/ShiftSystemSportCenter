@@ -16,8 +16,12 @@
           <ng-container *ngIf="obtenerTurno(turnos, colaboradorSeleccionado, dia.fecha) as turno; else agregarBoton">
             <div class="w-[95%] h-[95%] m-auto bg-white rounded-lg py-4 px-1 relative flex justify-end items-end"
               [ngClass]="{ 'feriado-semanal': esFeriado(dia.fecha) }">
-              <div class="container-green minum rounded-lg cursor-pointer transition hover:shadow"
-                [ngClass]="{ 'almuerzo-tomado': turno.tomoAlmuerzo }"
+              <div class="container-green border-2 border-solid border-[#abd9c1] minum rounded-lg cursor-pointer transition hover:shadow"
+                [ngClass]="{
+                  'almuerzo-tomado': turno.tomoAlmuerzo,
+                  'border-2 border-red-500': turno.esFeriado,
+                  'midHours border-[#d9d5ab]': (turno.horasTrabajadas ?? 0) > 8
+                }"
                 [attr.data-horas-trabajadas]="formatearHorasDia(turno.horasTrabajadas)"
                 [attr.data-tienda]="turno.nombreTienda" (click)="abrirModalEdicion.emit(turno)">
                 <span>{{ formatearHora(turno.horaEntrada) }} </span>
