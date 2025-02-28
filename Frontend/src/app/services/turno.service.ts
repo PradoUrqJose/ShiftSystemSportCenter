@@ -36,6 +36,14 @@ export interface TurnoPayload {
   tienda: { id: number }; // Solo el ID de la tienda
 }
 
+export interface ResumenMensual {
+  colaboradorId: number;
+  nombreColaborador: string;
+  totalHorasMes: number;
+  diasFeriadosTrabajados: number;
+  horasEnFeriados: number;
+  turnos?: Turno[]; // Opcional, si decides incluir los turnos detallados
+}
 
 @Injectable({
   providedIn: 'root',
@@ -204,5 +212,30 @@ export class TurnoService {
    */
   esFeriado(fecha: string, feriados: Feriado[]): boolean {
     return feriados.some((feriado) => feriado.fecha === fecha);
+  }
+
+  /**
+ * Obtener el resumen mensual de horas trabajadas y feriados para uno o varios colaboradores.
+ * @param mes Mes (1-12).
+ * @param anio Año (ejemplo: 2025).
+ * @param colaboradoresIds Lista opcional de IDs de colaboradores (separados por coma si se envían como string).
+ * @returns Observable con la lista de resúmenes mensuales.
+ */
+  getResumenMensual(mes: number, anio: number, colaboradoresIds?: number[]): Observable<ResumenMensual[]> {
+    let url = `${this.apiUrl}/resumen-mensual?mes=${mes}&anio=${anio}`;
+
+    // Si se proporcionan IDs de colaboradores, añadirlos como parámetro
+    if (colaboradoresIds && colaboradoresIds.length > 0) {
+      const colaboradoresParam = colaboradoresIds.join(',');
+      url += `&colaboradores=${colaboradoresParam}`;
+    }
+
+    return this.http.get<ResumenMensual[]>(url).pipe(
+      tap((resumenes) => console.log('📊 Resumen mensual recibido:', resumenes)),
+      catchError((error) => {
+        console.error('❌ Error al obtener el resumen mensual:', error);
+        return throwError(() => new Error('No se pudo cargar el resumen mensual. Intente más tarde.'));
+      })
+    );
   }
 }
