@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { DiaSemana } from './../../../services/calendario.service';
-import { Turno, TurnoService } from './../../../services/turno.service';
+import { CalendarioService, DiaSemana } from './../../../services/calendario.service';
+import { ResumenMensual, Turno, TurnoService } from './../../../services/turno.service';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
 import { Observable } from 'rxjs';
@@ -19,18 +19,51 @@ export class MonthlyViewComponent {
   @Input() colaboradorSeleccionado: number = 0; // Colaborador seleccionado
   @Input() turnosMensuales$!: Observable<Turno[]>; // Turnos mensuales (Observable)
   @Input() diasSemana: DiaSemana[] = []; // Días de la semana
+  @Input() mes: number = new Date().getMonth() + 1; // Nuevo Input para el mes (default: mes actual)
+  @Input() anio: number = new Date().getFullYear(); // Nuevo Input para el año (default: año actual)
 
   // Outputs para emitir eventos al componente padre
   @Output() abrirModal = new EventEmitter<{ colaboradorId: number; fecha: string }>();
   @Output() abrirModalEdicion = new EventEmitter<Turno>();
 
+
+  // Nueva propiedad para el resumen mensual
+  resumenMensual: ResumenMensual | undefined;
+
   constructor(
     private turnoService: TurnoService,
     private feriadoService: FeriadoService, // Inyectar el servicio de feriados
+    private calendarioService: CalendarioService
   ) { }
 
   ngOnInit(): void {
     this.cargarFeriados(); // Cargar los feriados al inicializar
+    this.cargarResumenMensual(); // Cargar el resumen al iniciar
+  }
+
+  // Detectar cambios en el colaborador seleccionado o mes/año
+  ngOnChanges(): void {
+    if (this.colaboradorSeleccionado && this.mes && this.anio) {
+      this.cargarResumenMensual();
+    }
+  }
+
+  // Método para cargar el resumen mensual del colaborador seleccionado
+  cargarResumenMensual(): void {
+    if (this.colaboradorSeleccionado) {
+      this.turnoService
+        .getResumenMensual(this.mes, this.anio, [this.colaboradorSeleccionado])
+        .subscribe({
+          next: (resumenes) => {
+            this.resumenMensual = resumenes[0]; // Tomamos el primer elemento ya que es un colaborador específico
+            console.log('Resumen mensual cargado:', this.resumenMensual);
+          },
+          error: (error) => {
+            console.error('Error al cargar el resumen mensual:', error);
+            this.resumenMensual = undefined; // Resetear en caso de error
+          },
+        });
+    }
   }
 
   // Método para obtener el turno de un colaborador en una fecha específica
@@ -56,10 +89,8 @@ export class MonthlyViewComponent {
   }
 
   // Método para formatear la hora
-  formatearHora(hora: string | undefined): string {
-    if (!hora) return '00:00';
-    const [horas, minutos] = hora.split(':');
-    return `${horas}:${minutos}`;
+  formatearHora(hora: string | undefined, type?: boolean): string {
+    return this.calendarioService.formatearHoras(parseFloat(hora ?? '0'), type);
   }
 
   // Método para verificar si un día es el día actual
