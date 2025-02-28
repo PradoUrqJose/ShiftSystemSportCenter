@@ -1,5 +1,6 @@
 package com.sportcenter.shift_manager.service;
 
+import com.sportcenter.shift_manager.dto.ResumenMensualDTO;
 import com.sportcenter.shift_manager.dto.TurnoDTO;
 import com.sportcenter.shift_manager.model.Colaborador;
 import com.sportcenter.shift_manager.model.Feriado;
@@ -400,4 +401,58 @@ public class TurnoService {
                 .collect(Collectors.toList());
     }
 
+
+    public List<ResumenMensualDTO> getResumenMensualPorColaboradores(List<Long> colaboradoresIds, int mes, int anio) {
+        LocalDate inicioMes = LocalDate.of(anio, mes, 1);
+        LocalDate finMes = inicioMes.withDayOfMonth(inicioMes.lengthOfMonth());
+
+        // Si no se especifican colaboradores, obtener todos
+        List<Long> idsAConsultar = colaboradoresIds != null && !colaboradoresIds.isEmpty()
+                ? colaboradoresIds
+                : colaboradorRepository.findAll().stream().map(Colaborador::getId).toList();
+
+        List<Turno> turnos = turnoRepository.findByColaborador_IdInAndFechaBetween(idsAConsultar, inicioMes, finMes);
+
+        // Agrupar turnos por colaborador
+        Map<Long, List<Turno>> turnosPorColaborador = turnos.stream()
+                .collect(Collectors.groupingBy(t -> t.getColaborador().getId()));
+
+        List<ResumenMensualDTO> resumenes = new ArrayList<>();
+
+        for (Long colaboradorId : idsAConsultar) {
+            List<Turno> turnosColaborador = turnosPorColaborador.getOrDefault(colaboradorId, Collections.emptyList());
+
+            // Calcular totales
+            double totalHorasMes = turnosColaborador.stream()
+                    .mapToDouble(this::calcularHorasTrabajadas)
+                    .sum();
+
+            long diasFeriadosTrabajados = turnosColaborador.stream()
+                    .filter(Turno::isEsFeriado)
+                    .map(Turno::getFecha)
+                    .distinct()
+                    .count();
+
+            double horasEnFeriados = turnosColaborador.stream()
+                    .filter(Turno::isEsFeriado)
+                    .mapToDouble(this::calcularHorasTrabajadas)
+                    .sum();
+
+            Colaborador colaborador = colaboradorRepository.findById(colaboradorId)
+                    .orElseThrow(() -> new RuntimeException("Colaborador no encontrado"));
+
+            ResumenMensualDTO resumen = new ResumenMensualDTO(
+                    colaboradorId,
+                    colaborador.getNombre(),
+                    totalHorasMes,
+                    (int) diasFeriadosTrabajados,
+                    horasEnFeriados,
+                    turnosColaborador.stream().map(this::convertToDTO).toList() // Opcional
+            );
+
+            resumenes.add(resumen);
+        }
+
+        return resumenes;
+    }
 }
