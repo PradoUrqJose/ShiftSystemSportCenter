@@ -1,5 +1,6 @@
 package com.sportcenter.shift_manager.controller;
 
+import com.sportcenter.shift_manager.dto.ResumenMensualDTO;
 import com.sportcenter.shift_manager.dto.TurnoDTO;
 import com.sportcenter.shift_manager.model.Turno;
 import com.sportcenter.shift_manager.service.TurnoService;
@@ -110,9 +111,6 @@ public class TurnoController {
         return turnoService.getHorasTrabajadasPorColaboradores(colaboradoresIds, fechaInicio, fechaFin);
     }
 
-
-
-
     @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/reporte/feriados")
     public List<TurnoDTO> getTurnosEnFeriados(
@@ -123,5 +121,19 @@ public class TurnoController {
                 ? Arrays.stream(colaboradores.split(",")).map(Long::parseLong).toList()
                 : new ArrayList<>();
         return turnoService.getTurnosEnFeriados(colaboradoresIds, fechaInicio, fechaFin);
+    }
+
+    @CrossOrigin(origins = "http://localhost:4200")
+    @GetMapping("/resumen-mensual")
+    public List<ResumenMensualDTO> getResumenMensual(
+            @RequestParam("mes") int mes,
+            @RequestParam("anio") int anio,
+            @RequestParam(value = "colaboradores", required = false) String colaboradores) {
+
+        List<Long> colaboradoresIds = (colaboradores != null && !colaboradores.isEmpty())
+                ? Arrays.stream(colaboradores.split(",")).map(Long::parseLong).toList()
+                : new ArrayList<>();
+
+        return turnoService.getResumenMensualPorColaboradores(colaboradoresIds, mes, anio);
     }
 }
