@@ -139,7 +139,7 @@ export class ColaboradorProfileComponent implements OnInit {
       y: {
         display: false,
         beginAtZero: true, // Comienza en 0
-        max: 14 // Límite máximo para reducir la altura de las barras (ajústalo según necesites)
+        max: 16 // Límite máximo para reducir la altura de las barras (ajústalo según necesites)
       }
     },
     plugins: {
