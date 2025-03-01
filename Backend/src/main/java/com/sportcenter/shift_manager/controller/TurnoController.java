@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/turnos")
-@CrossOrigin(origins = "http://localhost:4200")
 public class TurnoController {
     private final TurnoService turnoService;
 
@@ -97,7 +96,6 @@ public class TurnoController {
     }
 
     // Agregar @CrossOrigin en cada método de reportes
-    @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/reporte")
     public List<TurnoDTO> getHorasTrabajadasPorColaboradores(
             @RequestParam("fechaInicio") String fechaInicio,
@@ -111,7 +109,6 @@ public class TurnoController {
         return turnoService.getHorasTrabajadasPorColaboradores(colaboradoresIds, fechaInicio, fechaFin);
     }
 
-    @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/reporte/feriados")
     public List<TurnoDTO> getTurnosEnFeriados(
             @RequestParam("fechaInicio") String fechaInicio,
@@ -123,7 +120,6 @@ public class TurnoController {
         return turnoService.getTurnosEnFeriados(colaboradoresIds, fechaInicio, fechaFin);
     }
 
-    @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/resumen-mensual")
     public List<ResumenMensualDTO> getResumenMensual(
             @RequestParam("mes") int mes,
