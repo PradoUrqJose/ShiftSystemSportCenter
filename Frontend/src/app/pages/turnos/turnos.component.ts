@@ -105,6 +105,10 @@ export default class TurnosComponent implements OnInit {
     { nombre: 'Dom' },
   ]; // Días de la semana
 
+  // Nuevas propiedades para mes y año
+  mes: number = 0;
+  anio: number = 0;
+
   constructor(
     private turnoService: TurnoService,
     private turnoStateService: TurnoStateService, // ✅ Inyectamos el nuevo servicio
@@ -123,6 +127,8 @@ export default class TurnosComponent implements OnInit {
     });
     this.mostrarModal$ = this.modalService.mostrarModal$;
     this.isModalVisible$ = this.modalService.isModalVisible$;
+    // Inicializar mes y año desde semanaActual
+    this.actualizarMesAnio();
   }
 
   //! Métodos del ciclo de vida
@@ -139,6 +145,13 @@ export default class TurnosComponent implements OnInit {
     this.cargarTiendas();
     this.actualizarNombreMes();
 
+  }
+
+  // Método para actualizar mes y año desde semanaActual
+  private actualizarMesAnio(): void {
+    const semanaActual = this.turnoStateService.getSemanaActual();
+    this.mes = semanaActual.getMonth() + 1; // getMonth() devuelve 0-11, sumamos 1 para 1-12
+    this.anio = semanaActual.getFullYear();
   }
 
   cargarMes(): void {
@@ -295,6 +308,8 @@ export default class TurnosComponent implements OnInit {
     this.turnoStateService.setSemanaActual(nuevaFecha); // ✅ Actualizar estado global
     this.cargarMes();
     this.actualizarNombreMes();
+    this.actualizarMesAnio(); // Actualizar mes y año
+    this.cdr.detectChanges(); // Forzar detección de cambios
   }
 
 
@@ -332,6 +347,8 @@ export default class TurnosComponent implements OnInit {
             this.turnoStateService.setLoading(false);
           }
         });
+        this.actualizarMesAnio(); // Actualizar mes y año
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error al cambiar la semana:', error);

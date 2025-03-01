@@ -19,8 +19,8 @@ export class MonthlyViewComponent {
   @Input() colaboradorSeleccionado: number = 0; // Colaborador seleccionado
   @Input() turnosMensuales$!: Observable<Turno[]>; // Turnos mensuales (Observable)
   @Input() diasSemana: DiaSemana[] = []; // Días de la semana
-  @Input() mes: number = new Date().getMonth() + 1; // Nuevo Input para el mes (default: mes actual)
-  @Input() anio: number = new Date().getFullYear(); // Nuevo Input para el año (default: año actual)
+  @Input() mes: number = 0
+  @Input() anio: number = 0
 
   // Outputs para emitir eventos al componente padre
   @Output() abrirModal = new EventEmitter<{ colaboradorId: number; fecha: string }>();
