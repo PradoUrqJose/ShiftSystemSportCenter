@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/colaboradores")
-@CrossOrigin(origins = "http://localhost:4200")
 public class ColaboradorController {
     private final ColaboradorService colaboradorService;
 

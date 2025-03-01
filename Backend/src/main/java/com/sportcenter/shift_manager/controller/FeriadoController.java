@@ -11,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/feriados")
-@CrossOrigin(origins = "http://localhost:4200") // Ajusta según tu frontend
 public class FeriadoController {
 
     private final FeriadoService feriadoService;
