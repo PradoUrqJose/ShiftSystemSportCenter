@@ -27,6 +27,8 @@ import { AgregarPuestoModalComponent } from './agregar-puesto-modal/agregar-pues
   styleUrls: ['./colaboradores.component.css'],
 })
 export default class ColaboradoresComponent implements OnInit {
+  isTableLoading: boolean = true;  // Controla el estado de carga de la tabla
+
   colaboradores: Colaborador[] = [];
   empresas: Empresa[] = [];
   colaboradorForm: FormGroup;
@@ -66,10 +68,10 @@ export default class ColaboradoresComponent implements OnInit {
     private http: HttpClient
   ) {
     this.colaboradorForm = this.fb.group({
-      nombre: ['', Validators.required],
-      apellido: ['', Validators.required],
+      nombre: ['', [Validators.required, Validators.maxLength(15)]],
+      apellido: ['', [Validators.required, Validators.maxLength(20)]],
       dni: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
-      telefono: ['', [Validators.required, Validators.pattern(/^\d{9}$/)]],
+      telefono: ['', [Validators.required, Validators.pattern(/^\d{9}$/), Validators.maxLength(15)]],
       email: ['', [Validators.required, Validators.email]],
       empresaId: ['', Validators.required],
       foto: [null], // Para manejar la imagen
@@ -98,8 +100,12 @@ export default class ColaboradoresComponent implements OnInit {
       if (control && control.invalid) {
         if (controlName === 'nombre' && control.errors?.['required']) {
           this.errorMessage = 'El nombre es obligatorio.';
+        } else if  (controlName === 'nombre' && control.errors?.['maxlength']) {
+          this.errorMessage = 'El nombre no puede tener más de 15 caracteres.';
         } else if (controlName === 'apellido' && control.errors?.['required']) {
           this.errorMessage = 'El apellido es obligatorio.';
+        } else if (controlName === 'apellido' && control.errors?.['maxlength']) {
+          this.errorMessage = 'El apellido no puede tener más de 20 caracteres.';
         } else if (controlName === 'dni' && control.errors?.['required']) {
           this.errorMessage = 'El DNI es obligatorio.';
         } else if (controlName === 'dni' && control.errors?.['pattern']) {
@@ -108,6 +114,8 @@ export default class ColaboradoresComponent implements OnInit {
           this.errorMessage = 'El teléfono es obligatorio.';
         } else if (controlName === 'telefono' && control.errors?.['pattern']) {
           this.errorMessage = 'El teléfono debe tener 9 dígitos.';
+        } else if (controlName === 'telefono' && control.errors?.['maxlength']) {
+          this.errorMessage = 'El teléfono no puede tener más de 15 caracteres.';
         } else if (controlName === 'email' && control.errors?.['required']) {
           this.errorMessage = 'El email es obligatorio.';
         } else if (controlName === 'email' && control.errors?.['email']) {
@@ -179,11 +187,15 @@ export default class ColaboradoresComponent implements OnInit {
   }
 
   getColaboradores(): void {
+    this.isTableLoading = true;  // Activar loading
     this.colaboradorService.getColaboradores().subscribe({
       next: (data) => {
         this.colaboradores = data.map((colaborador) => {
           if (colaborador.fotoUrl) {
             colaborador.fotoUrl += '?t=' + new Date().getTime(); // Agrega un parámetro de tiempo para evitar la caché
+            // Crear una promesa para verificar cuando la imagen carga
+            const img = new Image();
+            img.src = colaborador.fotoUrl;
           }
           return colaborador;
         });
@@ -193,9 +205,11 @@ export default class ColaboradoresComponent implements OnInit {
         this.colaboradoresDeshabilitados = this.colaboradores.filter(
           (c) => !c.habilitado
         );
+        this.isTableLoading = false;  // Desactivar loading
       },
       error: () => {
         this.errorMessage = 'Error al obtener colaboradores.';
+        this.isTableLoading = false;
       },
     });
   }
