@@ -31,11 +31,9 @@ public class ColaboradorDTO {
     @Size(max = 15, message = "El teléfono no puede exceder 15 caracteres")
     private String telefono;
 
-    @NotBlank(message = "El email es obligatorio")
     @Email(message = "El email debe ser válido")
     private String email;
 
-    @NotNull(message = "La empresa es obligatoria")
     private Long empresaId;
 
     private String empresaNombre;
