@@ -4,9 +4,9 @@ import { DiaSemana } from './calendario.service';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, map, Observable, tap, throwError } from 'rxjs';
-import { Colaborador } from './colaborador.service';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { environment } from '../../environments/environment';
 
 
 export interface Turno {
@@ -49,7 +49,7 @@ export interface ResumenMensual {
   providedIn: 'root',
 })
 export class TurnoService {
-  private apiUrl = 'http://localhost:8080/api/turnos';
+  private apiUrl = `${environment.apiUrl}/turnos`;
 
   constructor(private http: HttpClient) { }
 

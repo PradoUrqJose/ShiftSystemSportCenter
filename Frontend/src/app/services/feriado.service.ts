@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Feriado {
   fecha: string; // Formato YYYY-MM-DD
@@ -11,7 +12,7 @@ export interface Feriado {
   providedIn: 'root',
 })
 export class FeriadoService {
-  private apiUrl = 'http://localhost:8080/api/feriados'; // Ajusta según tu backend
+  private apiUrl = `${environment.apiUrl}/feriados`;
 
   constructor(private http: HttpClient) {}
 
