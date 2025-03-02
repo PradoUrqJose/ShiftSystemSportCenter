@@ -1,6 +1,7 @@
 package com.sportcenter.shift_manager.service;
 
 import com.sportcenter.shift_manager.dto.ColaboradorDTO;
+import com.sportcenter.shift_manager.exception.ResourceNotFoundException;
 import com.sportcenter.shift_manager.model.Colaborador;
 import com.sportcenter.shift_manager.model.Empresa;
 import com.sportcenter.shift_manager.model.Puesto;
@@ -9,6 +10,7 @@ import com.sportcenter.shift_manager.repository.EmpresaRepository;
 import com.sportcenter.shift_manager.repository.PuestoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.List;
@@ -30,10 +32,11 @@ public class ColaboradorService {
     }
 
     // Guardar un nuevo colaborador
+    @Transactional
     public Colaborador saveColaborador(ColaboradorDTO colaboradorDTO, MultipartFile file) throws IOException {
         // Validar existencia de empresa
         Empresa empresa = empresaRepository.findById(colaboradorDTO.getEmpresaId())
-                .orElseThrow(() -> new RuntimeException("Empresa con ID " + colaboradorDTO.getEmpresaId() + " no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa con ID " + colaboradorDTO.getEmpresaId() + " no encontrada"));
 
         // Validar duplicados de email, DNI y Nombre + Apellido
         if (colaboradorRepository.findByEmail(colaboradorDTO.getEmail()).isPresent()) {
@@ -46,7 +49,6 @@ public class ColaboradorService {
             throw new IllegalArgumentException("Ya existe un colaborador con el nombre y apellido: "
                     + colaboradorDTO.getNombre() + " " + colaboradorDTO.getApellido());
         }
-
         // Crear nuevo colaborador
         Colaborador colaborador = new Colaborador();
         colaborador.setNombre(colaboradorDTO.getNombre());
@@ -108,10 +110,11 @@ public class ColaboradorService {
     }
 
     // Actualizar un colaborador
+    @Transactional
     public Colaborador updateColaborador(Long id, ColaboradorDTO colaboradorDTO, MultipartFile file) throws IOException {
         // Buscar colaborador existente
         Colaborador colaborador = colaboradorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Colaborador con ID " + id + " no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Colaborador con ID " + id + " no encontrado"));
 
         // Validar existencia de empresa
         Empresa nuevaEmpresa = empresaRepository.findById(colaboradorDTO.getEmpresaId())
@@ -188,9 +191,10 @@ public class ColaboradorService {
     }
 
     // Cambiar estado de habilitación (sin cambios)
+    @Transactional
     public Colaborador toggleHabilitacionColaborador(Long id, boolean habilitado) {
         Colaborador colaborador = colaboradorRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Colaborador con ID " + id + " no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Colaborador con ID " + id + " no encontrado"));
         colaborador.setHabilitado(habilitado);
         return colaboradorRepository.save(colaborador);
     }
