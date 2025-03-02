@@ -3,6 +3,7 @@ package com.sportcenter.shift_manager.controller;
 import com.sportcenter.shift_manager.dto.ColaboradorDTO;
 import com.sportcenter.shift_manager.model.Colaborador;
 import com.sportcenter.shift_manager.service.ColaboradorService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,46 +21,51 @@ public class ColaboradorController {
     }
 
     @PostMapping
-    public ResponseEntity<ColaboradorDTO> saveColaborador(@RequestPart("colaborador") ColaboradorDTO colaboradorDTO,
-                                                          @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
+    public ResponseEntity<ColaboradorDTO> saveColaborador(
+            @Valid @RequestPart("colaborador") ColaboradorDTO colaboradorDTO,
+            @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
         Colaborador colaborador = colaboradorService.saveColaborador(colaboradorDTO, file);
-
-        // Convertir el Colaborador a ColaboradorDTO para devolverlo
         ColaboradorDTO colaboradorResponse = colaboradorService.convertToDTO(colaborador);
-
         return ResponseEntity.ok(colaboradorResponse);
     }
 
     @GetMapping
-    public List<ColaboradorDTO> getAllColaboradores() {
-        return colaboradorService.getAllColaboradores();
+    public ResponseEntity<List<ColaboradorDTO>> getAllColaboradores() {
+        return ResponseEntity.ok(colaboradorService.getAllColaboradores());
     }
 
     @GetMapping("/empresa/{empresaId}")
-    public List<ColaboradorDTO> getColaboradoresByEmpresa(@PathVariable Long empresaId) {
-        return colaboradorService.getColaboradoresByEmpresa(empresaId);
+    public ResponseEntity<List<ColaboradorDTO>> getColaboradoresByEmpresa(@PathVariable Long empresaId) {
+        return ResponseEntity.ok(colaboradorService.getColaboradoresByEmpresa(empresaId));
     }
 
     @GetMapping("/filtro")
-    public List<ColaboradorDTO> getColaboradoresPorHabilitacion(@RequestParam boolean habilitado) {
-        return colaboradorService.getColaboradoresPorHabilitacion(habilitado);
+    public ResponseEntity<List<ColaboradorDTO>> getColaboradoresPorHabilitacion(@RequestParam boolean habilitado) {
+        return ResponseEntity.ok(colaboradorService.getColaboradoresPorHabilitacion(habilitado));
     }
 
     @PutMapping("/{id}")
-    public Colaborador updateColaborador(@PathVariable Long id,
-                                         @RequestPart("colaborador") ColaboradorDTO colaboradorDTO,
-                                         @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
-        return colaboradorService.updateColaborador(id, colaboradorDTO, file);
+    public ResponseEntity<ColaboradorDTO> updateColaborador(
+            @PathVariable Long id,
+            @Valid @RequestPart("colaborador") ColaboradorDTO colaboradorDTO,
+            @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
+        Colaborador colaborador = colaboradorService.updateColaborador(id, colaboradorDTO, file);
+        ColaboradorDTO dto = colaboradorService.convertToDTO(colaborador);
+        return ResponseEntity.ok(dto);
     }
 
     @PutMapping("/{id}/habilitacion")
-    public Colaborador toggleHabilitacionColaborador(@PathVariable Long id, @RequestParam boolean habilitado) {
-        return colaboradorService.toggleHabilitacionColaborador(id, habilitado);
+    public ResponseEntity<ColaboradorDTO> toggleHabilitacionColaborador(
+            @PathVariable Long id, @RequestParam boolean habilitado) {
+        Colaborador colaborador = colaboradorService.toggleHabilitacionColaborador(id, habilitado);
+        ColaboradorDTO dto = colaboradorService.convertToDTO(colaborador);
+        return ResponseEntity.ok(dto);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteColaborador(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteColaborador(@PathVariable Long id) {
         colaboradorService.deleteColaborador(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
