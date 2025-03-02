@@ -71,8 +71,8 @@ export default class ColaboradoresComponent implements OnInit {
       nombre: ['', [Validators.required, Validators.maxLength(15)]],
       apellido: ['', [Validators.required, Validators.maxLength(20)]],
       dni: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
-      telefono: ['', [Validators.required, Validators.pattern(/^\d{9}$/), Validators.maxLength(15)]],
-      email: ['', [Validators.required, Validators.email]],
+      telefono: ['', [Validators.pattern(/^\d{9}$/), Validators.maxLength(15)]],
+      email: ['', [Validators.email]],
       empresaId: ['', Validators.required],
       foto: [null], // Para manejar la imagen
       habilitado: [true], // Valor por defecto true
@@ -110,14 +110,10 @@ export default class ColaboradoresComponent implements OnInit {
           this.errorMessage = 'El DNI es obligatorio.';
         } else if (controlName === 'dni' && control.errors?.['pattern']) {
           this.errorMessage = 'El DNI debe tener 8 dígitos.';
-        } else if (controlName === 'telefono' && control.errors?.['required']) {
-          this.errorMessage = 'El teléfono es obligatorio.';
         } else if (controlName === 'telefono' && control.errors?.['pattern']) {
           this.errorMessage = 'El teléfono debe tener 9 dígitos.';
         } else if (controlName === 'telefono' && control.errors?.['maxlength']) {
           this.errorMessage = 'El teléfono no puede tener más de 15 caracteres.';
-        } else if (controlName === 'email' && control.errors?.['required']) {
-          this.errorMessage = 'El email es obligatorio.';
         } else if (controlName === 'email' && control.errors?.['email']) {
           this.errorMessage = 'El email debe ser válido.';
         } else if (
@@ -151,20 +147,22 @@ export default class ColaboradoresComponent implements OnInit {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.isPhotoLoading = true; // Activar la bandera de carga
       const file = input.files[0];
+      if (file.size > 1048576) { // 1 MB
+        this.errorMessage = 'La foto debe ser menor a 1 MB';
+        return;
+      }
+      this.isPhotoLoading = true;
       const reader = new FileReader();
-
       reader.onload = () => {
         setTimeout(() => {
-          this.fotoPreview = reader.result; // Establecer la foto después del retraso
-          this.isPhotoLoading = false; // Desactivar la bandera de carga
-        }, 700); // Simular un retraso de 2 segundos
+          this.fotoPreview = reader.result;
+          this.isPhotoLoading = false;
+        }, 700);
       };
-
-      reader.readAsDataURL(file); // Leer el archivo seleccionado
-      this.colaboradorForm.patchValue({ foto: file }); // Asignar el archivo al formulario
-      this.colaboradorForm.get('foto')?.markAsDirty(); // Marcar el control de la imagen como dirty
+      reader.readAsDataURL(file);
+      this.colaboradorForm.patchValue({ foto: file });
+      this.colaboradorForm.get('foto')?.markAsDirty();
     }
   }
 
@@ -233,41 +231,39 @@ export default class ColaboradoresComponent implements OnInit {
     });
   }
 
-  addColaborador(): void {
-    if (this.colaboradorForm.valid) {
-      this.clearValidationErrors(); // Limpia mensajes previos
-      this.isLoading = true; // Activar el spinner de carga
+addColaborador(): void {
+  if (this.colaboradorForm.valid) {
+    this.clearValidationErrors(); // Limpia mensajes previos
+    this.isLoading = true; // Activar el spinner de carga
 
-      const colaborador: Colaborador = {
-        ...this.colaboradorForm.value,
-        empresaId: this.selectedEmpresaId!,
-      };
+    const colaborador: Colaborador = {
+      ...this.colaboradorForm.value,
+      empresaId: this.selectedEmpresaId!,
+    };
 
-      const file = this.colaboradorForm.get('foto')?.value;
+    const file = this.colaboradorForm.get('foto')?.value;
 
-      this.colaboradorService.addColaborador(colaborador, file).subscribe({
-        next: () => {
-          // Forzar la actualización de la tabla
-          this.getColaboradores();
-
-          // Limpia el formulario y las variables asociadas
-          this.colaboradorForm.reset();
-          this.fotoPreview = 'assets/user-circle-svgrepo-com.svg';
-          this.selectedColaboradorId = null;
-          this.isLoading = false; // Desactiva el spinner
-          // Cierra el modal
-          this.closeModal();
-        },
-        error: (err) => {
-          this.errorMessage =
-            err.error?.message || 'Error al agregar colaborador.';
-          this.isLoading = false; // Desactiva el spinner en caso de error
-        },
-      });
-    } else {
-      this.validateForm();
-    }
+    this.colaboradorService.addColaborador(colaborador, file).subscribe({
+      next: () => {
+        this.getColaboradores();
+        this.colaboradorForm.reset();
+        this.fotoPreview = 'assets/user-circle-svgrepo-com.svg';
+        this.selectedColaboradorId = null;
+        this.isLoading = false;
+        this.closeModal();
+      },
+      error: (err) => {
+        // Extrae el mensaje del cuerpo de la respuesta (err.error)
+        const errorMessage = typeof err.error === 'string' ? err.error : 'Error al agregar colaborador.';
+        this.errorMessage = errorMessage;
+        this.isLoading = false;
+        console.error('Error recibido:', err); // Para depuración
+      },
+    });
+  } else {
+    this.validateForm();
   }
+}
 
   editColaborador(colaborador: Colaborador): void {
     this.isEditing = true;
