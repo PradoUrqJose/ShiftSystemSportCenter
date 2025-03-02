@@ -29,7 +29,7 @@ public class Colaborador {
     @Column(nullable = false, length = 15)
     private String nombre;
 
-    @Size(max = 5, message = "El apellido no puede tener más de 5 caracteres.")
+    @Size(max = 20, message = "El apellido no puede tener más de 20 caracteres.")
     @Column(nullable = false, length = 20)
     private String apellido;
 
@@ -53,7 +53,7 @@ public class Colaborador {
     @Column(nullable = false)
     private boolean habilitado = true; // Nueva propiedad
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDate fechaNacimiento;
 
     @ManyToOne(fetch = FetchType.EAGER)
