@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 export interface Tienda {
   id: number;
@@ -13,7 +14,7 @@ export interface Tienda {
   providedIn: 'root',
 })
 export class TiendaService {
-  private apiUrl = 'http://localhost:8080/api/tiendas';
+  private apiUrl = `${environment.apiUrl}/tiendas`;
 
   constructor(private http: HttpClient) {}
 
