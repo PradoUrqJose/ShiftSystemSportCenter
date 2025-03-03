@@ -4,6 +4,8 @@ import com.sportcenter.shift_manager.dto.PuestoDTO;
 import com.sportcenter.shift_manager.model.Puesto;
 import com.sportcenter.shift_manager.repository.PuestoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.sportcenter.shift_manager.exception.ResourceNotFoundException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,6 +19,7 @@ public class PuestoService {
     }
 
     // Crear un nuevo puesto
+    @Transactional
     public PuestoDTO savePuesto(PuestoDTO puestoDTO) {
         // Validar duplicados por nombre
         puestoRepository.findByNombre(puestoDTO.getNombre())
@@ -47,9 +50,10 @@ public class PuestoService {
     }
 
     // Actualizar un puesto
+    @Transactional
     public PuestoDTO updatePuesto(Long id, PuestoDTO puestoDTO) {
         Puesto puesto = puestoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Puesto con ID " + id + " no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Puesto con ID " + id + " no encontrado"));
 
         // Validar duplicados por nombre (excepto el propio puesto)
         puestoRepository.findByNombre(puestoDTO.getNombre())
@@ -66,6 +70,7 @@ public class PuestoService {
     }
 
     // Eliminar un puesto
+    @Transactional
     public void deletePuesto(Long id) {
         Puesto puesto = puestoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Puesto con ID " + id + " no encontrado"));
