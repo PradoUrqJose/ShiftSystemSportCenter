@@ -2,6 +2,7 @@ package com.sportcenter.shift_manager.controller;
 
 import com.sportcenter.shift_manager.dto.PuestoDTO;
 import com.sportcenter.shift_manager.service.PuestoService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +18,7 @@ public class PuestoController {
     }
 
     @PostMapping
-    public ResponseEntity<PuestoDTO> savePuesto(@RequestBody PuestoDTO puestoDTO) {
+    public ResponseEntity<PuestoDTO> savePuesto(@Valid @RequestBody PuestoDTO puestoDTO) {
         PuestoDTO savedPuesto = puestoService.savePuesto(puestoDTO);
         return ResponseEntity.ok(savedPuesto);
     }
@@ -35,7 +36,7 @@ public class PuestoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PuestoDTO> updatePuesto(@PathVariable Long id, @RequestBody PuestoDTO puestoDTO) {
+    public ResponseEntity<PuestoDTO> updatePuesto(@PathVariable Long id, @Valid @RequestBody PuestoDTO puestoDTO) {
         PuestoDTO updatedPuesto = puestoService.updatePuesto(id, puestoDTO);
         return ResponseEntity.ok(updatedPuesto);
     }
