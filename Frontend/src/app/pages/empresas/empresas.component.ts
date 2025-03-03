@@ -47,7 +47,7 @@ export default class EmpresasComponent implements OnInit {
 
   ngOnInit(): void {
     this.empresaForm = this.fb.group({
-      nombre: ['', [Validators.required]],
+      nombre: ['', [Validators.required, Validators.maxLength(100)]],
       ruc: ['', [Validators.required, Validators.pattern(/^\d{11}$/)]],
       habilitada: [true]
     });
@@ -123,15 +123,15 @@ export default class EmpresasComponent implements OnInit {
       const empresaData = this.empresaForm.value;
       this.empresaService.addEmpresa(empresaData).subscribe({
         next: () => {
-          this.getEmpresas(); // Esto recarga y ordena
+          this.getEmpresas();
           this.closeModal();
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || 'Ocurrió un error al agregar la empresa.';
+          this.errorMessage = err.error?.message || 'Error al agregar la empresa.';
         }
       });
     } else {
-      this.errorMessage = 'Por favor, complete todos los campos correctamente.';
+      this.validateFormErrors();
     }
   }
 
@@ -155,19 +155,29 @@ export default class EmpresasComponent implements OnInit {
       const empresaData = this.empresaForm.value;
       this.empresaService.updateEmpresa(this.selectedEmpresaId, empresaData).subscribe({
         next: () => {
-          this.getEmpresas(); // Esto recarga y ordena
+          this.getEmpresas();
           this.closeModal();
-          Notiflix.Notify.success('Empresa actualizada con éxito', {
-            position: 'right-bottom',
-            cssAnimationStyle: 'from-right'
-          });
+          Notiflix.Notify.success('Empresa actualizada con éxito', { position: 'right-bottom', cssAnimationStyle: 'from-right' });
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || 'Ocurrió un error al actualizar la empresa.';
+          this.errorMessage = err.error?.message || 'Error al actualizar la empresa.';
         }
       });
     } else {
-      this.errorMessage = 'Por favor, complete todos los campos correctamente.';
+      this.validateFormErrors();
+    }
+  }
+
+  private validateFormErrors(): void {
+    this.errorMessage = null;
+    if (this.empresaForm.get('nombre')?.errors?.['required']) {
+      this.errorMessage = 'El nombre es obligatorio.';
+    } else if (this.empresaForm.get('nombre')?.errors?.['maxlength']) {
+      this.errorMessage = 'El nombre no puede exceder 100 caracteres.';
+    } else if (this.empresaForm.get('ruc')?.errors?.['required']) {
+      this.errorMessage = 'El RUC es obligatorio.';
+    } else if (this.empresaForm.get('ruc')?.errors?.['pattern']) {
+      this.errorMessage = 'El RUC debe tener 11 dígitos.';
     }
   }
 
