@@ -8,7 +8,7 @@ import { AgregarPuestoModalComponent } from '../agregar-puesto-modal/agregar-pue
 @Component({
   selector: 'app-gestionar-puestos',
   standalone: true,
-  imports: [CommonModule, AgregarPuestoModalComponent], // Agrega más módulos si necesitas formularios u otros
+  imports: [CommonModule, AgregarPuestoModalComponent],
   templateUrl: './gestionar-puestos.component.html',
   styleUrls: ['./gestionar-puestos.component.css']
 })
@@ -17,6 +17,8 @@ export default class GestionarPuestosComponent implements OnInit {
   mostrarModalAgregarPuesto: boolean = false;
   puestoActual: Puesto = { nombre: '', descripcion: '' };
   conteoColaboradoresPorPuesto: { [key: number]: number } = {};
+  errorMessage: string | null = null; // Añadir para mostrar errores
+  isLoading: boolean = false; // Añadir para indicar carga
 
   constructor(
     private puestoService: PuestoService,
@@ -29,15 +31,20 @@ export default class GestionarPuestosComponent implements OnInit {
     this.cargarConteoColaboradores();
   }
 
-  // Cargar lista de puestos
   cargarPuestos(): void {
+    this.isLoading = true;
     this.puestoService.getPuestos().subscribe({
-      next: (puestos) => this.puestos = puestos,
-      error: (err) => console.error('Error al cargar puestos:', err)
+      next: (puestos) => {
+        this.puestos = puestos;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.errorMessage = 'Error al cargar los puestos.';
+        this.isLoading = false;
+      }
     });
   }
 
-  // Cargar conteo de colaboradores por puesto
   cargarConteoColaboradores(): void {
     this.colaboradorService.getColaboradores().subscribe({
       next: (colaboradores) => {
@@ -48,40 +55,51 @@ export default class GestionarPuestosComponent implements OnInit {
           return acc;
         }, {} as { [key: number]: number });
       },
-      error: (err) => console.error('Error al cargar colaboradores:', err)
+      error: (err) => {
+        this.errorMessage = 'Error al cargar el conteo de colaboradores.';
+      }
     });
   }
 
-  // Abrir el modal para agregar puesto
   abrirModalAgregarPuesto(): void {
     this.puestoActual = { nombre: '', descripcion: '' };
     this.mostrarModalAgregarPuesto = true;
+    this.errorMessage = null;
   }
 
   cerrarModalAgregarPuesto(): void {
     this.mostrarModalAgregarPuesto = false;
+    this.errorMessage = null;
   }
 
   onPuestoAgregado(puesto: Puesto): void {
-    this.puestos.push(puesto);
-    this.cargarConteoColaboradores(); // Actualiza el conteo tras agregar
+    const index = this.puestos.findIndex(p => p.id === puesto.id);
+    if (index !== -1) {
+      this.puestos[index] = puesto; // Actualiza si ya existe
+    } else {
+      this.puestos.push(puesto); // Agrega si es nuevo
+    }
+    this.cargarConteoColaboradores();
+    this.cerrarModalAgregarPuesto();
   }
 
   eliminarPuesto(id: number | undefined): void {
     if (!id) return;
-
     this.puestoService.deletePuesto(id).subscribe({
       next: () => {
         this.puestos = this.puestos.filter(p => p.id !== id);
-        this.cargarConteoColaboradores(); // Actualiza el conteo tras eliminar
+        this.cargarConteoColaboradores();
       },
-      error: (err) => console.error('Error al eliminar puesto:', err)
+      error: (err) => {
+        this.errorMessage = err.message || 'Error al eliminar el puesto.';
+      }
     });
   }
 
   editarPuesto(puesto: Puesto): void {
     this.puestoActual = { ...puesto };
     this.mostrarModalAgregarPuesto = true;
+    this.errorMessage = null;
   }
 
   goBack(): void {
