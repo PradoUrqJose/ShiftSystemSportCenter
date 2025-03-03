@@ -33,10 +33,20 @@ export class AgregarPuestoModalComponent {
 
   // Método para guardar o actualizar el puesto
   guardarPuesto(): void {
-    if (!this.puestoActual.nombre) {
+    // Validación básica en el frontend antes de enviar al backend
+    if (!this.puestoActual.nombre.trim()) {
       this.errorMessage = 'El nombre es obligatorio.';
       return;
     }
+    if (this.puestoActual.nombre.length > 50) {
+      this.errorMessage = 'El nombre no puede exceder 50 caracteres.';
+      return;
+    }
+    if (this.puestoActual.descripcion && this.puestoActual.descripcion.length > 255) {
+      this.errorMessage = 'La descripción no puede exceder 255 caracteres.';
+      return;
+    }
+
     this.isSubmitting = true;
     this.errorMessage = null;
 
@@ -48,7 +58,7 @@ export class AgregarPuestoModalComponent {
           this.cerrarModal();
         },
         error: (err) => {
-          this.errorMessage = err.error || 'Error al actualizar el puesto.';
+          this.errorMessage = err.error?.message || 'Error al actualizar el puesto.';
           this.isSubmitting = false;
         }
       });
@@ -60,7 +70,7 @@ export class AgregarPuestoModalComponent {
           this.cerrarModal();
         },
         error: (err) => {
-          this.errorMessage = err.error || 'Error al agregar el puesto.';
+          this.errorMessage = err.error?.message || 'Error al agregar el puesto.';
           this.isSubmitting = false;
         }
       });

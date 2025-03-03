@@ -22,27 +22,47 @@
     </div>
 
     <!-- Formulario -->
-    <form (ngSubmit)="guardarPuesto()" class="mt-6 space-y-6">
+    <form #puestoForm="ngForm" (ngSubmit)="guardarPuesto()" class="mt-6 space-y-6">
       <!-- Mensaje de error -->
       <div *ngIf="errorMessage" class="bg-red-50 text-red-600 text-sm mt-4 p-2 rounded-lg mb-3">
         {{ errorMessage }}
       </div>
       <div>
         <label for="nombrePuesto" class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
-        <input id="nombrePuesto" type="text" [(ngModel)]="puestoActual.nombre" name="nombrePuesto"
-          class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-          required placeholder="Nombre del puesto..." />
+        <input id="nombrePuesto"
+               type="text"
+               [(ngModel)]="puestoActual.nombre"
+               name="nombrePuesto"
+               #nombre="ngModel"
+               class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+               required
+               maxlength="50"
+               placeholder="Nombre del puesto..." />
+        <!-- Mensajes de validación -->
+        <div *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)" class="text-red-600 text-sm mt-1">
+          <div *ngIf="nombre.errors?.['required']">El nombre es obligatorio.</div>
+          <div *ngIf="nombre.errors?.['maxlength']">El nombre no puede exceder 50 caracteres.</div>
+        </div>
       </div>
       <div>
         <label for="descripcionPuesto" class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
-        <input id="descripcionPuesto" type="text" [(ngModel)]="puestoActual.descripcion" name="descripcionPuesto"
-          class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-          placeholder="Descripción del puesto..." />
+        <input id="descripcionPuesto"
+               type="text"
+               [(ngModel)]="puestoActual.descripcion"
+               name="descripcionPuesto"
+               #descripcion="ngModel"
+               class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+               maxlength="255"
+               placeholder="Descripción del puesto..." />
+        <!-- Mensajes de validación -->
+        <div *ngIf="descripcion.invalid && (descripcion.dirty || descripcion.touched)" class="text-red-600 text-sm mt-1">
+          <div *ngIf="descripcion.errors?.['maxlength']">La descripción no puede exceder 255 caracteres.</div>
+        </div>
       </div>
       <div class="flex justify-end">
         <button type="submit"
           class="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-6 rounded-xl hover:from-blue-600 hover:to-blue-700 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-          [disabled]="isSubmitting">
+          [disabled]="isSubmitting || puestoForm.invalid">
           {{ puestoActual.id ? 'Actualizar' : 'Agregar' }}
         </button>
       </div>
