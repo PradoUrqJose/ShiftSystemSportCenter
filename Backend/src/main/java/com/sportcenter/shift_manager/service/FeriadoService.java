@@ -4,6 +4,8 @@ import com.sportcenter.shift_manager.model.Feriado;
 import com.sportcenter.shift_manager.repository.FeriadoRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -16,6 +18,7 @@ public class FeriadoService {
         this.feriadoRepository = feriadoRepository;
     }
 
+    @Transactional
     @PostConstruct
     public void initializeFeriados() {
         if (feriadoRepository.count() == 0) {
