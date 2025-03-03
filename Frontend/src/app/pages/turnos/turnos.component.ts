@@ -140,7 +140,7 @@ export default class TurnosComponent implements OnInit {
     });
     this.mostrarModal$ = this.modalService.mostrarModal$;
     this.isModalVisible$ = this.modalService.isModalVisible$;
-
+    this.vistaMensual = false;
     this.cargarSemana();
     this.cargarTiendas();
     this.actualizarNombreMes();
@@ -221,6 +221,7 @@ export default class TurnosComponent implements OnInit {
   }
 
   cargarSemana(): void {
+    console.log("CARGANDO SEMANA");
     this.turnoStateService.setLoading(true);
 
     const semanaActual = this.turnoStateService.getSemanaActual();
