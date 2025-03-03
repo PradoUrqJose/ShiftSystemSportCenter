@@ -21,7 +21,7 @@ public class EmpresaController {
     @PostMapping
     public ResponseEntity<EmpresaDTO> saveEmpresa(@Valid @RequestBody Empresa empresa) {
         Empresa savedEmpresa = empresaService.saveEmpresa(empresa);
-        return ResponseEntity.ok(convertToDTO(savedEmpresa));
+        return ResponseEntity.ok(empresaService.convertToDTO(savedEmpresa));
     }
 
     @GetMapping
@@ -42,29 +42,18 @@ public class EmpresaController {
     @PutMapping("/{id}")
     public ResponseEntity<EmpresaDTO> updateEmpresa(@PathVariable Long id, @Valid @RequestBody Empresa empresaDetails) {
         Empresa updatedEmpresa = empresaService.updateEmpresa(id, empresaDetails);
-        return ResponseEntity.ok(convertToDTO(updatedEmpresa));
+        return ResponseEntity.ok(empresaService.convertToDTO(updatedEmpresa));
     }
 
     @PutMapping("/{id}/habilitacion")
     public ResponseEntity<EmpresaDTO> toggleHabilitacionEmpresa(@PathVariable Long id, @RequestParam boolean habilitada) {
         Empresa toggledEmpresa = empresaService.toggleHabilitacionEmpresa(id, habilitada);
-        return ResponseEntity.ok(convertToDTO(toggledEmpresa));
+        return ResponseEntity.ok(empresaService.convertToDTO(toggledEmpresa));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEmpresa(@PathVariable Long id) {
         empresaService.deleteEmpresa(id);
         return ResponseEntity.noContent().build();
-    }
-
-    // Método auxiliar para convertir a DTO (puedes moverlo a EmpresaService si prefieres)
-    private EmpresaDTO convertToDTO(Empresa empresa) {
-        return new EmpresaDTO(
-                empresa.getId(),
-                empresa.getNombre(),
-                empresa.getRuc(),
-                empresa.getNumeroDeEmpleados(),
-                empresa.isHabilitada()
-        );
     }
 }

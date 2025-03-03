@@ -10,6 +10,7 @@ import lombok.*;
 import java.util.List;
 
 @Entity
+@Table(name = "empresa")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,10 +20,10 @@ public class Empresa {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 100)
     private String nombre;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 11)
     @Pattern(regexp = "\\d{11}", message = "El RUC debe tener 11 dígitos")
     private String ruc;
 

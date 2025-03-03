@@ -1,11 +1,13 @@
 package com.sportcenter.shift_manager.service;
 
 import com.sportcenter.shift_manager.dto.EmpresaDTO;
+import com.sportcenter.shift_manager.exception.ResourceNotFoundException;
 import com.sportcenter.shift_manager.model.Colaborador;
 import com.sportcenter.shift_manager.model.Empresa;
 import com.sportcenter.shift_manager.repository.ColaboradorRepository;
 import com.sportcenter.shift_manager.repository.EmpresaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +23,7 @@ public class EmpresaService {
     }
 
     // Guardar una nueva empresa
+    @Transactional
     public Empresa saveEmpresa(Empresa empresa) {
         if (empresaRepository.findByNombre(empresa.getNombre()).isPresent()) {
             throw new IllegalArgumentException("Ya existe una empresa con el nombre: " + empresa.getNombre());
@@ -34,57 +37,39 @@ public class EmpresaService {
     // Obtener todas las empresas
     public List<EmpresaDTO> getAllEmpresas() {
         return empresaRepository.findAll().stream()
-                .map(empresa -> new EmpresaDTO(
-                        empresa.getId(),
-                        empresa.getNombre(),
-                        empresa.getRuc(),
-                        empresa.getNumeroDeEmpleados(), // Método calculado en la entidad
-                        empresa.isHabilitada()
-                ))
+                .map(this::convertToDTO)
                 .toList();
     }
 
-    // Obtener una empresa por ID
-    public Optional<Empresa> getEmpresaById(Long id) {
-        return empresaRepository.findById(id);
-    }
-
-    // Obtener el número de empleados asociados a una empresa
     public int getNumeroDeEmpleados(Long id) {
         Empresa empresa = empresaRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Empresa con ID " + id + " no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa con ID " + id + " no encontrada"));
         return empresa.getNumeroDeEmpleados();
     }
 
+    @Transactional
     public Empresa toggleHabilitacionEmpresa(Long id, boolean habilitada) {
         Empresa empresa = empresaRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Empresa con ID " + id + " no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa con ID " + id + " no encontrada"));
         empresa.setHabilitada(habilitada);
         return empresaRepository.save(empresa);
     }
 
     public List<EmpresaDTO> getEmpresasPorHabilitacion(boolean habilitada) {
         return empresaRepository.findByHabilitada(habilitada).stream()
-                .map(empresa -> new EmpresaDTO(
-                        empresa.getId(),
-                        empresa.getNombre(),
-                        empresa.getRuc(),
-                        empresa.getNumeroDeEmpleados(),
-                        empresa.isHabilitada()
-                ))
+                .map(this::convertToDTO)
                 .toList();
     }
 
-    // Actualizar una empresa
+    @Transactional
     public Empresa updateEmpresa(Long id, Empresa empresaDetails) {
         Empresa empresa = empresaRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Empresa con ID " + id + " no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa con ID " + id + " no encontrada"));
 
         if (!empresa.getNombre().equals(empresaDetails.getNombre()) &&
                 empresaRepository.findByNombre(empresaDetails.getNombre()).isPresent()) {
             throw new IllegalArgumentException("Ya existe una empresa con el nombre: " + empresaDetails.getNombre());
         }
-
         if (!empresa.getRuc().equals(empresaDetails.getRuc()) &&
                 empresaRepository.findByRuc(empresaDetails.getRuc()).isPresent()) {
             throw new IllegalArgumentException("Ya existe una empresa con el RUC: " + empresaDetails.getRuc());
@@ -92,23 +77,31 @@ public class EmpresaService {
 
         empresa.setNombre(empresaDetails.getNombre());
         empresa.setRuc(empresaDetails.getRuc());
-        empresa.setHabilitada(empresaDetails.isHabilitada()); // Nueva línea
+        empresa.setHabilitada(empresaDetails.isHabilitada());
         return empresaRepository.save(empresa);
     }
 
-    // Eliminar una empresa
+    @Transactional
     public void deleteEmpresa(Long id) {
         Empresa empresa = empresaRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Empresa con ID " + id + " no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa con ID " + id + " no encontrada"));
 
-        // Usar la instancia inyectada de colaboradorRepository
         List<Colaborador> colaboradores = colaboradorRepository.findByEmpresaId(id);
         for (Colaborador colaborador : colaboradores) {
             colaborador.setEmpresa(null);
-            colaboradorRepository.save(colaborador); // Usar la instancia inyectada aquí también
+            colaboradorRepository.save(colaborador);
         }
 
         empresaRepository.delete(empresa);
     }
 
+    public EmpresaDTO convertToDTO(Empresa empresa) {
+        return new EmpresaDTO(
+                empresa.getId(),
+                empresa.getNombre(),
+                empresa.getRuc(),
+                empresa.getNumeroDeEmpleados(),
+                empresa.isHabilitada()
+        );
+    }
 }
