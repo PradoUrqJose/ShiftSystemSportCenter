@@ -20,11 +20,12 @@ export class AgregarTiendaModalComponent {
   @Output() tiendaGuardada = new EventEmitter<void>();
 
   isSubmitting: boolean = false;
+  errorMessage: string | null = null; // Añadir para mostrar errores localmente
 
   constructor(private tiendaService: TiendaService) {}
 
   resetTienda(): Tienda {
-    return { id: 0, nombre: '', direccion: '' };
+    return { id: undefined, nombre: '', direccion: '' }; // Ajusté id a opcional
   }
 
   cerrarModal(): void {
@@ -33,12 +34,18 @@ export class AgregarTiendaModalComponent {
       this.cerrarModalEvent.emit();
       this.tiendaActual = this.resetTienda();
       this.isSubmitting = false;
+      this.errorMessage = null;
     }, 300);
   }
 
   guardarTienda(): void {
+    if (!this.tiendaActual.nombre) {
+      this.errorMessage = 'El nombre es obligatorio.';
+      return;
+    }
     if (this.isSubmitting) return;
     this.isSubmitting = true;
+    this.errorMessage = null;
 
     if (this.tiendaActual.id) {
       this.tiendaService.updateTienda(this.tiendaActual.id, this.tiendaActual).subscribe({
@@ -50,9 +57,10 @@ export class AgregarTiendaModalComponent {
             cssAnimationStyle: 'from-right',
           });
         },
-        error: (error) => {
+        error: (err) => {
           this.isSubmitting = false;
-          Notiflix.Notify.failure(error.error?.message || 'Error desconocido', {
+          this.errorMessage = err.message || 'Error al actualizar la tienda.';
+          Notiflix.Notify.failure(this.errorMessage || 'Error desconocido', {
             position: 'right-bottom',
             cssAnimationStyle: 'from-right',
           });
@@ -68,9 +76,10 @@ export class AgregarTiendaModalComponent {
             cssAnimationStyle: 'from-right',
           });
         },
-        error: (error) => {
+        error: (err) => {
           this.isSubmitting = false;
-          Notiflix.Notify.failure(error.error?.message || 'Error desconocido', {
+          this.errorMessage = err.message || 'Error al agregar la tienda.';
+          Notiflix.Notify.failure(this.errorMessage || 'Error desconocido', {
             position: 'right-bottom',
             cssAnimationStyle: 'from-right',
           });
