@@ -10,30 +10,30 @@ import { environment } from '../../environments/environment';
 
 
 export interface Turno {
-  id: number; // ID del turno
-  nombreColaborador: string; // Nombre del colaborador
-  dniColaborador: string; // DNI del colaborador
-  nombreEmpresa: string; // Nombre de la empresa
-  empresaId?: number; // ID de la empresa (nuevo campo opcional)
-  colaboradorId?: number; // ID del colaborador (nuevo campo opcional)
-  fecha: string; // Fecha del turno
-  horaEntrada: string; // Hora de entrada
-  horaSalida: string; // Hora de salida
-  horasTrabajadas?: number; // Horas trabajadas (opcional)
-  tiendaId?: number | null; // Añadir tiendaId
-  nombreTienda?: string; // Añadir tiendaNombre
-  tomoAlmuerzo?: boolean; // Añadir tomoAlmuerzo
-  esFeriado?: boolean; // ✅ EsFeriado
-  horasTotalesSemana?: number; // ✅ HorasTotalesSemana
+  id: number;
+  nombreColaborador: string;
+  dniColaborador: string;
+  nombreEmpresa: string;
+  empresaId?: number;
+  colaboradorId?: number;
+  fecha: string;
+  horaEntrada: string;
+  horaSalida: string;
+  horasTrabajadas?: number;
+  tiendaId?: number | null;
+  nombreTienda?: string;
+  tomoAlmuerzo?: boolean;
+  esFeriado?: boolean;
+  horasTotalesSemana?: number;
 }
 
 export interface TurnoPayload {
-  colaborador: { id: number | undefined }; // Solo el ID del colaborador
-  fecha: string; // Fecha del turno
-  horaEntrada: string; // Hora de entrada
-  horaSalida: string; // Hora de salida
-  empresa: { id: number }; // Solo el ID de la empresa\
-  tienda: { id: number }; // Solo el ID de la tienda
+  colaborador: { id: number | undefined };
+  fecha: string;
+  horaEntrada: string;
+  horaSalida: string;
+  empresa: { id: number };
+  tienda: { id: number };
 }
 
 export interface ResumenMensual {
