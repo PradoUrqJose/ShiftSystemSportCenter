@@ -4,9 +4,10 @@ import com.sportcenter.shift_manager.dto.ResumenMensualDTO;
 import com.sportcenter.shift_manager.dto.TurnoDTO;
 import com.sportcenter.shift_manager.model.Turno;
 import com.sportcenter.shift_manager.service.TurnoService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,116 +21,102 @@ public class TurnoController {
         this.turnoService = turnoService;
     }
 
-    // Crear un turno (retorna DTO en lugar de entidad completa)
     @PostMapping
-    public TurnoDTO saveTurno(@RequestBody Turno turno) {
-        Turno savedTurno = turnoService.saveTurno(turno);
-        return turnoService.convertToDTO(savedTurno); // Convertimos a DTO para incluir colaboradorId y otros datos
+    public ResponseEntity<TurnoDTO> saveTurno(@Valid @RequestBody Turno turno) {
+        TurnoDTO savedTurno = turnoService.saveTurno(turno);
+        return ResponseEntity.ok(savedTurno);
     }
 
-    // Obtener turnos para un colaborador específico (retorna DTO)
     @GetMapping("/{colaboradorId}")
-    public List<TurnoDTO> getTurnosByColaborador(@PathVariable Long colaboradorId) {
-        return turnoService.getTurnosByColaboradorId(colaboradorId);
+    public ResponseEntity<List<TurnoDTO>> getTurnosByColaborador(@PathVariable Long colaboradorId) {
+        return ResponseEntity.ok(turnoService.getTurnosByColaboradorId(colaboradorId));
     }
 
-    // Obtener turnos por semana para todos los colaboradores (retorna entidad completa, si es necesario)
     @GetMapping
-    public List<TurnoDTO> getTurnosPorSemana(@RequestParam("fecha") String fecha) {
-        return turnoService.getTurnosPorSemanaDTO(fecha); // Agregar este método al servicio si quieres retornar DTOs aquí
+    public ResponseEntity<List<TurnoDTO>> getTurnosPorSemana(@RequestParam("fecha") String fecha) {
+        return ResponseEntity.ok(turnoService.getTurnosPorSemanaDTO(fecha));
     }
 
-    // Obtener turnos por mes para un trabajador específico
     @GetMapping("/mensual/{colaboradorId}")
-    public List<TurnoDTO> getTurnosMensualesPorColaborador(
+    public ResponseEntity<List<TurnoDTO>> getTurnosMensualesPorColaborador(
             @PathVariable Long colaboradorId,
             @RequestParam("mes") int mes,
             @RequestParam("anio") int anio) {
-        return turnoService.getTurnosMensualesPorColaborador(colaboradorId, mes, anio);
+        return ResponseEntity.ok(turnoService.getTurnosMensualesPorColaborador(colaboradorId, mes, anio));
     }
 
-    // Obtener turnos por mes para todos los trabajadores
     @GetMapping("/mensual")
-    public List<TurnoDTO> getTurnosMensuales(
+    public ResponseEntity<List<TurnoDTO>> getTurnosMensuales(
             @RequestParam("mes") int mes,
             @RequestParam("anio") int anio) {
-        return turnoService.getTurnosMensuales(mes, anio);
+        return ResponseEntity.ok(turnoService.getTurnosMensuales(mes, anio));
     }
 
-    // Actualizar un turno (sin DTO, ya que recibe entidad completa)
     @PutMapping("/{id}")
-    public Turno updateTurno(@PathVariable Long id, @RequestBody Turno turno) {
-        return turnoService.updateTurno(id, turno);
+    public ResponseEntity<TurnoDTO> updateTurno(@PathVariable Long id, @Valid @RequestBody Turno turno) {
+        TurnoDTO updatedTurno = turnoService.updateTurno(id, turno);
+        return ResponseEntity.ok(updatedTurno);
     }
 
-    // Eliminar un turno
     @DeleteMapping("/{id}")
-    public void deleteTurno(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTurno(@PathVariable Long id) {
         turnoService.deleteTurno(id);
+        return ResponseEntity.noContent().build();
     }
 
-
-    // ---- AGREGADOS PARA LA OPTIMIZACIÓN --------
     @GetMapping("/semanas-del-mes")
-    public List<List<String>> getSemanasDelMes(
+    public ResponseEntity<List<List<String>>> getSemanasDelMes(
             @RequestParam("mes") int mes,
             @RequestParam("anio") int anio) {
-        return turnoService.calcularSemanasDelMes(mes, anio);
+        return ResponseEntity.ok(turnoService.calcularSemanasDelMes(mes, anio));
     }
 
     @GetMapping("/semanal-estricto")
-    public List<TurnoDTO> getTurnosPorSemanaEstricta(
+    public ResponseEntity<List<TurnoDTO>> getTurnosPorSemanaEstricta(
             @RequestParam("mes") int mes,
             @RequestParam("anio") int anio,
             @RequestParam("semana") int numeroSemana) {
-        return turnoService.getTurnosPorSemanaEstricta(mes, anio, numeroSemana);
+        return ResponseEntity.ok(turnoService.getTurnosPorSemanaEstricta(mes, anio, numeroSemana));
     }
 
-    // ----------------- REPORTES ---------------
-    // Endpoint para obtener colaboradores que comparten la misma tienda y rango de fechas
     @GetMapping("/colab-tienda-fecha")
-    public List<TurnoDTO> getColaboradoresPorTiendaYRangoFechas(
+    public ResponseEntity<List<TurnoDTO>> getColaboradoresPorTiendaYRangoFechas(
             @RequestParam("tiendaId") Long tiendaId,
             @RequestParam("fechaInicio") String fechaInicio,
             @RequestParam("fechaFin") String fechaFin) {
-        return turnoService.getColaboradoresPorTiendaYRangoFechas(tiendaId, fechaInicio, fechaFin);
+        return ResponseEntity.ok(turnoService.getColaboradoresPorTiendaYRangoFechas(tiendaId, fechaInicio, fechaFin));
     }
 
-    // Agregar @CrossOrigin en cada método de reportes
     @GetMapping("/reporte")
-    public List<TurnoDTO> getHorasTrabajadasPorColaboradores(
+    public ResponseEntity<List<TurnoDTO>> getHorasTrabajadasPorColaboradores(
             @RequestParam("fechaInicio") String fechaInicio,
             @RequestParam("fechaFin") String fechaFin,
             @RequestParam(value = "colaboradores", required = false) String colaboradores) {
-
         List<Long> colaboradoresIds = (colaboradores != null && !colaboradores.isEmpty())
                 ? Arrays.stream(colaboradores.split(",")).map(Long::parseLong).toList()
                 : new ArrayList<>();
-
-        return turnoService.getHorasTrabajadasPorColaboradores(colaboradoresIds, fechaInicio, fechaFin);
+        return ResponseEntity.ok(turnoService.getHorasTrabajadasPorColaboradores(colaboradoresIds, fechaInicio, fechaFin));
     }
 
     @GetMapping("/reporte/feriados")
-    public List<TurnoDTO> getTurnosEnFeriados(
+    public ResponseEntity<List<TurnoDTO>> getTurnosEnFeriados(
             @RequestParam("fechaInicio") String fechaInicio,
             @RequestParam("fechaFin") String fechaFin,
             @RequestParam(value = "colaboradores", required = false) String colaboradores) {
         List<Long> colaboradoresIds = (colaboradores != null && !colaboradores.isEmpty())
                 ? Arrays.stream(colaboradores.split(",")).map(Long::parseLong).toList()
                 : new ArrayList<>();
-        return turnoService.getTurnosEnFeriados(colaboradoresIds, fechaInicio, fechaFin);
+        return ResponseEntity.ok(turnoService.getTurnosEnFeriados(colaboradoresIds, fechaInicio, fechaFin));
     }
 
     @GetMapping("/resumen-mensual")
-    public List<ResumenMensualDTO> getResumenMensual(
+    public ResponseEntity<List<ResumenMensualDTO>> getResumenMensual(
             @RequestParam("mes") int mes,
             @RequestParam("anio") int anio,
             @RequestParam(value = "colaboradores", required = false) String colaboradores) {
-
         List<Long> colaboradoresIds = (colaboradores != null && !colaboradores.isEmpty())
                 ? Arrays.stream(colaboradores.split(",")).map(Long::parseLong).toList()
                 : new ArrayList<>();
-
-        return turnoService.getResumenMensualPorColaboradores(colaboradoresIds, mes, anio);
+        return ResponseEntity.ok(turnoService.getResumenMensualPorColaboradores(colaboradoresIds, mes, anio));
     }
 }
