@@ -384,15 +384,12 @@ export default class TurnosComponent implements OnInit {
     this.resetearEstadoModal();
     this.colaboradores$
       .pipe(
-        map((colaboradores) => colaboradores.find((c) => c.id === colaboradorId))
+        map((colaboradores) =>
+          colaboradores.find((c) => c.id === colaboradorId)
+        )
       )
       .subscribe((col) => {
         if (col) {
-          if (!col.empresaId) {
-            console.error('Colaborador sin empresa:', col);
-            Notiflix.Notify.failure('El colaborador no tiene una empresa asignada.');
-            return;
-          }
           this.turnoActual = {
             id: 0,
             nombreColaborador: col.nombre,
