@@ -221,7 +221,6 @@ export default class TurnosComponent implements OnInit {
   }
 
   cargarSemana(): void {
-    console.log("CARGANDO SEMANA");
     this.turnoStateService.setLoading(true);
 
     const semanaActual = this.turnoStateService.getSemanaActual();
@@ -237,7 +236,6 @@ export default class TurnosComponent implements OnInit {
 
         // Actualizar diasSemana$ con la semana procesada
         this.diasSemana$.next(semanaSeleccionada);
-        console.log('Semana cargada inicialmente:', semanaSeleccionada);
 
         // Cargar los turnos
         const numeroSemana = this.calcularNumeroSemana(semanaActual, semanas);
@@ -333,8 +331,6 @@ export default class TurnosComponent implements OnInit {
         this.turnoService.getSemanasDelMes(mes, anio).subscribe({
           next: (semanas) => {
             const numeroSemana = this.calcularNumeroSemana(semanaActual, semanas);
-
-            console.log("Cambiar Semana");
             // Actualizar los turnos con getTurnosPorSemanaEstricta
             this.turnos$ = this.turnoService.getTurnosPorSemanaEstricta(mes, anio, numeroSemana);
 
@@ -388,12 +384,15 @@ export default class TurnosComponent implements OnInit {
     this.resetearEstadoModal();
     this.colaboradores$
       .pipe(
-        map((colaboradores) =>
-          colaboradores.find((c) => c.id === colaboradorId)
-        )
+        map((colaboradores) => colaboradores.find((c) => c.id === colaboradorId))
       )
       .subscribe((col) => {
         if (col) {
+          if (!col.empresaId) {
+            console.error('Colaborador sin empresa:', col);
+            Notiflix.Notify.failure('El colaborador no tiene una empresa asignada.');
+            return;
+          }
           this.turnoActual = {
             id: 0,
             nombreColaborador: col.nombre,
@@ -408,10 +407,8 @@ export default class TurnosComponent implements OnInit {
             tiendaId: null,
           };
         }
+        this.modalService.abrirModal(50);
       });
-
-    this.modalService.abrirModal(50); // ✅ Usamos el servicio
-
   }
 
   abrirModalEdicion(turno: Turno): void {

@@ -36,7 +36,7 @@ export class TurnoModalComponent {
   isModalAgregarTiendaVisible: boolean = false;
   mostrarModalGestionarTiendas: boolean = false;
   isModalGestionarTiendasVisible: boolean = false;
-  tiendaActual: Tienda = { id: 0, nombre: '', direccion: '' };
+  tiendaActual: Tienda = { id: undefined, nombre: '', direccion: '' };
 
 
   constructor(
@@ -91,6 +91,7 @@ export class TurnoModalComponent {
         cssAnimationStyle: 'from-right',
       });
       return;
+      console.log("DESDEVALIDACION TIENDA: ", this.turnoActual);
     }
 
     if (this.errorHoraEntrada || this.errorHoraSalida) {
@@ -112,11 +113,11 @@ export class TurnoModalComponent {
       horaEntrada: this.turnoActual.horaEntrada,
       horaSalida: this.turnoActual.horaSalida,
       empresa: { id: this.turnoActual.empresaId! },
-      tienda: { id: this.turnoActual.tiendaId! },
+      tienda: { id: Number(this.turnoActual.tiendaId) }, // Convertir a número
     };
 
     const operacion = this.turnoActual.id
-      ? this.turnoService.updateTurno(this.turnoActual.id, turnoParaGuardar)
+      ?  this.turnoService.updateTurno(this.turnoActual.id, turnoParaGuardar)
       : this.turnoService.addTurno(turnoParaGuardar);
 
     operacion.subscribe({
@@ -128,14 +129,16 @@ export class TurnoModalComponent {
           { position: 'right-bottom', cssAnimationStyle: 'from-right' }
         );
       },
-      error: (error) => {
+      error: (err) => {
         this.isSubmitting = false;
-        Notiflix.Notify.failure(error.error?.message || 'Error desconocido', {
+        Notiflix.Notify.failure(err.message || 'Error al guardar el turno', {
           position: 'right-bottom',
           cssAnimationStyle: 'from-right',
         });
       }
     });
+
+    console.log('Turno para guardar:', turnoParaGuardar);
   }
 
   eliminarTurno(): void {
