@@ -5,9 +5,9 @@ import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface Tienda {
-  id: number;
+  id?: number; // Opcional al crear una nueva tienda
   nombre: string;
-  direccion: string;
+  direccion?: string; // Opcional según el backend
 }
 
 @Injectable({
@@ -20,45 +20,36 @@ export class TiendaService {
 
   getTiendas(): Observable<Tienda[]> {
     return this.http.get<Tienda[]>(this.apiUrl).pipe(
-      catchError((error) => {
-        console.error('Error al obtener tiendas:', error);
-        return throwError(
-          () =>
-            new Error('No se pudieron cargar las tiendas. Intente más tarde.')
-        );
+      catchError((err) => {
+        console.error('Error al obtener tiendas:', err);
+        return throwError(() => new Error(err.error || 'No se pudieron cargar las tiendas.'));
       })
     );
   }
 
   addTienda(tienda: Tienda): Observable<Tienda> {
     return this.http.post<Tienda>(this.apiUrl, tienda).pipe(
-      catchError((error) => {
-        console.error('Error al agregar tienda:', error);
-        return throwError(
-          () => new Error('No se pudo agregar la tienda. Intente más tarde.')
-        );
+      catchError((err) => {
+        console.error('Error al agregar tienda:', err);
+        return throwError(() => new Error(err.error || 'Error al agregar la tienda.'));
       })
     );
   }
 
   updateTienda(id: number, tienda: Tienda): Observable<Tienda> {
     return this.http.put<Tienda>(`${this.apiUrl}/${id}`, tienda).pipe(
-      catchError((error) => {
-        console.error('Error al actualizar tienda:', error);
-        return throwError(
-          () => new Error('No se pudo actualizar la tienda. Intente más tarde.')
-        );
+      catchError((err) => {
+        console.error('Error al actualizar tienda:', err);
+        return throwError(() => new Error(err.error || 'Error al actualizar la tienda.'));
       })
     );
   }
 
   deleteTienda(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      catchError((error) => {
-        console.error('Error al eliminar tienda:', error);
-        return throwError(
-          () => new Error('No se pudo eliminar la tienda. Intente más tarde.')
-        );
+      catchError((err) => {
+        console.error('Error al eliminar tienda:', err);
+        return throwError(() => new Error(err.error || 'Error al eliminar la tienda.'));
       })
     );
   }

@@ -1,10 +1,7 @@
-<div *ngIf="mostrarModal"
-  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] backdrop-blur-sm"
-  (click)="cerrarModal()">
-  <div
-    class="bg-white p-6 rounded-2xl shadow-2xl transform transition-all duration-300 w-11/12 sm:w-2/3 md:w-1/2 lg:w-1/4 relative max-h-[80vh] flex flex-col overflow-hidden"
-    [ngClass]="{'opacity-0 translate-x-12': !isModalVisible, 'opacity-100 translate-x-0': isModalVisible}"
-    (click)="$event.stopPropagation()">
+<div *ngIf="mostrarModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] backdrop-blur-sm" (click)="cerrarModal()">
+  <div class="bg-white p-6 rounded-2xl shadow-2xl transform transition-all duration-300 w-11/12 sm:w-2/3 md:w-1/2 lg:w-1/4 relative max-h-[80vh] flex flex-col overflow-hidden"
+  [ngClass]="{'opacity-0 translate-x-12': !isModalVisible, 'opacity-100 translate-x-0': isModalVisible}"
+  (click)="$event.stopPropagation()">
     <!-- Botón de cierre -->
     <button (click)="cerrarModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition" aria-label="Cerrar">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -19,19 +16,20 @@
 
     <!-- Lista de Tiendas -->
     <div class="mt-6 flex-1 overflow-hidden pb-6">
-      <div class="h-full flex flex-col overflow-y-auto">
+      <div *ngIf="isLoading" class="text-center">Eliminando...</div>
+      <div *ngIf="errorMessage" class="text-red-500 text-center">{{ errorMessage }}</div>
+      <div class="h-full flex flex-col overflow-y-auto" *ngIf="!isLoading">
         <ul class="space-y-4 pr-2 max-h-[40vh]">
-          <li *ngFor="let tienda of tiendas$ | async"
-            class="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+          <li *ngFor="let tienda of tiendas$ | async" class="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
             <div>
               <span class="font-semibold text-gray-800">{{ tienda.nombre }}</span>
-              <p class="text-sm text-gray-500">{{ tienda.direccion }}</p>
+              <p class="text-sm text-gray-500">{{ tienda.direccion || 'Sin dirección' }}</p>
             </div>
             <div class="flex space-x-4">
               <button (click)="editarTienda(tienda)" class="text-blue-500 hover:text-blue-700 transition">
                 <i class="fa-solid fa-edit"></i>
               </button>
-              <button (click)="eliminarTienda(tienda.id)" class="text-red-500 hover:text-red-700 transition">
+              <button (click)="tienda.id !== undefined && eliminarTienda(tienda.id)" class="text-red-500 hover:text-red-700 transition">
                 <i class="fa-solid fa-trash"></i>
               </button>
             </div>
