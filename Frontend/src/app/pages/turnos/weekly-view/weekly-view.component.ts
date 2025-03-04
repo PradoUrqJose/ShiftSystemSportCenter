@@ -34,7 +34,6 @@ export class WeeklyViewComponent implements OnInit {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['colaboradores'] && changes['colaboradores'].currentValue) {
-      console.log('Colaboradores cambiaron:', this.colaboradores);
       this.filteredColaboradores = [...this.colaboradores];
       if (this.turnos) {
         this.calcularHorasTotales(); // Recalcular cuando colaboradores llegue
@@ -42,7 +41,6 @@ export class WeeklyViewComponent implements OnInit {
       this.applySortAndFilter();
     }
     if (changes['turnos'] && changes['turnos'].currentValue) {
-      console.log('Turnos cambiaron:', this.turnos);
       if (this.colaboradores.length > 0) {
         this.calcularHorasTotales(); // Recalcular cuando turnos llegue
       }
@@ -51,12 +49,10 @@ export class WeeklyViewComponent implements OnInit {
   }
 
   calcularHorasTotales() {
-    console.log("CALCULAR HORAS TOTALES", this.turnos, this.colaboradores);
     this.horasTotalesSemana = {};
     this.colaboradores.forEach(colaborador => {
       const horas = this.getHorasTotalesSemana(colaborador.id);
       this.horasTotalesSemana[colaborador.id] = horas;
-      console.log(`Colaborador ${colaborador.id}: ${horas} horas`);
     });
   }
 
