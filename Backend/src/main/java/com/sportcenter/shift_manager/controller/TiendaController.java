@@ -1,7 +1,6 @@
 package com.sportcenter.shift_manager.controller;
 
 import com.sportcenter.shift_manager.dto.TiendaDTO;
-import com.sportcenter.shift_manager.model.Tienda;
 import com.sportcenter.shift_manager.service.TiendaService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

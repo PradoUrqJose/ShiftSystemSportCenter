@@ -1,7 +1,6 @@
 package com.sportcenter.shift_manager.controller;
 
 import com.sportcenter.shift_manager.dto.FeriadoDTO;
-import com.sportcenter.shift_manager.model.Feriado;
 import com.sportcenter.shift_manager.service.FeriadoService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
