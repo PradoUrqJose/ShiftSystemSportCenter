@@ -16,13 +16,14 @@ public class TurnoDTO {
     private String nombreColaborador;
     private String dniColaborador;
     private String nombreEmpresa;
-    private Long tiendaId; // Agregar el ID de la tienda
+    private Long empresaId; // Nuevo campo
+    private Long tiendaId;
     private String nombreTienda;
     private LocalDate fecha;
     private LocalTime horaEntrada;
     private LocalTime horaSalida;
     private double horasTrabajadas;
-    private boolean tomoAlmuerzo; // Nuevo atributo
-    private double horasTotalesSemana; // ✅ Nuevo atributo
+    private boolean tomoAlmuerzo;
+    private double horasTotalesSemana;
     private boolean esFeriado;
 }

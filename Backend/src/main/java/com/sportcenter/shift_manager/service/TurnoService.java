@@ -3,21 +3,19 @@ package com.sportcenter.shift_manager.service;
 import com.sportcenter.shift_manager.dto.ResumenMensualDTO;
 import com.sportcenter.shift_manager.dto.TurnoDTO;
 import com.sportcenter.shift_manager.model.Colaborador;
-import com.sportcenter.shift_manager.model.Feriado;
 import com.sportcenter.shift_manager.model.Tienda;
 import com.sportcenter.shift_manager.model.Turno;
 import com.sportcenter.shift_manager.repository.ColaboradorRepository;
 import com.sportcenter.shift_manager.repository.TiendaRepository;
 import com.sportcenter.shift_manager.repository.TurnoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class TurnoService {
@@ -37,32 +35,36 @@ public class TurnoService {
     }
 
     // Métodos públicos: CRUD de turnos
-    public Turno saveTurno(Turno turno) {
+    @Transactional
+    public TurnoDTO saveTurno(Turno turno) {
         if (turno.getColaborador() == null || turno.getColaborador().getId() == null) {
-            throw new RuntimeException("El colaborador debe estar especificado en el turno");
+            throw new IllegalArgumentException("El colaborador debe estar especificado en el turno");
+        }
+        if (turno.getTienda() == null || turno.getTienda().getId() == null) {
+            throw new IllegalArgumentException("La tienda debe estar especificada en el turno");
+        }
+        if (turno.getFecha() == null || turno.getHoraEntrada() == null || turno.getHoraSalida() == null) {
+            throw new IllegalArgumentException("Fecha y horas son obligatorias");
+        }
+        if (!turno.getHoraSalida().isAfter(turno.getHoraEntrada())) {
+            throw new IllegalArgumentException("La hora de salida debe ser posterior a la hora de entrada");
         }
 
-        // Verificar que la hora de salida sea posterior a la hora de entrada
-        if (turno.getHoraEntrada() != null && turno.getHoraSalida() != null) {
-            if (!turno.getHoraSalida().isAfter(turno.getHoraEntrada())) {
-                throw new RuntimeException("La hora de salida debe ser posterior a la hora de entrada");
-            }
-        }
-        // Verificar que el colaborador existe
         Colaborador colaborador = colaboradorRepository.findById(turno.getColaborador().getId())
-                .orElseThrow(() -> new RuntimeException("El colaborador con ID " + turno.getColaborador().getId() + " no existe"));
-
+                .orElseThrow(() -> new IllegalArgumentException("El colaborador con ID " + turno.getColaborador().getId() + " no existe"));
         Tienda tienda = tiendaRepository.findById(turno.getTienda().getId())
-                .orElseThrow(() -> new RuntimeException("La tienda con ID " + turno.getTienda().getId() + " no existe"));
+                .orElseThrow(() -> new IllegalArgumentException("La tienda con ID " + turno.getTienda().getId() + " no existe"));
 
-        // Verificar si el turno es en un día feriado
-        boolean esFeriado = feriadoService.isFeriado(turno.getFecha());
-        turno.setEsFeriado(esFeriado);
+        if (colaborador.getEmpresa() == null) {
+            throw new IllegalArgumentException("El colaborador no tiene una empresa asignada");
+        }
 
         turno.setColaborador(colaborador);
-        turno.setEmpresa(colaborador.getEmpresa()); // Aseguramos que la empresa también se asocia correctamente
+        turno.setEmpresa(colaborador.getEmpresa());
         turno.setTienda(tienda);
-        return turnoRepository.save(turno); // Guardamos el turno y lo retornamos
+        turno.setEsFeriado(feriadoService.isFeriado(turno.getFecha()));
+        Turno savedTurno = turnoRepository.save(turno);
+        return convertToDTO(savedTurno);
     }
 
     // Métodos públicos: Gestión de turnos por colaborador
@@ -140,44 +142,54 @@ public class TurnoService {
         return parsedDate.with(java.time.DayOfWeek.MONDAY);
     }
 
-    public Turno updateTurno(Long id, Turno updatedTurno) {
+    @Transactional
+    public TurnoDTO updateTurno(Long id, Turno updatedTurno) {
         return turnoRepository.findById(id).map(turno -> {
-            // Validar que la hora de salida sea posterior a la de entrada
-            if (updatedTurno.getHoraEntrada() != null && updatedTurno.getHoraSalida() != null) {
-                if (!updatedTurno.getHoraSalida().isAfter(updatedTurno.getHoraEntrada())) {
-                    throw new RuntimeException("La hora de salida debe ser posterior a la hora de entrada");
-                }
+            if (updatedTurno.getColaborador() == null || updatedTurno.getColaborador().getId() == null) {
+                throw new IllegalArgumentException("El colaborador debe estar especificado en el turno");
+            }
+            if (updatedTurno.getTienda() == null || updatedTurno.getTienda().getId() == null) {
+                throw new IllegalArgumentException("La tienda debe estar especificada en el turno");
+            }
+            if (updatedTurno.getFecha() == null || updatedTurno.getHoraEntrada() == null || updatedTurno.getHoraSalida() == null) {
+                throw new IllegalArgumentException("Fecha y horas son obligatorias");
+            }
+            if (!updatedTurno.getHoraSalida().isAfter(updatedTurno.getHoraEntrada())) {
+                throw new IllegalArgumentException("La hora de salida debe ser posterior a la hora de entrada");
             }
 
-            Optional<Colaborador> colaboradorOpt = colaboradorRepository.findById(updatedTurno.getColaborador().getId());
-            if (colaboradorOpt.isEmpty()) {
-                throw new RuntimeException("Colaborador con ID " + updatedTurno.getColaborador().getId() + " no existe");
+            Colaborador colaborador = colaboradorRepository.findById(updatedTurno.getColaborador().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Colaborador con ID " + updatedTurno.getColaborador().getId() + " no existe"));
+            Tienda tienda = tiendaRepository.findById(updatedTurno.getTienda().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Tienda con ID " + updatedTurno.getTienda().getId() + " no existe"));
+
+            if (colaborador.getEmpresa() == null) {
+                throw new IllegalArgumentException("El colaborador no tiene una empresa asignada");
             }
 
-            Optional<Tienda> tiendaOpt = tiendaRepository.findById(updatedTurno.getTienda().getId());
-            if (tiendaOpt.isEmpty()) {
-                throw new RuntimeException("Tienda con ID " + updatedTurno.getTienda().getId() + " no existe");
-            }
-
-            turno.setColaborador(colaboradorOpt.get());
+            turno.setColaborador(colaborador);
             turno.setFecha(updatedTurno.getFecha());
             turno.setHoraEntrada(updatedTurno.getHoraEntrada());
             turno.setHoraSalida(updatedTurno.getHoraSalida());
-            turno.setTienda(tiendaOpt.get());
-            return turnoRepository.save(turno);
-        }).orElseThrow(() -> new RuntimeException("Turno no encontrado"));
+            turno.setEmpresa(colaborador.getEmpresa());
+            turno.setTienda(tienda);
+            turno.setEsFeriado(feriadoService.isFeriado(updatedTurno.getFecha()));
+            Turno updated = turnoRepository.save(turno);
+            return convertToDTO(updated);
+        }).orElseThrow(() -> new IllegalArgumentException("Turno con ID " + id + " no encontrado"));
     }
 
+    @Transactional
     public void deleteTurno(Long id) {
-        turnoRepository.deleteById(id);
+        Turno turno = turnoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Turno con ID " + id + " no encontrado"));
+        turnoRepository.delete(turno);
     }
 
     public TurnoDTO convertToDTO(Turno turno) {
-        boolean tomoAlmuerzo = false;
-        if (turno.getHoraEntrada() != null && turno.getHoraSalida() != null) {
-            tomoAlmuerzo = turno.getHoraEntrada().isBefore(LocalTime.of(12, 1))
-                    && turno.getHoraSalida().isAfter(LocalTime.of(13, 0));
-        }
+        boolean tomoAlmuerzo = turno.getHoraEntrada() != null && turno.getHoraSalida() != null &&
+                turno.getHoraEntrada().isBefore(LocalTime.of(12, 1)) &&
+                turno.getHoraSalida().isAfter(LocalTime.of(13, 0));
 
         boolean esFeriado = feriadoService.isFeriado(turno.getFecha());
 
@@ -187,6 +199,7 @@ public class TurnoService {
                 turno.getColaborador() != null ? turno.getColaborador().getNombre() : "Sin Nombre",
                 turno.getColaborador() != null ? turno.getColaborador().getDni() : "Sin DNI",
                 turno.getEmpresa() != null ? turno.getEmpresa().getNombre() : "Sin Empresa",
+                turno.getEmpresa() != null ? turno.getEmpresa().getId() : null, // Añadir empresaId
                 turno.getTienda() != null ? turno.getTienda().getId() : null,
                 turno.getTienda() != null ? turno.getTienda().getNombre() : "Sin Tienda",
                 turno.getFecha(),
@@ -204,15 +217,8 @@ public class TurnoService {
     public List<List<String>> calcularSemanasDelMes(int mes, int anio) {
         List<List<String>> semanas = new ArrayList<>();
         List<String> semanaActual = new ArrayList<>();
-
-        // Obtener primer y último día del mes
         LocalDate inicioMes = LocalDate.of(anio, mes, 1);
         LocalDate finMes = inicioMes.withDayOfMonth(inicioMes.lengthOfMonth());
-
-        System.out.println("Inicio del mes: " + inicioMes);
-        System.out.println("Fin del mes: " + finMes);
-
-        // Iniciar desde el primer día del mes
         LocalDate diaActual = inicioMes;
 
         // 1️⃣ PRIMERA SEMANA (INCOMPLETA, si el mes no inicia en Lunes)
@@ -223,7 +229,6 @@ public class TurnoService {
 
         // Si hay días en la primera semana, la agregamos antes de avanzar a semanas regulares
         if (!semanaActual.isEmpty()) {
-            System.out.println("Primera semana (incompleta): " + semanaActual);
             semanas.add(new ArrayList<>(semanaActual));
             semanaActual.clear();
         }
@@ -235,27 +240,19 @@ public class TurnoService {
                 diaActual = diaActual.plusDays(1);
             }
             semanas.add(new ArrayList<>(semanaActual));
-            System.out.println("Semana generada: " + semanaActual);
             semanaActual.clear();
         }
 
-        // 3️⃣ ÚLTIMA SEMANA (INCOMPLETA, si el mes no termina en Domingo)
         if (!semanaActual.isEmpty()) {
-            System.out.println("Última semana (incompleta): " + semanaActual);
             semanas.add(new ArrayList<>(semanaActual));
         }
-
-        System.out.println("Semanas finales generadas: " + semanas);
 
         // Calcular las horas trabajadas por semana
         for (List<String> semana : semanas) {
             if (!semana.isEmpty()) {
                 LocalDate inicioSemana = LocalDate.parse(semana.get(0));
                 LocalDate finSemana = LocalDate.parse(semana.get(semana.size() - 1));
-
                 List<Turno> turnos = turnoRepository.findByFechaBetween(inicioSemana, finSemana);
-
-                // Mapa para almacenar la suma de horas trabajadas por colaborador en la semana
                 Map<Long, Double> horasSemanalesPorColaborador = new HashMap<>();
 
                 for (Turno turno : turnos) {
@@ -317,15 +314,14 @@ public class TurnoService {
     }
 
     // --------------------- REPORTES ------------------------
-// Reporte 1: Colaboradores por tienda y rango de fechas
+    // Reporte 1: Colaboradores por tienda y rango de fechas
     public List<TurnoDTO> getColaboradoresPorTiendaYRangoFechas(Long tiendaId, String fechaInicio, String fechaFin) {
         try {
             LocalDate parsedFechaInicio = LocalDate.parse(fechaInicio);
             LocalDate parsedFechaFin = LocalDate.parse(fechaFin);
             List<Turno> turnos = turnoRepository.findByTienda_IdAndFechaBetweenOrderByFechaAsc(tiendaId, parsedFechaInicio, parsedFechaFin);
-
-            // Calcular horas totales por colaborador en el rango de fechas
             Map<Long, Double> horasTotalesPorColaborador = new HashMap<>();
+
             for (Turno turno : turnos) {
                 double horasTrabajadas = calcularHorasTrabajadas(turno);
                 horasTotalesPorColaborador.put(
