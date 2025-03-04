@@ -1,7 +1,10 @@
 package com.sportcenter.shift_manager.controller;
 
+import com.sportcenter.shift_manager.dto.TiendaDTO;
 import com.sportcenter.shift_manager.model.Tienda;
 import com.sportcenter.shift_manager.service.TiendaService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,27 +19,32 @@ public class TiendaController {
     }
 
     @PostMapping
-    public Tienda createTienda(@RequestBody Tienda tienda) {
-        return tiendaService.saveTienda(tienda);
+    public ResponseEntity<TiendaDTO> createTienda(@Valid @RequestBody TiendaDTO tiendaDTO) {
+        TiendaDTO savedTienda = tiendaService.saveTienda(tiendaDTO);
+        return ResponseEntity.ok(savedTienda);
     }
 
     @GetMapping
-    public List<Tienda> getAllTiendas() {
-        return tiendaService.getAllTiendas();
+    public ResponseEntity<List<TiendaDTO>> getAllTiendas() {
+        List<TiendaDTO> tiendas = tiendaService.getAllTiendas();
+        return ResponseEntity.ok(tiendas);
     }
 
     @GetMapping("/{id}")
-    public Tienda getTiendaById(@PathVariable Long id) {
-        return tiendaService.getTiendaById(id);
+    public ResponseEntity<TiendaDTO> getTiendaById(@PathVariable Long id) {
+        TiendaDTO tienda = tiendaService.getTiendaById(id);
+        return ResponseEntity.ok(tienda);
     }
 
     @PutMapping("/{id}")
-    public Tienda updateTienda(@PathVariable Long id, @RequestBody Tienda tienda) {
-        return tiendaService.updateTienda(id, tienda);
+    public ResponseEntity<TiendaDTO> updateTienda(@PathVariable Long id, @Valid @RequestBody TiendaDTO tiendaDTO) {
+        TiendaDTO updatedTienda = tiendaService.updateTienda(id, tiendaDTO);
+        return ResponseEntity.ok(updatedTienda);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteTienda(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTienda(@PathVariable Long id) {
         tiendaService.deleteTienda(id);
+        return ResponseEntity.noContent().build();
     }
 }
