@@ -11,7 +11,7 @@
   ],
   "routes": [
     {
-      "src": "/(assets|main-.*|polyfills-.*|scripts-.*|styles-.*)\\.(js|css)",
+      "src": "/(assets|main-.*|polyfills-.*|scripts-.*|styles-.*)\\.(js|css|ico|svg|png)",
       "dest": "/$1.$2"
     },
     {
