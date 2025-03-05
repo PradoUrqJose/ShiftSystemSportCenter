@@ -4,12 +4,13 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 COPY src ./src
-# Forzar rebuild en Railway - Marzo 2025
 RUN mvn clean package -DskipTests
+# Verifica que el .jar exista
+RUN ls -la target/ && test -f target/shift-manager-0.0.1-SNAPSHOT.jar || (echo "JAR file not found!" && exit 1)
 
 # Etapa de ejecución
 FROM openjdk:17-jdk-slim
 WORKDIR /app
-COPY --from=build /app/target/shift-manager-0.0.1-SNAPSHOT.jar .
+COPY --from=build /app/target/shift-manager-0.0.1-SNAPSHOT.jar /app/shift-manager-0.0.1-SNAPSHOT.jar
 EXPOSE 8080
-CMD ["java", "-jar", "shift-manager-0.0.1-SNAPSHOT.jar"]
+CMD ["java", "-jar", "/app/shift-manager-0.0.1-SNAPSHOT.jar"]
