@@ -8,10 +8,18 @@ import org.springframework.context.annotation.Profile;
 @Profile("dev")
 public class DotenvConfig {
     public DotenvConfig() {
-        Dotenv dotenv = Dotenv.configure()
-                .directory(".") // Apunta a la carpeta Backend/
-                .filename(".env")       // Nombre del archivo
-                .load();
-        dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
+        try {
+            Dotenv dotenv = Dotenv.configure()
+                    .directory(".")
+                    .filename(".env")
+                    .ignoreIfMissing() // Ignora si .env no existe
+                    .load();
+            if (dotenv != null) {
+                dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
+            }
+        } catch (Exception e) {
+            // Loguear el error si es necesario, pero no fallar
+            System.out.println("No se pudo cargar .env: " + e.getMessage());
+        }
     }
 }
