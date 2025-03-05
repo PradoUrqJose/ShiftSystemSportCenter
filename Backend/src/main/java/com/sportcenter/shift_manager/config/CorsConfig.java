@@ -6,17 +6,17 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
-
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**") // Aplica a todas las rutas de la API
+        registry.addMapping("/api/**")
                 .allowedOrigins(
-                        "http://localhost:4200" // Desarrollo
-                        //"https://tu-app.vercel.app" // Producción (cambia por tu dominio real de Vercel)
+                        "http://localhost:4200", // Desarrollo con ng serve
+                        "http://localhost:5000", // Desarrollo con serve
+                        "https://shift-manager-frontend.vercel.app" // Producción en Vercel (ajusta según la URL real)
                 )
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Métodos permitidos
-                .allowedHeaders("*") // Todos los encabezados
-                .allowCredentials(true) // Permitir cookies o autenticación si lo necesitas
-                .maxAge(3600); // Tiempo de cache de preflight (1 hora)
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600);
     }
 }
