@@ -3,11 +3,11 @@ cmds = ['mvn clean package -DskipTests']
 cacheDirectories = ['/app/.m2']
 
 [phases.setup]
-nixPkgs = ['java', 'maven']
+nixPkgs = ['openjdk17', 'maven']
 
 [start]
 cmd = 'java -jar target/shift-manager-0.0.1-SNAPSHOT.jar'
 
 [variables]
-MAVEN_OPTS = '-Xmx1024m'  # Aumenta la memoria para Maven
-NIXPACKS_DOWNLOAD_BUFFER_SIZE = '52428800'  # 50MB buffer (default es menor)
+MAVEN_OPTS = '-Xmx1024m'
+NIXPACKS_DOWNLOAD_BUFFER_SIZE = '52428800'
