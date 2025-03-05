@@ -358,7 +358,6 @@ addColaborador(): void {
     this.fotoPreview = 'assets/user-circle-svgrepo-com.svg'; // Restablecer la foto predeterminada
 
     // Refrescar la tabla tras cerrar el modal
-    this.getColaboradores();
     this.modalService.cerrarModal(50);
   }
 
