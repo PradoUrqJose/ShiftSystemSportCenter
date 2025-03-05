@@ -1,11 +1,10 @@
 # Etapa de construcción
 FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /app
-# Copia primero el pom.xml para cachear dependencias
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
-# Copia el resto del código y construye
 COPY src ./src
+# Forzar rebuild en Railway - Marzo 2025
 RUN mvn clean package -DskipTests
 
 # Etapa de ejecución
