@@ -38,7 +38,7 @@ public class ColaboradorService {
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa con ID " + colaboradorDTO.getEmpresaId() + " no encontrada"));
 
         // Validar duplicados de email, DNI y Nombre + Apellido
-        if (colaboradorRepository.findByEmail(colaboradorDTO.getEmail()).isPresent()) {
+        if (colaboradorDTO.getEmail() != null && colaboradorRepository.findByEmail(colaboradorDTO.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Ya existe un colaborador con el email: " + colaboradorDTO.getEmail());
         }
         if (colaboradorRepository.findByDni(colaboradorDTO.getDni()).isPresent()) {
