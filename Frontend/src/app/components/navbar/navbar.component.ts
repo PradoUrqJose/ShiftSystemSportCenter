@@ -1,22 +1,26 @@
+import { CommonModule } from '@angular/common';
 import { Component, AfterViewInit } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterModule],
+  imports: [RouterModule, CommonModule],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css']
 })
-export default class NavbarComponent implements AfterViewInit {
+export default class NavbarComponent {
+  isReportesOpen = false;
+  reportes = [
+    { nombre: 'Horas Trabajadas', link: '/reportes/horas-trabajadas' },
+    { nombre: 'Turnos en Feriados', link: '/reportes/turnos-feriados' },
+    { nombre: 'Semana Normal', link: '/reportes/semana-normal' }
+  ];
 
-  ngAfterViewInit(): void {
-    const menuBtn = document.getElementById('menu-btn');
-    const mobileMenu = document.getElementById('mobile-menu');
+  constructor(private router: Router) {}
 
-    menuBtn?.addEventListener('click', () => {
-      mobileMenu?.classList.toggle('show');
-    });
+  // Método para verificar si alguna ruta de "Reportes" está activa
+  isReportesActive(): boolean {
+    return this.reportes.some(reporte => this.router.url.includes(reporte.link));
   }
-
 }

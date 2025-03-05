@@ -45,37 +45,24 @@
           <span class="ml-2 text-sm tracking-wide truncate">Turnos</span>
         </a>
       </li>
-      <li class="relative group">
-        <a routerLink="/reportes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }"
-          class="nav-link flex items-center h-11 cursor-pointer text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6">
+      <!-- Reportes -->
+      <li>
+        <button (click)="isReportesOpen = !isReportesOpen" [ngClass]="{'active': isReportesActive()}" class="w-full nav-link flex items-center h-11 text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6 focus:outline-none">
           <span class="inline-flex justify-center items-center ml-4">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
-              <path d="M6 7H18M6 12H18M6 17H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
+              <svg class="w-5 h-5"  viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M15 11L15 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M12 12L12 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M9 14L9 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M17.8284 6.82843C18.4065 7.40649 18.6955 7.69552 18.8478 8.06306C19 8.4306 19 8.83935 19 9.65685L19 17C19 18.8856 19 19.8284 18.4142 20.4142C17.8284 21 16.8856 21 15 21H9C7.11438 21 6.17157 21 5.58579 20.4142C5 19.8284 5 18.8856 5 17L5 7C5 5.11438 5 4.17157 5.58579 3.58579C6.17157 3 7.11438 3 9 3H12.3431C13.1606 3 13.5694 3 13.9369 3.15224C14.3045 3.30448 14.5935 3.59351 15.1716 4.17157L17.8284 6.82843Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path> </g></svg>
           </span>
           <span class="ml-2 text-sm tracking-wide truncate">Reportes</span>
-          <svg class="w-4 h-4 ml-2 group-hover:rotate-90 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
-              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-              clip-rule="evenodd" />
+          <svg [class.rotate-90]="isReportesOpen" class="w-4 h-4 ml-auto transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
           </svg>
-        </a>
+        </button>
 
-        <!-- Submenú alineado a la derecha con animación -->
-        <div
-        class="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-white border rounded-lg shadow-xl opacity-0 translate-x-[-10px] pointer-events-none
-        group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-200 ease-in-out w-48">
-          <ul class="py-1">
-            <li><a routerLink="/reportes/horas-trabajadas" class="block px-4 py-2 text-gray-600 hover:bg-gray-200">Horas
-                Trabajadas</a></li>
-            <li><a routerLink="/reportes/turnos-feriados" class="block px-4 py-2 text-gray-600 hover:bg-gray-200">Turnos
-                en Feriados</a></li>
-            <li><a routerLink="/reportes/semana-normal" class="block px-4 py-2 text-gray-600 hover:bg-gray-200">Semana
-                Normal</a></li>
-          </ul>
-        </div>
-
+        <!-- Submenú animado -->
+        <ul *ngIf="isReportesOpen" class="overflow-hidden space-y-1">
+          <li *ngFor="let reporte of reportes; let i = index" [ngStyle]="{'animation-delay': i * 100 + 'ms'}" class="text-sm ml-5 block text-gray-600 hover:bg-gray-200 transition-all opacity-0 animate-fade-in">
+            <a class="block px-4 py-2" [routerLink]="reporte.link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">{{ reporte.nombre }}</a>
+          </li>
+        </ul>
       </li>
     </ul>
   </div>
