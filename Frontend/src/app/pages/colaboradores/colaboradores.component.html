@@ -4,34 +4,33 @@
     <h2 class="text-xl font-bold text-gray-800 sm:mr-6 border-b-2 border-blue-400 pb-1">Gestión de Colaboradores</h2>
     <div class="flex gap-4">
       <a class="buttonStyle gray-button font-bold py-2 px-3 rounded-lg transition transform hover:scale-105"
-      [routerLink]="['/puestos']">
-      Puestos
-    </a>
-    <button (click)="openModal()"
-      class="buttonStyle blue-button font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">
-      Agregar
-    </button>
+        [routerLink]="['/puestos']">
+        Puestos
+      </a>
+      <button (click)="openModal()"
+        class="buttonStyle blue-button font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">
+        Agregar
+      </button>
     </div>
   </div>
-
+  <!-- Loading overlay -->
+  <div *ngIf="isTableLoading" class="sk-circle">
+    <div class="sk-circle1 sk-child"></div>
+    <div class="sk-circle2 sk-child"></div>
+    <div class="sk-circle3 sk-child"></div>
+    <div class="sk-circle4 sk-child"></div>
+    <div class="sk-circle5 sk-child"></div>
+    <div class="sk-circle6 sk-child"></div>
+    <div class="sk-circle7 sk-child"></div>
+    <div class="sk-circle8 sk-child"></div>
+    <div class="sk-circle9 sk-child"></div>
+    <div class="sk-circle10 sk-child"></div>
+    <div class="sk-circle11 sk-child"></div>
+    <div class="sk-circle12 sk-child"></div>
+  </div>
   <!-- Tabla -->
   <div class="mt-6">
-    <!-- Loading overlay -->
-    <div *ngIf="isTableLoading" class="sk-circle">
-      <div class="sk-circle1 sk-child"></div>
-      <div class="sk-circle2 sk-child"></div>
-      <div class="sk-circle3 sk-child"></div>
-      <div class="sk-circle4 sk-child"></div>
-      <div class="sk-circle5 sk-child"></div>
-      <div class="sk-circle6 sk-child"></div>
-      <div class="sk-circle7 sk-child"></div>
-      <div class="sk-circle8 sk-child"></div>
-      <div class="sk-circle9 sk-child"></div>
-      <div class="sk-circle10 sk-child"></div>
-      <div class="sk-circle11 sk-child"></div>
-      <div class="sk-circle12 sk-child"></div>
-    </div>
-    <table class="w-full bg-white shadow rounded-lg overflow-hidden">
+    <table *ngIf="!isTableLoading" class="w-full bg-white shadow rounded-lg overflow-hidden">
       <thead>
         <tr class="bg-blue-50 text-gray-800">
           <th class="p-4 w-1/12 text-left">Foto</th>
@@ -46,7 +45,7 @@
           </th>
         </tr>
       </thead>
-      <tbody *ngIf="!isTableLoading">
+      <tbody>
         <tr *ngFor="let colaborador of colaboradoresHabilitados" class="border-t hover:bg-gray-50 transition">
           <!-- Foto -->
           <td class="p-4">
@@ -211,21 +210,21 @@
             <input id="dni" type="text" formControlName="dni" placeholder="DNI"
               class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" />
           </div>
-            <div class="grid grid-cols-2 col-span-3 gap-4">
+          <div class="grid grid-cols-2 col-span-3 gap-4">
             <div class="flex items-center">
               <select (change)="onEmpresaSelected($event)" formControlName="empresaId"
-              class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 h-full">
-              <option [ngValue]="null" disabled selected>Seleccione una Empresa</option>
-              <option *ngFor="let empresa of empresas" [value]="empresa.id">
-                {{ empresa.nombre }}
-              </option>
+                class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 h-full">
+                <option [ngValue]="null" disabled selected>Seleccione una Empresa</option>
+                <option *ngFor="let empresa of empresas" [value]="empresa.id">
+                  {{ empresa.nombre }}
+                </option>
               </select>
             </div>
             <div class="flex items-center">
               <input id="email" type="email" formControlName="email" placeholder="Email"
-              class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 h-full" />
+                class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 h-full" />
             </div>
-            </div>
+          </div>
         </div>
         <!-- Línea divisora -->
         <hr class="border-gray-200 my-4">
