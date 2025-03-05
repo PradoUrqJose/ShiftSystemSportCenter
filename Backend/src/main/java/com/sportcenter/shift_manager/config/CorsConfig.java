@@ -12,7 +12,7 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOrigins(
                         "http://localhost:4200", // Desarrollo con ng serve
                         "http://localhost:5000", // Desarrollo con serve
-                        "https://shift-manager-frontend.vercel.app" // Producción en Vercel (ajusta según la URL real)
+                        "https://shift-manager-frontend-ap5nb9ryq.vercel.app" // Producción en Vercel (ajusta según la URL real)
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
