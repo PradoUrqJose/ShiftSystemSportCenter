@@ -5,7 +5,7 @@ COPY pom.xml .
 RUN mvn dependency:go-offline -B
 COPY src ./src
 RUN mvn clean package -DskipTests
-# Verifica que el .jar exista
+# Verifica que el .jar exista - Forzar rebuild Marzo 2025
 RUN ls -la target/ && test -f target/shift-manager-0.0.1-SNAPSHOT.jar || (echo "JAR file not found!" && exit 1)
 
 # Etapa de ejecución
