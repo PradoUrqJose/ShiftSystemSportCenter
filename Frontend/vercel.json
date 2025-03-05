@@ -11,6 +11,10 @@
   ],
   "routes": [
     {
+      "src": "/(assets|main-.*|polyfills-.*|scripts-.*|styles-.*)\\.(js|css)",
+      "dest": "/$1.$2"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
