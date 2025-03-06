@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://shift-manager-fly-long-meadow-3339.fly.dev/api', // Reemplaza con tu dominio real
+  apiUrl: 'https://shift-manager-fly-thrumming-dawn-7994.fly.dev/api', // Reemplaza con tu dominio real
 };
