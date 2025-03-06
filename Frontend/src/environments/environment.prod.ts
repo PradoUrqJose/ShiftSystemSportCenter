@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://shiftsystemsportcenter-production.up.railway.app/api', // Reemplaza con tu dominio real
+  apiUrl: 'https://shift-manager-fly-long-meadow-3339.fly.dev//api', // Reemplaza con tu dominio real
 };
