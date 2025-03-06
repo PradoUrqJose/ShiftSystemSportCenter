@@ -13,4 +13,5 @@ FROM openjdk:17-jdk-slim
 WORKDIR /app
 COPY --from=build /app/target/shift-manager-0.0.1-SNAPSHOT.jar /app/shift-manager-0.0.1-SNAPSHOT.jar
 EXPOSE 8080
-CMD ["java", "-jar", "/app/shift-manager-0.0.1-SNAPSHOT.jar"]
+# Optimizaciones para cold start
+CMD ["java", "-XX:+UseSerialGC", "-Xms256m", "-Xmx512m", "-jar", "/app/shift-manager-0.0.1-SNAPSHOT.jar"]
