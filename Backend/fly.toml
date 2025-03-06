@@ -1,0 +1,21 @@
+app = "shift-manager-fly"
+primary_region = "iad"  # Virginia, USA, cerca de Supabase US West
+
+[build]
+builder = "docker"
+
+[env]
+SPRING_PROFILES_ACTIVE = "prod"
+SPRING_DATASOURCE_URL = "jdbc:postgresql://aws-0-us-west-1.pooler.supabase.com:5432/postgres?ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory"
+SPRING_DATASOURCE_USERNAME = "postgres.iulriquzrojydedsqlws"
+SPRING_DATASOURCE_PASSWORD = "eDJZsgs22K8FJ6wX"
+CLOUDINARY_CLOUD_NAME = "dqelrk3cb"
+CLOUDINARY_API_KEY = "573872982986831"
+CLOUDINARY_API_SECRET = "N_jvHL1QRTFFFud6fFvKxtR6euo"
+
+[http_service]
+internal_port = 8080
+force_https = true
+auto_stop_machines = true
+auto_start_machines = true
+min_machines_running = 1
