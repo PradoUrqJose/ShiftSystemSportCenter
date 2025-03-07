@@ -10,32 +10,29 @@ import {
 import {
   TurnoService,
   Turno,
-  TurnoPayload,
 } from './../../services/turno.service';
 import {
   ColaboradorService,
   Colaborador,
 } from '../../services/colaborador.service';
 import { TiendaService, Tienda } from '../../services/tienda.service';
-import { FeriadoService, Feriado } from '../../services/feriado.service';
+import { Feriado } from '../../services/feriado.service';
 
 // -------------- Date-fns and Date-fns-TZ Imports --------------
 import {
   startOfMonth,
   format,
-  startOfWeek,
 } from 'date-fns';
 import { es } from 'date-fns/locale'; // Importación de la localización para español
 
 // -------------- RxJS Imports --------------
-import { BehaviorSubject, catchError, finalize, map, Observable, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, of} from 'rxjs';
 
 // -------------- Angular Modules Imports --------------
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // -------------- External Libraries Imports --------------
-import Notiflix from 'notiflix'; // Notificación en la UI
 import tippy from 'tippy.js'; // Herramienta para tooltips interactivos
 import 'tippy.js/dist/tippy.css'; // Estilos de Tippy.js
 import 'tippy.js/animations/shift-away-extreme.css'; // Animación de Tippy.js
@@ -47,7 +44,6 @@ import { SemanaService } from '../../services/semana.service';
 import { HeaderComponent } from './header/header.component';
 import { WeeklyViewComponent } from './weekly-view/weekly-view.component';
 import { MonthlyViewComponent } from './monthly-view/monthly-view.component';
-import { RouterModule } from '@angular/router';
 
 import { TurnoModalComponent } from './turno-modal/turno-modal.component'; // Nuevo componente
 
