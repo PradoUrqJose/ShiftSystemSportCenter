@@ -1,5 +1,4 @@
 <div class="monthly-view -mt-16">
-  <!-- Tabla de turnos mensual -->
   <table class="w-full bg-transparent rounded-lg overflow-hidden">
     <thead>
       <tr class="text-gray-500">
@@ -12,50 +11,47 @@
       <tr *ngFor="let semana of semanasDelMes">
         <td *ngFor="let dia of semana" class="text-center w-[8rem] h-[8rem] bg-transparent"
           [ngClass]="{ 'dia-sobrante': dia.esSobrante}">
-          <ng-container *ngIf="turnosMensuales$ | async as turnos">
-            <ng-container *ngIf="obtenerTurno(turnos, colaboradorSeleccionado, dia.fecha) as turno; else agregarBoton">
-              <div class="w-[95%] h-[95%] m-auto bg-white rounded-lg py-4 px-1 relative flex justify-end items-end"
-                [ngClass]="{ 'feriado-semanal': esFeriado(dia.fecha) }">
-                <div
-                  class="container-green border-2 border-solid border-[#abd9c1] minum rounded-lg cursor-pointer transition hover:shadow"
-                  [ngClass]="{
-                    'almuerzo-tomado': turno.tomoAlmuerzo,
-                    'border-2 border-red-500': turno.esFeriado,
-                    'midHours border-[#d9d5ab]': (turno.horasTrabajadas ?? 0) > 8
-                  }" [attr.data-horas-trabajadas]="formatearHorasDia(turno.horasTrabajadas)"
-                  [attr.data-tienda]="turno.nombreTienda" (click)="abrirModalEdicion.emit(turno)">
-                  <span>{{ formatearHora(turno.horaEntrada) }} </span>
-                  <i class="fa-solid fa-caret-right"></i>
-                  <span> {{ formatearHora(turno.horaSalida) }}</span>
-                </div>
-                <span class="absolute top-2.5 right-3 nunito text-sm font-semibold month"
-                  [ngClass]="{ 'dia-actual-encabezado': esDiaActual(dia.fecha), 'feriado-semanal-encabezado': esFeriado(dia.fecha), 'dia-sobrante-texto': dia.esSobrante }">
-                  {{ dia.dayNumber }}
-                </span>
+          <ng-container *ngIf="obtenerTurno(turnos, colaboradorSeleccionado, dia.fecha) as turno; else agregarBoton">
+            <div class="w-[95%] h-[95%] m-auto bg-white rounded-lg py-4 px-1 relative flex justify-end items-end"
+              [ngClass]="{ 'feriado-semanal': esFeriado(dia.fecha) }">
+              <div
+                class="container-green border-2 border-solid border-[#abd9c1] minum rounded-lg cursor-pointer transition hover:shadow"
+                [ngClass]="{
+                  'almuerzo-tomado': turno.tomoAlmuerzo,
+                  'border-2 border-red-500': turno.esFeriado,
+                  'midHours border-[#d9d5ab]': (turno.horasTrabajadas ?? 0) > 8
+                }" [attr.data-horas-trabajadas]="formatearHorasDia(turno.horasTrabajadas)"
+                [attr.data-tienda]="turno.nombreTienda" (click)="abrirModalEdicion.emit(turno)">
+                <span>{{ formatearHora(turno.horaEntrada) }} </span>
+                <i class="fa-solid fa-caret-right"></i>
+                <span> {{ formatearHora(turno.horaSalida) }}</span>
               </div>
-            </ng-container>
-            <ng-template #agregarBoton>
-              <div class="w-[95%] h-[95%] m-auto bg-white rounded-lg p-4 flex justify-center items-center relative"
-                [ngClass]="{ 'feriado-semanal': esFeriado(dia.fecha) }">
-                <button *ngIf="colaboradorSeleccionado !== 0"
-                  class="p-2 text-gray-400 text-xs hover:text-blue-800 hover:scale-125 transition rounded-lg"
-                  (click)="abrirModal.emit({colaboradorId: colaboradorSeleccionado, fecha: dia.fecha})"
-                  title="Agregar Turno">
-                  <i class="fa-solid fa-plus"></i>
-                </button>
-                <span class="absolute top-2.5 right-3 nunito text-sm font-semibold month"
-                  [ngClass]="{ 'dia-actual-encabezado': esDiaActual(dia.fecha), 'feriado-semanal-encabezado': esFeriado(dia.fecha), 'dia-sobrante-texto': dia.esSobrante }">
-                  {{ dia.dayNumber }}
-                </span>
-              </div>
-            </ng-template>
+              <span class="absolute top-2.5 right-3 nunito text-sm font-semibold month"
+                [ngClass]="{ 'dia-actual-encabezado': esDiaActual(dia.fecha), 'feriado-semanal-encabezado': esFeriado(dia.fecha), 'dia-sobrante-texto': dia.esSobrante }">
+                {{ dia.dayNumber }}
+              </span>
+            </div>
           </ng-container>
+          <ng-template #agregarBoton>
+            <div class="w-[95%] h-[95%] m-auto bg-white rounded-lg p-4 flex justify-center items-center relative"
+              [ngClass]="{ 'feriado-semanal': esFeriado(dia.fecha) }">
+              <button *ngIf="colaboradorSeleccionado !== 0"
+                class="p-2 text-gray-400 text-xs hover:text-blue-800 hover:scale-125 transition rounded-lg"
+                (click)="abrirModal.emit({colaboradorId: colaboradorSeleccionado, fecha: dia.fecha})"
+                title="Agregar Turno">
+                <i class="fa-solid fa-plus"></i>
+              </button>
+              <span class="absolute top-2.5 right-3 nunito text-sm font-semibold month"
+                [ngClass]="{ 'dia-actual-encabezado': esDiaActual(dia.fecha), 'feriado-semanal-encabezado': esFeriado(dia.fecha), 'dia-sobrante-texto': dia.esSobrante }">
+                {{ dia.dayNumber }}
+              </span>
+            </div>
+          </ng-template>
         </td>
       </tr>
     </tbody>
   </table>
 
-  <!-- Resumen mensual al pie -->
   <div class="quicksand mt-4 p-4 bg-gray-100 rounded-lg shadow flex justify-between items-center text-gray-700" *ngIf="resumenMensual">
     <p class="text-lg font-semibold">Total horas mensuales: <span class="text-blue-600">{{ formatearHora(resumenMensual.totalHorasMes.toString(), true) }}</span></p>
     <ng-container *ngIf="resumenMensual.diasFeriadosTrabajados >= 0">

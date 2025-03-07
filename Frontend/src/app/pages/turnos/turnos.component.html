@@ -14,8 +14,7 @@
     </a> -->
   </div>
 
-
-  <!-- Spinner de carga  -->
+  <!-- Spinner de carga global -->
   <div *ngIf="isLoading$ | async" class="sk-circle">
     <div class="sk-circle1 sk-child"></div>
     <div class="sk-circle2 sk-child"></div>
@@ -33,7 +32,7 @@
 
   <!-- Tabla de turnos semanal -->
   <div *ngIf="!vistaMensual && !(isLoading$ | async)">
-    <app-weekly-view *ngIf="!vistaMensual && !(isLoading$ | async)"
+    <app-weekly-view
       [diasSemana]="(diasSemana$ | async) || []"
       [colaboradores]="(colaboradores$ | async) || []"
       [turnos]="(turnos$ | async) || []"
@@ -81,26 +80,17 @@
     </div>
 
     <!-- Tabla de turnos mensual -->
-    <div class="w-full sm:w-[76%]" *ngIf="vistaMensual && !(isLoading$ | async)">
-      <app-monthly-view
-      [semanasDelMes]="semanasDelMes"
-      [colaboradorSeleccionado]="colaboradorSeleccionado"
-      [turnosMensuales$]="turnosMensuales$"
-      [mes]="mes"
-      [anio]="anio"
-      (abrirModal)="abrirModal($event.colaboradorId, $event.fecha)" (abrirModalEdicion)="abrirModalEdicion($event)">
-      </app-monthly-view>
+    <div class="w-full sm:w-[76%]">
+      <app-monthly-view [semanasDelMes]="semanasDelMes" [colaboradorSeleccionado]="colaboradorSeleccionado"
+        [turnosMensuales$]="turnosMensuales$" [diasSemana]="(diasSemana$ | async) || []" [mes]="mes" [anio]="anio"
+        (abrirModal)="abrirModal($event.colaboradorId, $event.fecha)" (abrirModalEdicion)="abrirModalEdicion($event)"
+        (turnosModificados)="actualizarResumenMensual()"></app-monthly-view>
     </div>
   </div>
 
   <!-- Modal para Turnos -->
-  <app-turno-modal
-    [mostrarModal]="(mostrarModal$ | async) === true"
-    [isModalVisible]="(isModalVisible$ | async) === true"
-    [turnoActual]="turnoActual"
-    [turnoOriginal]="turnoOriginal"
-    [tiendas$]="tiendas$"
-    (cerrarModalEvent)="cerrarModal()"
-    (turnoGuardado)="manejarTurnoGuardado()"
+  <app-turno-modal [mostrarModal]="(mostrarModal$ | async) === true"
+    [isModalVisible]="(isModalVisible$ | async) === true" [turnoActual]="turnoActual" [turnoOriginal]="turnoOriginal"
+    [tiendas$]="tiendas$" (cerrarModalEvent)="cerrarModal()" (turnoGuardado)="manejarTurnoGuardado()"
     (turnoEliminado)="manejarTurnoEliminado()">
   </app-turno-modal>

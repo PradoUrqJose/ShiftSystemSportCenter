@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { CalendarioService, DiaSemana } from './../../../services/calendario.service';
 import { ResumenMensual, Turno, TurnoService } from './../../../services/turno.service';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
+import { shareReplay } from 'rxjs/operators';
 
 @Component({
   selector: 'app-monthly-view',
@@ -11,114 +12,103 @@ import { Observable } from 'rxjs';
   imports: [CommonModule],
   templateUrl: './monthly-view.component.html',
   styleUrls: ['./monthly-view.component.css', '../turnos.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MonthlyViewComponent {
-  // Inputs para recibir datos del componente padre
-  feriados: Feriado[] = []; // Lista de feriados
-  @Input() semanasDelMes: DiaSemana[][] = []; // Semanas del mes
-  @Input() colaboradorSeleccionado: number = 0; // Colaborador seleccionado
-  @Input() turnosMensuales$!: Observable<Turno[]>; // Turnos mensuales (Observable)
-  @Input() diasSemana: DiaSemana[] = []; // Días de la semana
-  @Input() mes: number = 0
-  @Input() anio: number = 0
+export class MonthlyViewComponent implements OnInit, OnDestroy {
+  @Input() semanasDelMes: DiaSemana[][] = [];
+  @Input() colaboradorSeleccionado: number = 0;
+  @Input() turnosMensuales$!: Observable<Turno[]>;
+  @Input() diasSemana: DiaSemana[] = [];
+  @Input() mes: number = 0;
+  @Input() anio: number = 0;
 
-  // Outputs para emitir eventos al componente padre
   @Output() abrirModal = new EventEmitter<{ colaboradorId: number; fecha: string }>();
   @Output() abrirModalEdicion = new EventEmitter<Turno>();
+  @Output() turnosModificados = new EventEmitter<void>();
 
-
-  // Nueva propiedad para el resumen mensual
+  turnos: Turno[] = [];
+  feriados: Feriado[] = [];
   resumenMensual: ResumenMensual | undefined;
+  private turnosSubscription?: Subscription;
 
   constructor(
     private turnoService: TurnoService,
-    private feriadoService: FeriadoService, // Inyectar el servicio de feriados
-    private calendarioService: CalendarioService
-  ) { }
+    private feriadoService: FeriadoService,
+    private calendarioService: CalendarioService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
-    this.cargarFeriados(); // Cargar los feriados al inicializar
-    this.cargarResumenMensual(); // Cargar el resumen al iniciar
+    this.cargarFeriados();
+    this.subscribeToTurnos();
   }
 
-  // Detectar cambios en el colaborador seleccionado o mes/año
-  ngOnChanges(): void {
-    if (this.colaboradorSeleccionado && this.mes && this.anio) {
-      this.cargarResumenMensual();
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['turnosMensuales$'] || changes['colaboradorSeleccionado'] || changes['mes'] || changes['anio']) {
+      this.subscribeToTurnos();
     }
   }
 
-  // Método para cargar el resumen mensual del colaborador seleccionado
-  cargarResumenMensual(): void {
+  ngOnDestroy(): void {
+    this.turnosSubscription?.unsubscribe();
+  }
+
+  private subscribeToTurnos(): void {
+    this.turnosSubscription?.unsubscribe();
+    this.turnosSubscription = this.turnosMensuales$.pipe(
+      shareReplay(1)
+    ).subscribe(turnos => {
+      this.turnos = turnos || [];
+      this.cargarResumenMensual(); // Recargar resumen cada vez que cambian los turnos
+      this.cdr.detectChanges();
+    });
+  }
+
+  private cargarFeriados(): void {
+    this.feriadoService.getFeriados().subscribe(data => {
+      this.feriados = data;
+      this.cdr.detectChanges();
+    });
+  }
+
+  private cargarResumenMensual(): void {
     if (this.colaboradorSeleccionado) {
-      this.turnoService
-        .getResumenMensual(this.mes, this.anio, [this.colaboradorSeleccionado])
-        .subscribe({
-          next: (resumenes) => {
-            this.resumenMensual = resumenes[0]; // Tomamos el primer elemento ya que es un colaborador específico
-            console.log('Resumen mensual cargado:', this.resumenMensual);
-          },
-          error: (error) => {
-            console.error('Error al cargar el resumen mensual:', error);
-            this.resumenMensual = undefined; // Resetear en caso de error
-          },
+      this.turnoService.getResumenMensual(this.mes, this.anio, [this.colaboradorSeleccionado])
+        .subscribe(resumenes => {
+          this.resumenMensual = resumenes[0];
+          this.cdr.detectChanges();
         });
+    } else {
+      this.resumenMensual = undefined;
+      this.cdr.detectChanges();
     }
   }
 
-  // Método para obtener el turno de un colaborador en una fecha específica
-  obtenerTurno(
-    turnos: Turno[] | null,
-    colaboradorId: number,
-    fecha: string
-  ): Turno | undefined {
-    if (!turnos) return undefined; // Manejo de null
-    return this.turnoService.obtenerTurno(turnos, colaboradorId, fecha) || undefined;
+  obtenerTurno(turnos: Turno[], colaboradorId: number, fecha: string): Turno | undefined {
+    return turnos.find(t => t.colaboradorId === colaboradorId && t.fecha === fecha);
   }
 
-  // Método para formatear las horas trabajadas
   formatearHorasDia(horasTrabajadas: number | undefined): string {
     if (!horasTrabajadas) return '00:00';
-
     const horas = Math.floor(horasTrabajadas);
     const minutos = Math.round((horasTrabajadas - horas) * 60);
-
-    return `${horas.toString().padStart(2, '0')}:${minutos
-      .toString()
-      .padStart(2, '0')}`;
+    return `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
   }
 
-  // Método para formatear la hora
   formatearHora(hora: string | undefined, type?: boolean): string {
     return this.calendarioService.formatearHoras(parseFloat(hora ?? '0'), type);
   }
 
-  // Método para verificar si un día es el día actual
   esDiaActual(fecha: string): boolean {
     const hoy = new Date();
-    const [year, month, day] = fecha.split('-').map(Number); // Dividir y convertir a números
-    const fechaComparar = new Date(year, month - 1, day); // Meses son 0-indexados en JavaScript
-    // Normalizar ambas fechas a medianoche
+    const [year, month, day] = fecha.split('-').map(Number);
+    const fechaComparar = new Date(year, month - 1, day);
     hoy.setHours(0, 0, 0, 0);
     fechaComparar.setHours(0, 0, 0, 0);
-
     return hoy.getTime() === fechaComparar.getTime();
   }
 
-  //! Métodos de utilidad
   esFeriado(fecha: string): boolean {
     return this.turnoService.esFeriado(fecha, this.feriados);
   }
-
-  cargarFeriados(): void {
-    this.feriadoService.getFeriados().subscribe({
-      next: (data) => {
-        this.feriados = data; // Guardar los feriados
-      },
-      error: (error) => {
-        console.error('Error al cargar los feriados:', error);
-      },
-    });
-  }
-
 }
