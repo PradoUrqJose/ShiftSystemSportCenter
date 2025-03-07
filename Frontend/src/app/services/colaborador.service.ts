@@ -93,8 +93,4 @@ export class ColaboradorService {
     return this.http.get<Colaborador>(`${this.apiUrl}/${id}`);
   }
 
-  // Método existente que ya tienes
-  getTurnosByColaboradorId(id: number): Observable<any[]> {
-    return this.http.get<any[]>(`http://localhost:8080/api/turnos/${id}`);
-  }
 }

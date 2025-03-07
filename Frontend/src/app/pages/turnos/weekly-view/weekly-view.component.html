@@ -47,10 +47,10 @@
       <tr *ngFor="let colaborador of colaboradores" class="hover:bg-gray-50 transition">
         <!-- Columna de colaborador -->
         <td class="py-4 px-4 flex justify-start items-center gap-3 w-full">
-          <div class="photo flex items-center justify-center w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
-            <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
-              alt="Foto de {{ colaborador.nombre }}" class="w-full h-full object-cover" />
-          </div>
+          <div (click)="viewProfile(colaborador.id)"
+          class="hover-photo relative cursor-pointer photo flex items-center justify-center w-12 h-12 rounded-full bg-gray-200">
+          <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'" alt="Foto de perfil" class="w-12 h-12 rounded-full object-cover object-center">
+        </div>
           <div class="colaborador">
             <div class="colaborador-nombre text-sm font-bold">
               {{ colaborador.nombre }} {{ colaborador.apellido }}

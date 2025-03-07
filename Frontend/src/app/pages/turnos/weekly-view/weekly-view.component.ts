@@ -4,6 +4,7 @@ import { Colaborador } from './../../../services/colaborador.service';
 import { Turno, TurnoService } from './../../../services/turno.service';
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-weekly-view',
@@ -18,7 +19,8 @@ export class WeeklyViewComponent implements OnInit {
     private turnoService: TurnoService,
     private feriadoService: FeriadoService,
     private calendarioService: CalendarioService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -242,4 +244,11 @@ export class WeeklyViewComponent implements OnInit {
       };
     }
   }
+
+  viewProfile(colaboradorId: number | null): void {
+    if (colaboradorId) {
+      this.router.navigate(['/reportes/colaborador-profile', colaboradorId]);
+    }
+  }
+
 }

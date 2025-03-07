@@ -238,4 +238,9 @@ export class TurnoService {
       })
     );
   }
+
+    // Método existente que ya tienes
+    getTurnosByColaboradorId(id: number): Observable<any[]> {
+      return this.http.get<any[]>(`${this.apiUrl}/${id}`);
+    }
 }

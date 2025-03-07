@@ -12,7 +12,7 @@ import { eachDayOfInterval, endOfWeek, format, isToday, parseISO, startOfWeek } 
 import { es } from 'date-fns/locale'; // Importar localización en español
 import { forkJoin } from 'rxjs';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { Turno } from '../../../services/turno.service';
+import { Turno, TurnoService } from '../../../services/turno.service';
 
 Chart.register(...registerables, ChartDataLabels);
 
@@ -196,7 +196,8 @@ export class ColaboradorProfileComponent implements OnInit {
     private router: Router,
     private colaboradorService: ColaboradorService,
     private reporteService: ReporteService,
-    private calendarioService: CalendarioService
+    private calendarioService: CalendarioService,
+    private turnoService: TurnoService
   ) { }
 
   ngOnInit(): void {
@@ -234,7 +235,7 @@ export class ColaboradorProfileComponent implements OnInit {
   loadStatistics(colaboradorId: number): void {
     const colaboradores = [colaboradorId];
     forkJoin({
-      turnos: this.colaboradorService.getTurnosByColaboradorId(colaboradorId),
+      turnos: this.turnoService.getTurnosByColaboradorId(colaboradorId),
       horasTrabajadas: this.reporteService.getHorasTrabajadas(this.fechaInicio, this.fechaFin, colaboradores),
       turnosFeriados: this.reporteService.getTurnosFeriados(this.fechaInicio, this.fechaFin, colaboradores)
     }).subscribe({
