@@ -81,7 +81,7 @@
     </div>
 
     <!-- Tabla de turnos mensual -->
-    <div class="w-full sm:w-[76%]">
+    <div class="w-full sm:w-[76%]" *ngIf="vistaMensual && !(isLoading$ | async)">
       <app-monthly-view
       [semanasDelMes]="semanasDelMes"
       [colaboradorSeleccionado]="colaboradorSeleccionado"
