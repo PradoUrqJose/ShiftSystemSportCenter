@@ -21,7 +21,6 @@ export class FeriadoService {
   getFeriados(): Observable<Feriado[]> {
     return this.http.get<Feriado[]>(this.apiUrl).pipe(
       catchError(err => {
-        console.error('Error al obtener feriados:', err);
         return throwError(() => new Error('No se pudieron cargar los feriados'));
       })
     );
@@ -30,7 +29,6 @@ export class FeriadoService {
   isFeriado(fecha: string): Observable<boolean> {
     return this.http.get<boolean>(`${this.apiUrl}/es-feriado`, { params: { fecha } }).pipe(
       catchError(err => {
-        console.error('Error al verificar feriado:', err);
         return throwError(() => new Error('Error al verificar si es feriado'));
       })
     );
