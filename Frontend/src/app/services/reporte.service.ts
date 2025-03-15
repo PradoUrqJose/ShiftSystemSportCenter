@@ -21,8 +21,6 @@ export class ReporteService {
       params = params.set('colaboradores', colaboradores.join(','));
     }
 
-    console.log('✅ Parámetros enviados al backend (Horas Trabajadas):', { fechaInicio, fechaFin, colaboradores: colaboradores.join(',') });
-
     return this.http.get<any[]>(this.apiUrl, { params });
   }
 
@@ -35,9 +33,6 @@ export class ReporteService {
     if (colaboradores.length > 0) {
       params = params.set('colaboradores', colaboradores.join(','));
     }
-
-    console.log('✅ Parámetros enviados al backend (Turnos Feriados):', { fechaInicio, fechaFin, colaboradores: colaboradores.join(',') });
-
     return this.http.get<any[]>(`${this.apiUrl}/feriados`, { params });
   }
 
@@ -50,8 +45,6 @@ export class ReporteService {
     if (colaboradores.length > 0) {
       params = params.set('colaboradores', colaboradores.join(','));
     }
-
-    console.log('✅ Parámetros enviados al backend (Horas Extras):', { fechaInicio, fechaFin, colaboradores: colaboradores.join(',') });
 
     return this.http.get<any[]>(`${this.apiUrl}/horas-extra`, { params });
   }
