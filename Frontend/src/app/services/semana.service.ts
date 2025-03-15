@@ -41,7 +41,6 @@ export class SemanaService {
           return of(this.actualizarSemana(semanas[indiceSemanaActual]));
         }),
         catchError((error) => {
-          console.error('❌ Error al cargar semanas:', error);
           throw error;
         })
       );
