@@ -21,7 +21,6 @@ export class TiendaService {
   getTiendas(): Observable<Tienda[]> {
     return this.http.get<Tienda[]>(this.apiUrl).pipe(
       catchError((err) => {
-        console.error('Error al obtener tiendas:', err);
         return throwError(() => new Error(err.error || 'No se pudieron cargar las tiendas.'));
       })
     );
@@ -30,7 +29,6 @@ export class TiendaService {
   addTienda(tienda: Tienda): Observable<Tienda> {
     return this.http.post<Tienda>(this.apiUrl, tienda).pipe(
       catchError((err) => {
-        console.error('Error al agregar tienda:', err);
         return throwError(() => new Error(err.error || 'Error al agregar la tienda.'));
       })
     );
@@ -39,7 +37,6 @@ export class TiendaService {
   updateTienda(id: number, tienda: Tienda): Observable<Tienda> {
     return this.http.put<Tienda>(`${this.apiUrl}/${id}`, tienda).pipe(
       catchError((err) => {
-        console.error('Error al actualizar tienda:', err);
         return throwError(() => new Error(err.error || 'Error al actualizar la tienda.'));
       })
     );
@@ -48,7 +45,6 @@ export class TiendaService {
   deleteTienda(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
       catchError((err) => {
-        console.error('Error al eliminar tienda:', err);
         return throwError(() => new Error(err.error || 'Error al eliminar la tienda.'));
       })
     );
