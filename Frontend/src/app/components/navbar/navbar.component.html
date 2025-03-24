@@ -57,7 +57,6 @@
           </svg>
         </button>
 
-        <!-- Submenú animado -->
         <ul *ngIf="isReportesOpen" class="overflow-hidden space-y-1">
           <li *ngFor="let reporte of reportes; let i = index" [ngStyle]="{'animation-delay': i * 100 + 'ms'}" class="text-sm ml-5 block text-gray-600 hover:bg-gray-200 transition-all opacity-0 animate-fade-in">
             <a class="block px-4 py-2" [routerLink]="reporte.link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">{{ reporte.nombre }}</a>
