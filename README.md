@@ -111,12 +111,12 @@ Bienvenido al proyecto **Shift System Sport Center**, una aplicación para gesti
 ### 5. Variables de entorno
 
 #### Backend:
-- Copia el archivo `Backend/.env.example` (si existe) y renómbralo a `.env` (o configúralo directamente en `application.properties` como se indicó).
-- Ejemplo de `.env.example`:
+- Abre el archivo `Backend/src/main/resources/application-dev-properties` y renombra las variables
+- Variables a renombrar por uso en local de `application-dev-properties`:
   ```text
-  DB_USERNAME=postgres
-  DB_PASSWORD=admin123
-  DB_URL=jdbc:postgresql://localhost:5432/shiftmanager
+  spring.datasource.url
+  spring.datasource.username
+  spring.datasource.password
   ```
 - Ajusta los valores según tu configuración local.
 
