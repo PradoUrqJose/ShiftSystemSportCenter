@@ -1,4 +1,4 @@
-# Shift System Sport Center
+![image](https://github.com/user-attachments/assets/9c2c4711-750e-49a8-b41e-f582cc55be8e)![image](https://github.com/user-attachments/assets/94c31a1c-c180-424a-90cc-68bd9d0e2f32)# Shift System Sport Center
 
 Bienvenido al proyecto **Shift System Sport Center**, una aplicación para gestionar turnos en un centro deportivo. Este proyecto cuenta con un **backend en Spring Boot** y un **frontend en Angular**. Sigue estas instrucciones para configurarlo en tu máquina local.
 
@@ -74,7 +74,13 @@ Bienvenido al proyecto **Shift System Sport Center**, una aplicación para gesti
   ```bash
   mvn clean install
   ```
-  Esto descarga dependencias y genera los archivos necesarios.
+  - Abre el pom.xml en Backend/pom.xml
+  Busca un ícono de Maven y hazle click para instalar dependencias
+  ![image](https://github.com/user-attachments/assets/8b8e0e9d-c7c1-41b6-bf2b-7fa058ba6fc3)
+
+  o si te aparece error usa la interfaz de IntelliJ para hacer el clean
+  ![image](https://github.com/user-attachments/assets/4eb4ae20-ebd6-4ec5-b6e8-5b2c8f29ac73)
+  Esto descarga dependencias y genera los archivos necesarios
 
 #### Ejecutar el backend:
 - En IntelliJ, haz clic en el botón **"Run"** (▶️) en el archivo principal (**ej. ShiftManagerApplication.java**).
