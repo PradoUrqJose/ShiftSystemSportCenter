@@ -1,167 +1,147 @@
-Shift System Sport Center
-¡Bienvenido al proyecto Shift System Sport Center! Esta aplicación gestiona turnos para un centro deportivo, con un backend en Spring Boot y un frontend en Angular. A continuación, encontrarás instrucciones claras y detalladas para configurar y ejecutar el proyecto en tu máquina local.
+# Shift System Sport Center
 
-Requisitos previos
-Antes de empezar, asegúrate de tener instalado lo siguiente:
+Bienvenido al proyecto **Shift System Sport Center**, una aplicación para gestionar turnos en un centro deportivo. Este proyecto cuenta con un **backend en Spring Boot** y un **frontend en Angular**. Sigue estas instrucciones para configurarlo en tu máquina local.
 
-Node.js: Versión 18 o superior.
-Angular CLI: Versión 18.2.9 (npm install -g @angular/cli@18.2.9).
-PostgreSQL: Versión 15 o superior recomendada.
-Java: Versión 17 (recomendada) o 21.
-Maven: Para gestionar dependencias del backend.
-Un IDE para Java: IntelliJ IDEA (recomendado) o cualquier otro como Eclipse o VS Code.
-Estructura del proyecto
-Backend: Contiene la lógica del servidor construida con Spring Boot.
-Frontend: Interfaz de usuario desarrollada con Angular.
-Configuración del entorno
-Sigue estos pasos para preparar el proyecto:
+## Requisitos previos
+- **Node.js**: Versión 18 o superior.
+- **Angular CLI**: Versión 18.2.9 (`npm install -g @angular/cli@18.2.9`).
+- **PostgreSQL**: Versión 15 o superior recomendada.
+- **IntelliJ IDEA**: IDE recomendado para el backend (instalará Java automáticamente).
+- **Maven**: Para gestionar dependencias del backend.
 
-1. Configuración del entorno general
-Node.js y Angular:
-Descarga e instala Node.js (versión 18+) desde nodejs.org.
-Instala Angular CLI globalmente:
-bash
+## Estructura del proyecto
+- **Backend**: Lógica del servidor con Spring Boot.
+- **Frontend**: Interfaz de usuario con Angular.
 
-Contraer
+## Configuración del entorno
 
-Ajuste
+### 1. Configuración general
 
-Copiar
-npm install -g @angular/cli@18.2.9
-Verifica las versiones:
-bash
+#### Node.js y Angular:
+- Descarga e instala **Node.js (18+)** desde [nodejs.org](https://nodejs.org/).
+- Instala Angular CLI globalmente:
+  ```bash
+  npm install -g @angular/cli@18.2.9
+  ```
+- Verifica la instalación:
+  ```bash
+  node -v  # Debería mostrar v18.x.x
+  ng version  # Debería mostrar Angular CLI: 18.2.9
+  ```
 
-Contraer
+#### PostgreSQL:
+- Instala **PostgreSQL** desde [postgresql.org](https://www.postgresql.org/).
+- Configura un usuario y contraseña local (guarda estos datos).
 
-Ajuste
+### 2. Configuración de la base de datos
 
-Copiar
-node -v  # Debería mostrar v18.x.x
-ng version  # Debería mostrar Angular CLI: 18.2.9
-PostgreSQL:
-Descarga e instala PostgreSQL desde postgresql.org.
-Configura un usuario y contraseña en tu instalación local (anota estos datos, los necesitarás más adelante).
-2. Configuración de la base de datos
-Abre PostgreSQL (puedes usar pgAdmin o la terminal con psql).
-Crea una base de datos llamada shiftmanager:
-En pgAdmin: Haz clic derecho en "Databases" > "Create" > "Database", y nómbrala shiftmanager.
-En terminal:
-bash
+- Abre PostgreSQL (usa **pgAdmin** o la terminal con **psql**).
+- Crea una base de datos llamada `shiftmanager`:
+  - **En pgAdmin**: Clic derecho en "Databases" > "Create" > "Database" > Nombre: `shiftmanager`.
+  - **En la terminal**:
+    ```bash
+    psql -U postgres
+    CREATE DATABASE shiftmanager;
+    \q
+    ```
 
-Contraer
+### 3. Configuración del Backend (Spring Boot)
 
-Ajuste
+#### Abrir el proyecto en IntelliJ IDEA:
+- Descarga e instala **IntelliJ IDEA**.
+- Abre la carpeta **Backend** en IntelliJ.
+- El IDE detectará que falta **Java** y te pedirá instalarlo (**versión 17 recomendada, o 21 si prefieres**). Acepta y sigue las instrucciones.
 
-Copiar
-psql -U postgres
-CREATE DATABASE shiftmanager;
-\q
-3. Configuración del Backend (Spring Boot)
-Instala Java y Maven:
-Descarga Java 17 desde Adoptium (recomendado) o usa Java 21 si prefieres.
-Instala Maven desde maven.apache.org o usa el que viene con tu IDE.
-Verifica:
-bash
+#### Instalar Lombok:
+- En IntelliJ: Ve a `File > Settings > Plugins`, busca **"Lombok"**, instálalo y reinicia el IDE.
+- Acepta todas las configuraciones automáticas sugeridas (**da "Sí" a todo**).
 
-Contraer
+#### Configurar las credenciales de PostgreSQL:
+- Abre `Backend/src/main/resources/application.properties`.
+- Edita con tus datos locales:
+  ```properties
+  spring.datasource.url=jdbc:postgresql://localhost:5432/shiftmanager
+  spring.datasource.username=tu_usuario  # Ejemplo: postgres
+  spring.datasource.password=tu_contraseña  # Ejemplo: admin123
+  ```
 
-Ajuste
+#### Construir el backend:
+- En la terminal, ve a la carpeta **Backend**:
+  ```bash
+  cd Backend
+  ```
+- Ejecuta:
+  ```bash
+  mvn clean install
+  ```
+  Esto descarga dependencias y genera los archivos necesarios.
 
-Copiar
-java -version  # Debería mostrar 17.x.x o 21.x.x
-mvn -v  # Debería mostrar la versión de Maven
-Configura tu IDE:
-Abre la carpeta Backend en IntelliJ IDEA (recomendado) o tu IDE preferido.
-Si IntelliJ te pide instalar Java (17 o 21), acepta y sigue las instrucciones.
-Habilita el soporte para Lombok:
-En IntelliJ: Ve a File > Settings > Plugins, busca "Lombok", instálalo y reinicia el IDE.
-Acepta cualquier sugerencia de configuración automática del IDE (dale "Sí" a todo).
-Configura las credenciales de PostgreSQL:
-Abre el archivo Backend/src/main/resources/application.properties (o application.yml si usas YAML).
-Actualiza las siguientes líneas con tu usuario y contraseña de PostgreSQL local:
-properties
+#### Ejecutar el backend:
+- En IntelliJ, haz clic en el botón **"Run"** (▶️) en el archivo principal (**ej. ShiftManagerApplication.java**).
+- O en la terminal:
+  ```bash
+  mvn spring-boot:run
+  ```
+  Se iniciará en [http://localhost:8080](http://localhost:8080).
 
-Contraer
+### 4. Configuración del Frontend (Angular)
 
-Ajuste
+#### Instalar dependencias:
+- En la terminal, ve a la carpeta **Frontend**:
+  ```bash
+  cd Frontend
+  ```
+- Ejecuta:
+  ```bash
+  npm install
+  ```
 
-Copiar
-spring.datasource.url=jdbc:postgresql://localhost:5432/shiftmanager
-spring.datasource.username=tu_usuario  # Ejemplo: postgres
-spring.datasource.password=tu_contraseña  # Ejemplo: admin123
-Guarda los cambios.
-Construye el backend:
-En la terminal, navega a la carpeta Backend:
-bash
+#### Ejecutar el frontend:
+- En la misma carpeta:
+  ```bash
+  ng serve -o
+  ```
+  `-o` abre el navegador automáticamente en [http://localhost:4200](http://localhost:4200).
 
-Contraer
+### 5. Variables de entorno
 
-Ajuste
+#### Backend:
+- Copia el archivo `Backend/.env.example` (si existe) y renómbralo a `.env` (o configúralo directamente en `application.properties` como se indicó).
+- Ejemplo de `.env.example`:
+  ```text
+  DB_USERNAME=postgres
+  DB_PASSWORD=admin123
+  DB_URL=jdbc:postgresql://localhost:5432/shiftmanager
+  ```
+- Ajusta los valores según tu configuración local.
 
-Copiar
-cd Backend
-Ejecuta:
-bash
+#### Frontend:
+- Si el proyecto usa variables de entorno (por ejemplo, para APIs), busca `Frontend/.env.example`, cópialo a `.env` y configura las claves necesarias (como la URL del backend).
 
-Contraer
+#### Archivo de ejemplo para variables sensibles
+- Crea un archivo **.env.example** en la raíz del proyecto para guiar a otros desarrolladores. Ejemplo:
+  ```text
+  # Backend
+  DB_USERNAME=your_postgres_username
+  DB_PASSWORD=your_postgres_password
+  DB_URL=jdbc:postgresql://localhost:5432/shiftmanager
+  
+  # Frontend (si aplica)
+  API_URL=http://localhost:8080/api
+  ```
+- Los desarrolladores deberán copiar este archivo a `.env` y ajustar los valores.
 
-Ajuste
+## Resumen de ejecución
+- **Backend**: Usa el botón **"Run"** en IntelliJ o `mvn spring-boot:run` en **Backend**.
+- **Frontend**: Ejecuta `ng serve -o` en **Frontend**.
+- **Asegúrate de que PostgreSQL esté activo.**
 
-Copiar
-mvn clean install
-Esto descarga las dependencias y genera los archivos necesarios.
-Ejecuta el backend:
-En IntelliJ, abre el archivo principal (probablemente ShiftManagerApplication.java) y haz clic en el botón verde de "Run" (▶️).
-O desde la terminal:
-bash
+## Solución de problemas
 
-Contraer
+- **Error de Java**: Si IntelliJ no instala Java, descárgalo manualmente desde [Adoptium](https://adoptium.net/).
+- **Base de datos**: Verifica usuario/contraseña en `application.properties`.
+- **Puertos ocupados**: Cambia `server.port` en `application.properties` o usa `ng serve --port 4300`.
 
-Ajuste
+## Contribuciones
 
-Copiar
-mvn spring-boot:run
-El backend debería iniciarse en http://localhost:8080.
-4. Configuración del Frontend (Angular)
-Instala las dependencias:
-Abre una terminal y navega a la carpeta Frontend:
-bash
-
-Contraer
-
-Ajuste
-
-Copiar
-cd Frontend
-Ejecuta:
-bash
-
-Contraer
-
-Ajuste
-
-Copiar
-npm install
-Esto instalará todas las dependencias listadas en package.json.
-Ejecuta el frontend:
-En la misma carpeta Frontend, corre:
-bash
-
-Contraer
-
-Ajuste
-
-Copiar
-ng serve -o
-ng serve inicia el servidor de desarrollo de Angular.
--o abre automáticamente el navegador en http://localhost:4200.
-Resumen de ejecución
-Backend: Ejecuta desde IntelliJ (botón "Run") o con mvn spring-boot:run en la carpeta Backend.
-Frontend: Usa ng serve -o en la carpeta Frontend.
-Asegúrate de que PostgreSQL esté corriendo antes de iniciar la aplicación.
-Solución de problemas
-Error de conexión a la base de datos: Verifica que el usuario, contraseña y nombre de la base de datos en application.properties sean correctos.
-Puerto ocupado: Si 8080 o 4200 están en uso, cámbialos en application.properties (server.port) o usa ng serve --port 4300.
-Dependencias fallidas: Borra node_modules en Frontend y target en Backend, luego repite npm install y mvn clean install.
-Contribuciones
-¡Siéntete libre de abrir un issue o enviar un pull request en GitHub! Este proyecto está abierto a mejoras.
+Abre un **issue** o envía un **pull request** en GitHub. ¡Toda ayuda es bienvenida! 🎉
