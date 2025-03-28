@@ -74,13 +74,12 @@ Bienvenido al proyecto **Shift System Sport Center**, una aplicación para gesti
   ```bash
   mvn clean install
   ```
-  - Abre el pom.xml en Backend/pom.xml
-  Busca un ícono de Maven y hazle click para instalar dependencias
-  ![image](https://github.com/user-attachments/assets/8b8e0e9d-c7c1-41b6-bf2b-7fa058ba6fc3)
-
-  o si te aparece error usa la interfaz de IntelliJ para hacer el clean
+- O si te aparece error usa la interfaz de IntelliJ para hacer el clean
   ![image](https://github.com/user-attachments/assets/4eb4ae20-ebd6-4ec5-b6e8-5b2c8f29ac73)
   Esto descarga dependencias y genera los archivos necesarios
+- Abre el pom.xml en Backend/pom.xml
+    - Busca un ícono de Maven y hazle click para instalar dependencias
+      ![image](https://github.com/user-attachments/assets/8b8e0e9d-c7c1-41b6-bf2b-7fa058ba6fc3)
 
 #### Ejecutar el backend:
 - En IntelliJ, haz clic en el botón **"Run"** (▶️) en el archivo principal (**ej. ShiftManagerApplication.java**).
