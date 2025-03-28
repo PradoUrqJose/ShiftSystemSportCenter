@@ -109,7 +109,7 @@ public class TurnoService {
             long minutosTrabajados = java.time.Duration.between(turno.getHoraEntrada(), turno.getHoraSalida()).toMinutes();
 
             // Restar 45 minutos si el turno abarca la hora del almuerzo (12:00 - 13:00)
-            if (turno.getHoraEntrada().isBefore(LocalTime.of(12, 1)) && turno.getHoraSalida().isAfter(LocalTime.of(13, 0))) {
+            if (turno.getHoraEntrada().isBefore(LocalTime.of(12, 1)) && turno.getHoraSalida().isAfter(LocalTime.of(14, 0))) {
                 minutosTrabajados -= 45;
             }
 
@@ -189,7 +189,7 @@ public class TurnoService {
     public TurnoDTO convertToDTO(Turno turno) {
         boolean tomoAlmuerzo = turno.getHoraEntrada() != null && turno.getHoraSalida() != null &&
                 turno.getHoraEntrada().isBefore(LocalTime.of(12, 1)) &&
-                turno.getHoraSalida().isAfter(LocalTime.of(13, 0));
+                turno.getHoraSalida().isAfter(LocalTime.of(14, 0));
 
         boolean esFeriado = feriadoService.isFeriado(turno.getFecha());
 
