@@ -39,7 +39,7 @@ public class Turno {
     public double getHorasTrabajadas() {
         if (horaEntrada != null && horaSalida != null) {
             long minutosTrabajados = java.time.Duration.between(horaEntrada, horaSalida).toMinutes();
-            if (horaEntrada.isBefore(LocalTime.of(12, 1)) && horaSalida.isAfter(LocalTime.of(13, 0))) {
+            if (horaEntrada.isBefore(LocalTime.of(12, 1)) && horaSalida.isAfter(LocalTime.of(14, 0))) {
                 minutosTrabajados -= 45;
             }
             return minutosTrabajados / 60.0;
