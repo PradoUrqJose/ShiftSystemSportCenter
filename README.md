@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/9c2c4711-750e-49a8-b41e-f582cc55be8e)![image](https://github.com/user-attachments/assets/94c31a1c-c180-424a-90cc-68bd9d0e2f32)# Shift System Sport Center
+# Shift System Sport Center
 
 Bienvenido al proyecto **Shift System Sport Center**, una aplicación para gestionar turnos en un centro deportivo. Este proyecto cuenta con un **backend en Spring Boot** y un **frontend en Angular**. Sigue estas instrucciones para configurarlo en tu máquina local.
 
