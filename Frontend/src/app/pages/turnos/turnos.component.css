@@ -188,3 +188,11 @@ thead {
 .border-red-500 {
   border-color: #ef4444;
 }
+
+.table-wrapper {
+  width: 100%;
+  height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* No establecemos max-height para que la tabla crezca según los colaboradores */
+}
