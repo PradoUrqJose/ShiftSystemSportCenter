@@ -12,51 +12,44 @@
   </div>
 
   <!-- Button para Turnos Estritos -->
-  <a routerLink="/turnos" class="cursor-pointer buttonStyle blue-button font-bold py-2 px-3 rounded-md transition transform hover:scale-105">
+  <a routerLink="/turnos"
+    class="cursor-pointer buttonStyle blue-button font-bold py-2 px-3 rounded-md transition transform hover:scale-105">
     Semana Estricta
   </a>
 </div>
 
 
+<div class="h-[86vh] overflow-y-auto">
+  <!-- Spinner de carga  -->
+  <div *ngIf="isLoading$ | async" class="sk-circle">
+    <div class="sk-circle1 sk-child"></div>
+    <div class="sk-circle2 sk-child"></div>
+    <div class="sk-circle3 sk-child"></div>
+    <div class="sk-circle4 sk-child"></div>
+    <div class="sk-circle5 sk-child"></div>
+    <div class="sk-circle6 sk-child"></div>
+    <div class="sk-circle7 sk-child"></div>
+    <div class="sk-circle8 sk-child"></div>
+    <div class="sk-circle9 sk-child"></div>
+    <div class="sk-circle10 sk-child"></div>
+    <div class="sk-circle11 sk-child"></div>
+    <div class="sk-circle12 sk-child"></div>
+  </div>
 
-<!-- Spinner de carga  -->
-<div *ngIf="isLoading$ | async" class="sk-circle">
-  <div class="sk-circle1 sk-child"></div>
-  <div class="sk-circle2 sk-child"></div>
-  <div class="sk-circle3 sk-child"></div>
-  <div class="sk-circle4 sk-child"></div>
-  <div class="sk-circle5 sk-child"></div>
-  <div class="sk-circle6 sk-child"></div>
-  <div class="sk-circle7 sk-child"></div>
-  <div class="sk-circle8 sk-child"></div>
-  <div class="sk-circle9 sk-child"></div>
-  <div class="sk-circle10 sk-child"></div>
-  <div class="sk-circle11 sk-child"></div>
-  <div class="sk-circle12 sk-child"></div>
+  <!-- Tabla de turnos semanal -->
+  <div *ngIf="!(isLoading$ | async)">
+    <app-weekly-view *ngIf="!(isLoading$ | async)" [diasSemana]="(diasSemana$ | async) || []"
+      [colaboradores]="colaboradores" [turnos]="(turnos$ | async) || []" (abrirModal)="abrirModal($event)"
+      (abrirModalEdicion)="abrirModalEdicion($event)" [hideTotal]=false>
+    </app-weekly-view>
+
+  </div>
+
+  <!-- Modal de turnos -->
+  <app-turno-modal [mostrarModal]="(mostrarModal$ | async) === true"
+    [isModalVisible]="(isModalVisible$ | async) === true" [turnoActual]="turnoActual" [turnoOriginal]="turnoOriginal"
+    [tiendas$]="tiendas$" (cerrarModalEvent)="cerrarModal()" (turnoGuardado)="manejarTurnoGuardado()"
+    (turnoEliminado)="manejarTurnoEliminado()">
+  </app-turno-modal>
+
 </div>
-
-<!-- Tabla de turnos semanal -->
-<div *ngIf="!(isLoading$ | async)">
-  <app-weekly-view
-    *ngIf="!(isLoading$ | async)"
-    [diasSemana]="(diasSemana$ | async) || []"
-    [colaboradores]="colaboradores"
-    [turnos]="(turnos$ | async) || []"
-    (abrirModal)="abrirModal($event)"
-    (abrirModalEdicion)="abrirModalEdicion($event)"
-    [hideTotal]=false>
-  </app-weekly-view>
-
-</div>
-
-<!-- Modal de turnos -->
-<app-turno-modal
-  [mostrarModal]="(mostrarModal$ | async) === true"
-  [isModalVisible]="(isModalVisible$ | async) === true"
-  [turnoActual]="turnoActual"
-  [turnoOriginal]="turnoOriginal"
-  [tiendas$]="tiendas$"
-  (cerrarModalEvent)="cerrarModal()"
-  (turnoGuardado)="manejarTurnoGuardado()"
-  (turnoEliminado)="manejarTurnoEliminado()">
-</app-turno-modal>
