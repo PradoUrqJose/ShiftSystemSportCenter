@@ -33,3 +33,19 @@
 .hover-photo:hover::after {
   opacity: 1;
 }
+
+table {
+  width: 100%;
+  border-collapse: collapse; /* Evita espacios entre celdas */
+}
+
+thead {
+  position: sticky;
+  top: 0; /* Fija el encabezado en la parte superior del contenedor desplazable */
+  z-index: 10; /* Asegura que el encabezado esté por encima del contenido */
+  background-color: #eff6ff; /* Coincide con bg-blue-50 para evitar transparencia */
+}
+
+th {
+  background-color: #eff6ff; /* Asegura que las celdas del encabezado tengan fondo */
+}
