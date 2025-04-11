@@ -9,7 +9,7 @@
     </thead>
     <tbody>
       <tr *ngFor="let semana of semanasDelMes">
-        <td *ngFor="let dia of semana" class="text-center w-[8rem] h-[8rem] bg-transparent"
+        <td *ngFor="let dia of semana" class="text-center w-[8rem] h-[8rem] bg-transparent 2xl:w-[10rem] 2xl:h-[10rem]"
           [ngClass]="{ 'dia-sobrante': dia.esSobrante}">
           <ng-container *ngIf="obtenerTurno(turnos, colaboradorSeleccionado, dia.fecha) as turno; else agregarBoton">
             <div class="w-[95%] h-[95%] m-auto bg-white rounded-lg py-4 px-1 relative flex justify-end items-end"
