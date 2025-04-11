@@ -31,7 +31,7 @@
   </div>
 
   <!-- Tabla de turnos semanal -->
-  <div *ngIf="!vistaMensual && !(isLoading$ | async)">
+  <div *ngIf="!vistaMensual && !(isLoading$ | async)" class="table-wrapper">
     <app-weekly-view
       [diasSemana]="(diasSemana$ | async) || []"
       [colaboradores]="(colaboradores$ | async) || []"
