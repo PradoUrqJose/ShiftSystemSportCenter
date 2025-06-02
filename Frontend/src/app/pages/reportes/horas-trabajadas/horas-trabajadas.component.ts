@@ -72,7 +72,13 @@ export class HorasTrabajadasComponent implements OnInit {
   }
 
   formatearHora(hora: string | undefined): string {
-    const horasTotales = hora ? parseFloat(hora) : 0;
+    if (!hora) return '';
+    const partes = hora.split(':');
+    return partes.length >= 2 ? `${partes[0]}:${partes[1]}` : hora;
+  }
+
+  formatearHorasTrabajadas(horas: number | string): string {
+    const horasTotales = typeof horas === 'string' ? parseFloat(horas) : horas;
     return this.calendarioService.formatearHoras(horasTotales);
   }
 
