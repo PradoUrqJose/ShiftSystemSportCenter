@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TurnoService, Turno, TurnoPayload } from '../../../services/turno.service';
+import { TurnoService, Turno, TurnoPayload, TurnoPartidoPayload } from '../../../services/turno.service';
 import { TiendaService, Tienda } from '../../../services/tienda.service';
 import { ModalService } from '../../../services/modal.service';
 import { Observable, map } from 'rxjs';
@@ -31,6 +31,20 @@ export class TurnoModalComponent {
   isSubmitting: boolean = false;
   errorHoraEntrada: string | null = null;
   errorHoraSalida: string | null = null;
+
+  // Variables para turnos partidos
+  esTurnoPartido: boolean = false;
+  turnoManana = { horaEntrada: '', horaSalida: '' };
+  turnoTarde = { horaEntrada: '', horaSalida: '' };
+  errorHoraEntradaManana: string | null = null;
+  errorHoraSalidaManana: string | null = null;
+  errorHoraEntradaTarde: string | null = null;
+  errorHoraSalidaTarde: string | null = null;
+
+  // Control para deshabilitar turno partido en edición
+  get isTurnoPartidoDisabled(): boolean {
+    return !!this.turnoActual.id; // Deshabilitado si estamos editando
+  }
 
   mostrarModalAgregarTienda: boolean = false;
   isModalAgregarTiendaVisible: boolean = false;
@@ -71,18 +85,31 @@ export class TurnoModalComponent {
       this.isSubmitting = false;
       this.errorHoraEntrada = null;
       this.errorHoraSalida = null;
+      this.resetTurnoPartido();
     }, 300);
+  }
+
+  resetTurnoPartido(): void {
+    this.esTurnoPartido = false;
+    this.turnoManana = { horaEntrada: '', horaSalida: '' };
+    this.turnoTarde = { horaEntrada: '', horaSalida: '' };
+    this.errorHoraEntradaManana = null;
+    this.errorHoraSalidaManana = null;
+    this.errorHoraEntradaTarde = null;
+    this.errorHoraSalidaTarde = null;
   }
 
   guardarTurno(): void {
     if (this.isSubmitting) return;
     this.isSubmitting = true;
 
+    // Limpiar errores
     this.errorHoraEntrada = null;
     this.errorHoraSalida = null;
-
-    this.validarHorarioEntrada();
-    this.validarHorarioSalida();
+    this.errorHoraEntradaManana = null;
+    this.errorHoraSalidaManana = null;
+    this.errorHoraEntradaTarde = null;
+    this.errorHoraSalidaTarde = null;
 
     if (!this.turnoActual.tiendaId) {
       this.isSubmitting = false;
@@ -91,8 +118,19 @@ export class TurnoModalComponent {
         cssAnimationStyle: 'from-right',
       });
       return;
-      console.log("DESDEVALIDACION TIENDA: ", this.turnoActual);
     }
+
+    // Solo permitir turno partido al agregar (no al editar)
+    if (this.esTurnoPartido && !this.turnoActual.id) {
+      this.guardarTurnoPartido();
+    } else {
+      this.guardarTurnoSimple();
+    }
+  }
+
+  private guardarTurnoSimple(): void {
+    this.validarHorarioEntrada();
+    this.validarHorarioSalida();
 
     if (this.errorHoraEntrada || this.errorHoraSalida) {
       this.isSubmitting = false;
@@ -113,11 +151,11 @@ export class TurnoModalComponent {
       horaEntrada: this.turnoActual.horaEntrada,
       horaSalida: this.turnoActual.horaSalida,
       empresa: { id: this.turnoActual.empresaId! },
-      tienda: { id: Number(this.turnoActual.tiendaId) }, // Convertir a número
+      tienda: { id: Number(this.turnoActual.tiendaId) },
     };
 
     const operacion = this.turnoActual.id
-      ?  this.turnoService.updateTurno(this.turnoActual.id, turnoParaGuardar)
+      ? this.turnoService.updateTurno(this.turnoActual.id, turnoParaGuardar)
       : this.turnoService.addTurno(turnoParaGuardar);
 
     operacion.subscribe({
@@ -137,8 +175,49 @@ export class TurnoModalComponent {
         });
       }
     });
+  }
 
-    console.log('Turno para guardar:', turnoParaGuardar);
+  private guardarTurnoPartido(): void {
+    this.validarTurnoPartido();
+
+    if (this.errorHoraEntradaManana || this.errorHoraSalidaManana ||
+        this.errorHoraEntradaTarde || this.errorHoraSalidaTarde) {
+      this.isSubmitting = false;
+      return;
+    }
+
+    const turnoPartido: TurnoPartidoPayload = {
+      colaborador: { id: this.turnoActual.colaboradorId },
+      fecha: this.turnoActual.fecha,
+      empresa: { id: this.turnoActual.empresaId! },
+      tienda: { id: Number(this.turnoActual.tiendaId) },
+      turnoManana: {
+        horaEntrada: this.turnoManana.horaEntrada,
+        horaSalida: this.turnoManana.horaSalida
+      },
+      turnoTarde: {
+        horaEntrada: this.turnoTarde.horaEntrada,
+        horaSalida: this.turnoTarde.horaSalida
+      }
+    };
+
+    this.turnoService.addTurnoPartido(turnoPartido).subscribe({
+      next: () => {
+        this.turnoGuardado.emit();
+        this.cerrarModal();
+        Notiflix.Notify.success('Turno partido creado con éxito', {
+          position: 'right-bottom',
+          cssAnimationStyle: 'from-right'
+        });
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        Notiflix.Notify.failure(err.message || 'Error al guardar el turno partido', {
+          position: 'right-bottom',
+          cssAnimationStyle: 'from-right',
+        });
+      }
+    });
   }
 
   eliminarTurno(): void {
@@ -205,15 +284,120 @@ export class TurnoModalComponent {
     }
   }
 
+  validarTurnoPartido(): void {
+    // Validar turno de mañana
+    this.validarHorarioEntradaManana();
+    this.validarHorarioSalidaManana();
+
+    // Validar turno de tarde
+    this.validarHorarioEntradaTarde();
+    this.validarHorarioSalidaTarde();
+
+    // Validar que no se solapen los horarios
+    if (!this.errorHoraEntradaManana && !this.errorHoraSalidaManana &&
+        !this.errorHoraEntradaTarde && !this.errorHoraSalidaTarde) {
+      this.validarSolapamientoHorarios();
+    }
+  }
+
+  validarHorarioEntradaManana(): void {
+    let hora = this.turnoManana.horaEntrada;
+    if (!hora) {
+      this.errorHoraEntradaManana = 'La hora de entrada de mañana es obligatoria.';
+      return;
+    }
+
+    hora = this.formatearHora(hora);
+    const [horas, minutos] = hora.split(':').map(Number);
+
+    if (horas < 5 || horas > 12 || (horas === 12 && minutos > 0)) {
+      this.errorHoraEntradaManana = 'La hora de entrada de mañana debe ser entre las 5:00 AM y las 12:00 PM.';
+    } else {
+      this.errorHoraEntradaManana = null;
+    }
+  }
+
+  validarHorarioSalidaManana(): void {
+    let hora = this.turnoManana.horaSalida;
+    if (!hora) {
+      this.errorHoraSalidaManana = 'La hora de salida de mañana es obligatoria.';
+      return;
+    }
+
+    hora = this.formatearHora(hora);
+    const [horas, minutos] = hora.split(':').map(Number);
+
+    if (horas < 8 || horas > 14 || (horas === 14 && minutos > 0)) {
+      this.errorHoraSalidaManana = 'La hora de salida de mañana debe ser entre las 8:00 AM y las 2:00 PM.';
+    } else {
+      this.errorHoraSalidaManana = null;
+    }
+  }
+
+  validarHorarioEntradaTarde(): void {
+    let hora = this.turnoTarde.horaEntrada;
+    if (!hora) {
+      this.errorHoraEntradaTarde = 'La hora de entrada de tarde es obligatoria.';
+      return;
+    }
+
+    hora = this.formatearHora(hora);
+    const [horas, minutos] = hora.split(':').map(Number);
+
+    if (horas < 13 || horas > 18 || (horas === 18 && minutos > 0)) {
+      this.errorHoraEntradaTarde = 'La hora de entrada de tarde debe ser entre las 1:00 PM y las 6:00 PM.';
+    } else {
+      this.errorHoraEntradaTarde = null;
+    }
+  }
+
+  validarHorarioSalidaTarde(): void {
+    let hora = this.turnoTarde.horaSalida;
+    if (!hora) {
+      this.errorHoraSalidaTarde = 'La hora de salida de tarde es obligatoria.';
+      return;
+    }
+
+    hora = this.formatearHora(hora);
+    const [horas, minutos] = hora.split(':').map(Number);
+
+    if (horas < 16 || horas > 22 || (horas === 22 && minutos > 0)) {
+      this.errorHoraSalidaTarde = 'La hora de salida de tarde debe ser entre las 4:00 PM y las 10:00 PM.';
+    } else {
+      this.errorHoraSalidaTarde = null;
+    }
+  }
+
+  validarSolapamientoHorarios(): void {
+    const salidaManana = this.formatearHora(this.turnoManana.horaSalida);
+    const entradaTarde = this.formatearHora(this.turnoTarde.horaEntrada);
+
+    if (salidaManana >= entradaTarde) {
+      this.errorHoraSalidaManana = 'La salida de mañana debe ser anterior a la entrada de tarde.';
+      this.errorHoraEntradaTarde = 'La entrada de tarde debe ser posterior a la salida de mañana.';
+    }
+  }
+
   seRealizaronCambios(): boolean {
     if (!this.turnoOriginal) return true;
 
-    return (
-      this.turnoActual.horaEntrada !== this.turnoOriginal.horaEntrada ||
-      this.turnoActual.horaSalida !== this.turnoOriginal.horaSalida ||
-      this.turnoActual.fecha !== this.turnoOriginal.fecha ||
-      this.turnoActual.tiendaId !== this.turnoOriginal.tiendaId
-    );
+    if (this.esTurnoPartido) {
+      // Para turnos partidos, verificar que al menos uno de los campos esté lleno
+      return (
+        this.turnoManana.horaEntrada !== '' ||
+        this.turnoManana.horaSalida !== '' ||
+        this.turnoTarde.horaEntrada !== '' ||
+        this.turnoTarde.horaSalida !== '' ||
+        this.turnoActual.tiendaId !== this.turnoOriginal.tiendaId
+      );
+    } else {
+      return (
+        this.turnoActual.horaEntrada !== this.turnoOriginal.horaEntrada ||
+        this.turnoActual.horaSalida !== this.turnoOriginal.horaSalida ||
+        this.turnoActual.fecha !== this.turnoOriginal.fecha ||
+        this.turnoActual.tiendaId !== this.turnoOriginal.tiendaId
+      );
+    }
   }
 
   formatearHora(hora: string | undefined): string {

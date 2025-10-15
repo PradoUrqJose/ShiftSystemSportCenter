@@ -3,7 +3,7 @@ import { DiaSemana } from './calendario.service';
 // turno.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { catchError, map, Observable, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, tap, throwError, forkJoin } from 'rxjs';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { environment } from '../../environments/environment';
@@ -34,6 +34,21 @@ export interface TurnoPayload {
   horaSalida: string;
   empresa: { id: number };
   tienda: { id: number };
+}
+
+export interface TurnoPartidoPayload {
+  colaborador: { id: number | undefined };
+  fecha: string;
+  empresa: { id: number };
+  tienda: { id: number };
+  turnoManana: {
+    horaEntrada: string;
+    horaSalida: string;
+  };
+  turnoTarde: {
+    horaEntrada: string;
+    horaSalida: string;
+  };
 }
 
 export interface ResumenMensual {
@@ -144,6 +159,37 @@ export class TurnoService {
         return throwError(
           () => new Error(error.error.message || 'Error desconocido')
         );
+      })
+    );
+  }
+
+  addTurnoPartido(turnoPartido: TurnoPartidoPayload): Observable<any> {
+    // Crear dos turnos separados para el turno partido
+    const turnoManana: TurnoPayload = {
+      colaborador: turnoPartido.colaborador,
+      fecha: turnoPartido.fecha,
+      horaEntrada: turnoPartido.turnoManana.horaEntrada,
+      horaSalida: turnoPartido.turnoManana.horaSalida,
+      empresa: turnoPartido.empresa,
+      tienda: turnoPartido.tienda
+    };
+
+    const turnoTarde: TurnoPayload = {
+      colaborador: turnoPartido.colaborador,
+      fecha: turnoPartido.fecha,
+      horaEntrada: turnoPartido.turnoTarde.horaEntrada,
+      horaSalida: turnoPartido.turnoTarde.horaSalida,
+      empresa: turnoPartido.empresa,
+      tienda: turnoPartido.tienda
+    };
+
+    // Crear ambos turnos en paralelo usando forkJoin
+    return forkJoin({
+      turnoManana: this.addTurno(turnoManana),
+      turnoTarde: this.addTurno(turnoTarde)
+    }).pipe(
+      catchError((error) => {
+        return throwError(() => new Error('Error al crear turno partido: ' + error.message));
       })
     );
   }

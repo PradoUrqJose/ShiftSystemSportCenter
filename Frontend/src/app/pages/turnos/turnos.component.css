@@ -46,21 +46,21 @@
 .container-green::after {
   content: "";
   width: 5px;
-  height: 24px;
+  height: 60%; /* Se ajusta dinámicamente */
   border-radius: 6px;
   background-color: #4b4370;
   position: absolute;
   left: -3px;
+  top: 50%;
+  transform: translateY(-50%); /* Centra verticalmente */
 }
 
 .container-green.minum::after {
-  content: "";
   width: 3px;
-  height: 16px;
-  border-radius: 6px;
-  background-color: #4b4370;
-  position: absolute;
-  left: 4px;
+  height: 50%;
+  left: 0px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .container-green.almuerzo-tomado::after {

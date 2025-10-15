@@ -88,6 +88,17 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
     return turnos.find(t => t.colaboradorId === colaboradorId && t.fecha === fecha);
   }
 
+  obtenerTurnos(turnos: Turno[], colaboradorId: number, fecha: string): Turno[] {
+    return turnos.filter(turno =>
+      turno.colaboradorId === colaboradorId && turno.fecha === fecha
+    ).sort((a, b) => {
+      // Ordenar por hora de entrada
+      const horaA = a.horaEntrada || '00:00';
+      const horaB = b.horaEntrada || '00:00';
+      return horaA.localeCompare(horaB);
+    });
+  }
+
   formatearHorasDia(horasTrabajadas: number | undefined): string {
     if (!horasTrabajadas) return '00:00';
     const horas = Math.floor(horasTrabajadas);

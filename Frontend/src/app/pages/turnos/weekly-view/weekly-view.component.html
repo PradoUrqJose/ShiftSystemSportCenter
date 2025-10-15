@@ -68,17 +68,26 @@
           }">
           <ng-container *ngIf="dia.fecha !== 'empty'; else emptyCell">
             <ng-container *ngIf="turnos as turnos">
-              <ng-container *ngIf="obtenerTurno(turnos, colaborador.id, dia.fecha) as turno; else agregarBoton">
-                <!-- Turno existente -->
-                <div class="container-green cursor-pointer transition border-green-100 p-2 rounded-lg m-auto text-center"
-                  [ngClass]="{
-                    'almuerzo-tomado': turno.tomoAlmuerzo,
-                    'border-2 border-red-500': esFeriado(dia.fecha),
-                    'midHours': (turno.horasTrabajadas ?? 0) > 8
-                  }"
-                  [attr.data-horas-trabajadas]="formatearHorasDia(turno.horasTrabajadas)"
-                  [attr.data-tienda]="turno.nombreTienda" (click)="abrirModalEdicion.emit(turno)">
-                  {{ formatearHora(turno.horaEntrada) }} - {{ formatearHora(turno.horaSalida) }}
+              <ng-container *ngIf="obtenerTurnos(turnos, colaborador.id, dia.fecha) as turnosDelDia">
+                <!-- Múltiples turnos del día -->
+                <div *ngIf="turnosDelDia.length > 0; else agregarBoton" class="space-y-1">
+                  <div *ngFor="let turno of turnosDelDia; let i = index"
+                    class="container-green cursor-pointer transition border-green-100 p-1 rounded-lg text-xs"
+                    [ngClass]="{
+                      'almuerzo-tomado': turno.tomoAlmuerzo,
+                      'border-2 border-red-500': esFeriado(dia.fecha),
+                      'midHours': (turno.horasTrabajadas ?? 0) > 8,
+                      'bg-blue-100 border-blue-300': turnosDelDia.length > 1 && i === 0,
+                      'bg-orange-100 border-orange-300': turnosDelDia.length > 1 && i === 1
+                    }"
+                    [attr.data-horas-trabajadas]="formatearHorasDia(turno.horasTrabajadas)"
+                    [attr.data-tienda]="turno.nombreTienda"
+                    (click)="abrirModalEdicion.emit(turno)"
+                    [title]="'Turno ' + (i + 1) + (turnosDelDia.length > 1 ? ' de ' + turnosDelDia.length : '')">
+                    <div class="flex items-center justify-center space-x-1">
+                      <span>{{ formatearHora(turno.horaEntrada) }}-{{ formatearHora(turno.horaSalida) }}</span>
+                    </div>
+                  </div>
                 </div>
               </ng-container>
 

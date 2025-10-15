@@ -87,6 +87,23 @@ export class WeeklyViewComponent implements OnInit {
     return this.turnoService.obtenerTurno(turnos, colaboradorId, fecha) || undefined;
   }
 
+  // Método para obtener múltiples turnos de un colaborador en una fecha específica
+  obtenerTurnos(
+    turnos: Turno[] | null,
+    colaboradorId: number,
+    fecha: string
+  ): Turno[] {
+    if (!turnos) return []; // Manejo de null
+    return turnos.filter(turno =>
+      turno.colaboradorId === colaboradorId && turno.fecha === fecha
+    ).sort((a, b) => {
+      // Ordenar por hora de entrada
+      const horaA = a.horaEntrada || '00:00';
+      const horaB = b.horaEntrada || '00:00';
+      return horaA.localeCompare(horaB);
+    });
+  }
+
   // Método para formatear las horas trabajadas
   formatearHorasDia(horasTrabajadas: number | undefined): string {
     return this.calendarioService.formatearHoras(horasTrabajadas ?? 0);
