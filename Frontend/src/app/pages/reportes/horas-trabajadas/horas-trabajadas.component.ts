@@ -5,21 +5,36 @@ import { FormsModule } from '@angular/forms';
 import { CalendarioService } from '../../../services/calendario.service';
 import { Colaborador, ColaboradorService } from '../../../services/colaborador.service';
 import { NgLabelTemplateDirective, NgOptionTemplateDirective, NgSelectComponent, NgSelectModule } from '@ng-select/ng-select';
+import { ExportExcelComponent, ExportColumn } from '../../../components/export-excel/export-excel.component';
 
 @Component({
   selector: 'app-horas-trabajadas',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgSelectModule],
+  imports: [CommonModule, FormsModule, NgSelectModule, ExportExcelComponent],
   templateUrl: './horas-trabajadas.component.html',
   styleUrl: './horas-trabajadas.component.css'
 })
 export class HorasTrabajadasComponent implements OnInit {
   reportes: any[] = [];
-  fechaInicio: string = '2025-01-01';
-  fechaFin: string = '2025-02-28';
+  fechaInicio: string = '';
+  fechaFin: string = '';
   colaboradores: Colaborador[] = [];
   colaboradoresSeleccionados: number[] = []; // Ahora solo almacena IDs
   errorMessage: string | null = null;
+  exportColumns: ExportColumn[] = [
+    { key: 'nombreColaborador', label: 'Colaborador' },
+    { key: 'dniColaborador', label: 'DNI' },
+    { key: 'nombreEmpresa', label: 'Empresa' },
+    { key: 'nombreTienda', label: 'Tienda' },
+    { key: 'fecha', label: 'Fecha' },
+    { key: 'horaEntrada', label: 'Ingreso' },
+    { key: 'horaSalida', label: 'Salida' },
+    { key: 'horasTrabajadas', label: 'SubTotal' },
+  ];
+  // Filtros adicionales
+  empresas: { id: number; nombre: string }[] = [];
+  empresaSeleccionada: number | 'all' = 'all';
+  estadoSeleccionado: 'all' | true | false = 'all';
 
   constructor(
     private reporteService: ReporteService,
@@ -28,13 +43,32 @@ export class HorasTrabajadasComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.setFechasMesActual();
     this.getColaboradores();
+  }
+
+  private setFechasMesActual(): void {
+    const hoy = new Date();
+    const first = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    const last = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+    this.fechaInicio = this.formatDate(first);
+    this.fechaFin = this.formatDate(last);
+  }
+
+  private formatDate(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
   getColaboradores(): void {
     this.colaboradorService.getColaboradores().subscribe({
       next: (data) => {
         this.colaboradores = data;
+        const mapa = new Map<number, string>();
+        data.forEach(c => { if (c.empresaId) mapa.set(c.empresaId, c.empresaNombre); });
+        this.empresas = [{ id: -1, nombre: 'Todas las empresas' }, ...Array.from(mapa.entries()).map(([id, nombre]) => ({ id, nombre: nombre || 'Sin Empresa' }))];
       },
       error: () => {
         this.errorMessage = 'Error al obtener colaboradores.';
@@ -48,6 +82,30 @@ export class HorasTrabajadasComponent implements OnInit {
     } else {
       this.colaboradoresSeleccionados.splice(index, 1);
     }
+  }
+
+  onEmpresaChange(): void {
+    if (this.empresaSeleccionada === 'all' && this.estadoSeleccionado === 'all') {
+      this.colaboradoresSeleccionados = [];
+      return;
+    }
+    this.updateSelectionFromFilters();
+  }
+
+  onEstadoChange(): void {
+    if (this.empresaSeleccionada === 'all' && this.estadoSeleccionado === 'all') {
+      this.colaboradoresSeleccionados = [];
+      return;
+    }
+    this.updateSelectionFromFilters();
+  }
+
+  private updateSelectionFromFilters(): void {
+    const ids = this.colaboradores
+      .filter(c => (this.empresaSeleccionada === 'all' || c.empresaId === this.empresaSeleccionada)
+        && (this.estadoSeleccionado === 'all' || c.habilitado === this.estadoSeleccionado))
+      .map(c => c.id);
+    this.colaboradoresSeleccionados = ids;
   }
 
   obtenerHorasTrabajadas() {

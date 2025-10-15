@@ -1,49 +1,128 @@
-  <h2 class="text-2xl font-bold mb-6 text-gray-800">📊 Reporte de Horas Trabajadas</h2>
+<h2 class="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+  📊 Reporte de Horas Trabajadas
+</h2>
 
-  <!-- 🔹 Nuevo Grid con Tamaños Personalizados -->
-  <div class="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-[1fr_1fr_2fr_1fr_auto] gap-4 mb-6">
-    <!-- 📅 Fecha Inicio (Pequeño) -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-1">📅 Fecha Inicio</label>
-      <input type="date" [(ngModel)]="fechaInicio"
-        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" />
-    </div>
-
-    <!-- 📅 Fecha Fin (Pequeño) -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-1">📅 Fecha Fin</label>
-      <input type="date" [(ngModel)]="fechaFin"
-        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" />
-    </div>
-
-    <!-- 👤 Select de Colaboradores (Más Grande) -->
-    <div class="lg:col-span-2">
-      <label class="block text-gray-700 font-medium mb-1">👤 Seleccionar Colaboradores</label>
-      <ng-select [items]="colaboradores" bindLabel="nombre" bindValue="id"
-        [(ngModel)]="colaboradoresSeleccionados" [closeOnSelect]="false"
-        [multiple]="true" [clearable]="true" placeholder="Selecciona colaboradores"
-        class="w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
-
-        <ng-template ng-option-tmp let-item="item">
-          <div class="flex items-center">
-            <input type="checkbox" [checked]="colaboradoresSeleccionados.includes(item.id)"
-              (change)="toggleSelection(item.id)"
-              class="mr-2 w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-            <span class="custom-option">{{ item.nombre }} {{ item.apellido }}</span>
-          </div>
-        </ng-template>
-
-      </ng-select>
-    </div>
-
-    <!-- 🔍 Botón de Búsqueda (Ajuste Automático) -->
-    <div class="flex items-end">
-      <button (click)="obtenerHorasTrabajadas()"
-        class="w-auto px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition transform hover:scale-105">
-        🔍 Buscar
-      </button>
-    </div>
+<!-- Filtros -->
+<div
+  class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 mb-8 items-end bg-gray-50 p-4 rounded-xl shadow-sm border border-gray-100"
+>
+  <!-- 📅 Fecha Inicio -->
+  <div class="flex flex-col">
+    <label class="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+      <i class="fa-regular fa-calendar"></i> Fecha Inicio
+    </label>
+    <input
+      type="date"
+      [(ngModel)]="fechaInicio"
+      class="h-10 w-full border border-gray-300 rounded-lg px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+    />
   </div>
+
+  <!-- 📅 Fecha Fin -->
+  <div class="flex flex-col">
+    <label class="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+      <i class="fa-regular fa-calendar-check"></i> Fecha Fin
+    </label>
+    <input
+      type="date"
+      [(ngModel)]="fechaFin"
+      class="h-10 w-full border border-gray-300 rounded-lg px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+    />
+  </div>
+
+  <!-- 🏢 Empresa -->
+  <div class="flex flex-col">
+    <label class="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+      <i class="fa-solid fa-building"></i> Empresa
+    </label>
+    <select
+      [(ngModel)]="empresaSeleccionada"
+      (change)="onEmpresaChange()"
+      class="h-10 w-full border border-gray-300 rounded-lg px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+    >
+      <option [ngValue]="'all'">Todas las empresas</option>
+      <option *ngFor="let e of empresas" [ngValue]="e.id" [disabled]="e.id === -1">
+        {{ e.nombre }}
+      </option>
+    </select>
+  </div>
+
+  <!-- 🔘 Estado -->
+  <div class="flex flex-col">
+    <label class="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+      <i class="fa-solid fa-toggle-on"></i> Estado
+    </label>
+    <select
+      [(ngModel)]="estadoSeleccionado"
+      (change)="onEstadoChange()"
+      class="h-10 w-full border border-gray-300 rounded-lg px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+    >
+      <option [ngValue]="'all'">Todos</option>
+      <option [ngValue]="true">Habilitado</option>
+      <option [ngValue]="false">Inactivo</option>
+    </select>
+  </div>
+
+  <!-- 👤 Colaboradores -->
+  <div class="lg:col-span-2 flex flex-col">
+    <label class="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+      <i class="fa-solid fa-user"></i> Seleccionar Colaboradores
+    </label>
+    <ng-select
+      class="custom-ng-select h-10 w-full"
+      [items]="colaboradores"
+      bindLabel="nombre"
+      bindValue="id"
+      [(ngModel)]="colaboradoresSeleccionados"
+      [closeOnSelect]="false"
+      [multiple]="true"
+      [clearable]="true"
+      placeholder="Selecciona colaboradores"
+    >
+      <ng-template ng-option-tmp let-item="item">
+        <div class="flex items-center justify-between w-full">
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              [checked]="colaboradoresSeleccionados.includes(item.id)"
+              (change)="toggleSelection(item.id)"
+              class="mr-2 w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+            />
+            <div class="flex flex-col">
+              <span class="custom-option">{{ item.nombre }} {{ item.apellido }}</span>
+              <span class="text-xs text-gray-500">{{ item.empresaNombre }}</span>
+            </div>
+          </div>
+          <span
+            class="text-xs font-semibold"
+            [ngClass]="{
+              'text-green-600': item.habilitado,
+              'text-red-600': !item.habilitado
+            }"
+            >{{ item.habilitado ? 'Habilitado' : 'Inactivo' }}</span
+          >
+        </div>
+      </ng-template>
+    </ng-select>
+  </div>
+
+   <!-- 🔍 Acciones -->
+   <div class="flex justify-end items-end gap-2">
+     <button
+       (click)="obtenerHorasTrabajadas()"
+       class="w-full sm:w-auto h-10 px-6 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-transform hover:scale-105 flex items-center justify-center gap-2"
+     >
+       <i class="fa-solid fa-magnifying-glass text-sm"></i>
+       Buscar
+     </button>
+     <app-export-excel
+       [data]="reportes"
+       [columns]="exportColumns"
+       [fileName]="'horas-trabajadas'"
+       [disabled]="reportes.length === 0"
+     ></app-export-excel>
+   </div>
+</div>
 
 
 <!-- Tabla de Resultados -->
