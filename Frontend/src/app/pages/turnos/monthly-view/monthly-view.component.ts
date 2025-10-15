@@ -11,8 +11,7 @@ import { shareReplay } from 'rxjs/operators';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './monthly-view.component.html',
-  styleUrls: ['./monthly-view.component.css', '../turnos.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: ['./monthly-view.component.css', '../turnos.component.css']
 })
 export class MonthlyViewComponent implements OnInit, OnDestroy {
   @Input() semanasDelMes: DiaSemana[][] = [];
@@ -55,19 +54,15 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
 
   private subscribeToTurnos(): void {
     this.turnosSubscription?.unsubscribe();
-    this.turnosSubscription = this.turnosMensuales$.pipe(
-      shareReplay(1)
-    ).subscribe(turnos => {
+    this.turnosSubscription = this.turnosMensuales$.subscribe(turnos => {
       this.turnos = turnos || [];
       this.cargarResumenMensual(); // Recargar resumen cada vez que cambian los turnos
-      this.cdr.detectChanges();
     });
   }
 
   private cargarFeriados(): void {
     this.feriadoService.getFeriados().subscribe(data => {
       this.feriados = data;
-      this.cdr.detectChanges();
     });
   }
 

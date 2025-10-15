@@ -56,9 +56,9 @@
 }
 
 .container-green.minum::after {
-  width: 3px;
+  width: 5px;
   height: 50%;
-  left: 0px;
+  left: -3px;
   top: 50%;
   transform: translateY(-50%);
 }
