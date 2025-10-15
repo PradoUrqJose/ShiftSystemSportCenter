@@ -172,7 +172,6 @@
 
 .absolute {
   position: absolute;
-  z-index: 50;
 }
 
 thead {

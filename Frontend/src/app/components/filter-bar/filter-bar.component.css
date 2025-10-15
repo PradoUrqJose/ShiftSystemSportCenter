@@ -1,0 +1,37 @@
+.dropdown-enter {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.dropdown-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.filter-button {
+  background-color: #f8fafc; /* gray-50 */
+  color: #374151; /* gray-700 */
+}
+.filter-button:hover {
+  background-color: #eef2ff; /* indigo-50-ish */
+}
+
+.filter-container {
+  width: 100%;
+}
+
+/* Dropdown animation */
+.dropdown-anim {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+  animation: dropdownFadeIn 160ms ease forwards;
+}
+
+@keyframes dropdownFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+

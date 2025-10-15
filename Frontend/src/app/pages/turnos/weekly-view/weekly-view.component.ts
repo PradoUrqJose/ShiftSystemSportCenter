@@ -67,6 +67,22 @@ export class WeeklyViewComponent implements OnInit {
   @Input() colaboradores: Colaborador[] = []; // Lista de colaboradores
   @Input() turnos: Turno[] = []; // Lista de turnos
   @Input() hideTotal: boolean = false;
+  @Input() set externalCompanyFilter(value: string | null) {
+    if (value !== undefined && value !== null) {
+      this.selectedCompany = value;
+      this.applySortAndFilter();
+    }
+  }
+  @Input() set externalCollaboratorFilter(value: number | number[] | null) {
+    if (Array.isArray(value)) {
+      this.selectedCollaboratorIds = value;
+      this.selectedCollaboratorId = null;
+    } else {
+      this.selectedCollaboratorId = value;
+      this.selectedCollaboratorIds = value ? [value] : [];
+    }
+    this.applySortAndFilter();
+  }
   // Outputs para emitir eventos al componente padre
   @Output() abrirModal = new EventEmitter<{ colaboradorId: number; fecha: string }>();
   @Output() abrirModalEdicion = new EventEmitter<Turno>();
@@ -76,6 +92,8 @@ export class WeeklyViewComponent implements OnInit {
   sortByCompany: boolean = false; // Ordenar por empresa
   selectedCompany: string = 'all'; // Empresa seleccionada para filtrar ('all' para mostrar todas)
   filteredColaboradores: Colaborador[] = []; // Lista filtrada y ordenada
+  selectedCollaboratorId: number | null = null; // Filtro por colaborador
+  selectedCollaboratorIds: number[] = []; // Multi-select
 
   // Método para obtener el turno de un colaborador en una fecha específica
   obtenerTurno(
@@ -228,6 +246,10 @@ export class WeeklyViewComponent implements OnInit {
     if (this.selectedCompany !== 'all') {
       result = result.filter(col => col.empresaNombre === this.selectedCompany);
     }
+    if (this.selectedCollaboratorIds && this.selectedCollaboratorIds.length > 0) {
+      const set = new Set(this.selectedCollaboratorIds);
+      result = result.filter(col => set.has(col.id));
+    }
     if (this.sortByCompany) {
       result.sort((a, b) => {
         const empresaA = a.empresaNombre || 'Sin Empresa';
@@ -260,6 +282,11 @@ export class WeeklyViewComponent implements OnInit {
         y: rect.bottom + window.scrollY
       };
     }
+  }
+
+  filterByCollaborator(colaboradorId: number | null): void {
+    this.selectedCollaboratorId = colaboradorId;
+    this.applySortAndFilter();
   }
 
   viewProfile(colaboradorId: number | null): void {

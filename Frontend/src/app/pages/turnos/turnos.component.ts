@@ -29,7 +29,7 @@ import {
 import { es } from 'date-fns/locale'; // Importación de la localización para español
 
 // -------------- RxJS Imports --------------
-import { BehaviorSubject, map, Observable, of, Subscription, tap} from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable, of, Subscription, tap} from 'rxjs';
 
 // -------------- Angular Modules Imports --------------
 import { CommonModule } from '@angular/common';
@@ -47,6 +47,7 @@ import { SemanaService } from '../../services/semana.service';
 import { HeaderComponent } from './header/header.component';
 import { WeeklyViewComponent } from './weekly-view/weekly-view.component';
 import { MonthlyViewComponent } from './monthly-view/monthly-view.component';
+import { FilterBarComponent } from '../../components/filter-bar/filter-bar.component';
 
 import { TurnoModalComponent } from './turno-modal/turno-modal.component'; // Nuevo componente
 
@@ -55,7 +56,7 @@ import { TurnoModalComponent } from './turno-modal/turno-modal.component'; // Nu
   templateUrl: './turnos.component.html',
   standalone: true,
   styleUrls: ['./turnos.component.css'],
-  imports: [CommonModule, FormsModule, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent],
+  imports: [CommonModule, FormsModule, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent],
 })
 export default class TurnosComponent implements OnInit, AfterViewChecked {
   //! Variables de estado
@@ -63,6 +64,7 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
   isLoading$!: Observable<boolean>;
   nombreMesActual: string = ''; // Nombre del mes actual
   colaboradores$: Observable<Colaborador[]>; // Observable de colaboradores
+  colaboradoresFiltrados$: Observable<Colaborador[]> = of([]);
   turnos$: Observable<Turno[]> = of([]); // Observable de turnos
   tiendas$: Observable<Tienda[]> = of([]); // Observable de tiendas
   diasSemana$: BehaviorSubject<DiaSemana[]> = new BehaviorSubject<DiaSemana[]>([]);
@@ -90,7 +92,8 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
   vistaMensual!: boolean; // ✅ Variable para guardar el estado booleano de `vistaMensual$`
   diasMes: DiaSemana[] = []; // Días del mes
   turnosMensuales$: Observable<Turno[]> = of([]); // Turnos mensuales
-  colaboradorSeleccionado: number = 0; // Colaborador seleccionado
+  colaboradorSeleccionado: number = 0; // Colaborador seleccionado (mensual)
+  colaboradoresSeleccionadosSemana: number[] = []; // Filtro multi-select semanal
   semanasDelMes: DiaSemana[][] = []; // Semanas del mes
   diasSemana = [
     { nombre: 'Lun' },
@@ -105,6 +108,9 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
   // Nuevas propiedades para mes y año
   mes: number = 0;
   anio: number = 0;
+  selectedCompanyForMonthly: string = 'all';
+  private selectedCompanyForMonthly$ = new BehaviorSubject<string>('all');
+  private selectedCollaboratorsFilter$ = new BehaviorSubject<number[]>([]);
   @Output() turnosModificados = new EventEmitter<void>(); // Nuevo evento para notificar cambios
 
   private turnosSubscription?: Subscription;
@@ -131,6 +137,21 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
     this.isModalVisible$ = this.modalService.isModalVisible$;
     // Inicializar mes y año desde semanaActual
     this.actualizarMesAnio();
+    this.colaboradoresFiltrados$ = combineLatest([
+      this.colaboradores$,
+      this.selectedCompanyForMonthly$,
+      this.selectedCollaboratorsFilter$,
+    ]).pipe(
+      map(([cols, company, ids]) => {
+        const list = cols || [];
+        const byCompany = (company === 'all') ? list : list.filter(c => (c.empresaNombre || 'Sin Empresa') === company);
+        if (ids && ids.length > 0) {
+          const set = new Set(ids);
+          return byCompany.filter(c => set.has(c.id));
+        }
+        return byCompany;
+      })
+    );
   }
 
   //! Métodos del ciclo de vida
@@ -162,6 +183,35 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
     const semanaActual = this.turnoStateService.getSemanaActual();
     this.mes = semanaActual.getMonth() + 1; // getMonth() devuelve 0-11, sumamos 1 para 1-12
     this.anio = semanaActual.getFullYear();
+  }
+
+  empresasFromList(colaboradores: Colaborador[] | null | undefined): string[] {
+    const list = colaboradores || [];
+    const unique = Array.from(new Set(list.map(c => c.empresaNombre || 'Sin Empresa')));
+    return ['all', ...unique.sort()];
+  }
+
+  onMonthlyCompanyChange(company: string): void {
+    this.selectedCompanyForMonthly = company;
+    this.selectedCompanyForMonthly$.next(company);
+  }
+
+  onMonthlyCollaboratorChange(ids: number[] | number | null): void {
+    // Aplicar al semanal como multi-select
+    this.colaboradoresSeleccionadosSemana = Array.isArray(ids) ? ids : (ids ? [ids] : []);
+    // Aplicar al mensual: si un único colaborador, mostrar; si varios/ninguno, mostrar 0 y pedir selección
+    if (Array.isArray(ids)) {
+      this.colaboradorSeleccionado = ids.length === 1 ? ids[0] : 0;
+      if (this.vistaMensual && this.colaboradorSeleccionado) {
+        this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
+      }
+      this.selectedCollaboratorsFilter$.next(this.colaboradoresSeleccionadosSemana);
+    } else {
+      const id = ids || 0;
+      this.colaboradorSeleccionado = id;
+      if (this.vistaMensual && id) this.mostrarTurnosMensuales(id);
+      this.selectedCollaboratorsFilter$.next(this.colaboradoresSeleccionadosSemana);
+    }
   }
 
   cargarMes(): void {

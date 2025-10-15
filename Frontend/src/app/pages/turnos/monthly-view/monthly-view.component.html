@@ -1,4 +1,4 @@
-<div class="monthly-view -mt-16">
+<div class="monthly-view -mt-10">
   <table class="w-full bg-transparent rounded-lg overflow-hidden">
     <thead>
       <tr class="text-gray-500">
@@ -22,7 +22,7 @@
             >
 
             <!-- Número del día (siempre visible) -->
-            <span class="absolute top-2.5 right-3 nunito text-sm font-semibold month"
+            <span class="z-10 absolute top-2.5 right-3 nunito text-sm font-semibold month"
               [ngClass]="{ 'dia-actual-encabezado': esDiaActual(dia.fecha), 'feriado-semanal-encabezado': esFeriado(dia.fecha), 'dia-sobrante-texto': dia.esSobrante }">
               {{ dia.dayNumber }}
             </span>

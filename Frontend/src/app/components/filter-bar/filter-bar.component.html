@@ -1,0 +1,89 @@
+<div class="filter-container">
+  <div class="flex flex-wrap gap-4 items-center">
+    <button *ngIf="showSortControl" (click)="onToggleSort()"
+      class="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+      title="Ordenar por empresa">
+      <i class="fa-solid fa-sort text-sm" [ngClass]="{'text-blue-700': sortActive}"></i>
+      <span class="hidden sm:inline">Ordenar</span>
+    </button>
+
+    <!-- Filtro por Empresa -->
+    <div class="relative">
+      <button type="button" class="filter-button flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-sm"
+        (click)="openCompanyDropdown($event)">
+        <i class="fa-solid fa-building text-gray-500"></i>
+        <span class="font-medium">{{ getSelectedEmpresaName() }}</span>
+        <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
+      </button>
+
+      <div *ngIf="showCompanyDropdown"
+        class="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 dropdown-anim"
+        (click)="$event.stopPropagation()">
+        <div class="p-2">
+          <div class="px-3 py-2 text-sm text-gray-500 border-b">Seleccionar Empresa</div>
+          <button *ngFor="let empresa of companies" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
+            [class.bg-blue-100]="(!selectedCompany || selectedCompany === 'all') && empresa === 'all' || selectedCompany === empresa"
+            (click)="selectCompany(empresa)">{{ empresa === 'all' ? 'Todas las empresas' : empresa }}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtro por Colaboradores -->
+    <div class="relative">
+      <button type="button" class="filter-button flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-sm"
+        (click)="openCollaboratorDropdown($event)">
+        <i class="fa-solid fa-users text-gray-500"></i>
+        <span class="font-medium">{{ getSelectedColaboradorName() }}</span>
+        <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
+      </button>
+
+      <div *ngIf="showCollaboratorDropdown"
+        class="absolute top-full left-0 mt-1 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 dropdown-anim"
+        (click)="$event.stopPropagation()">
+        <div class="p-2">
+          <div class="px-3 py-2 border-b">
+            <input type="text" [(ngModel)]="collaboratorSearch" placeholder="Buscar colaboradores..."
+              class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div class="max-h-60 overflow-y-auto">
+            <div class="px-3 py-2 text-sm text-gray-500 border-b">Colaboradores Habilitados</div>
+            <button class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded flex items-center gap-2"
+              [class.bg-blue-100]="!selectedCollaboratorIds || selectedCollaboratorIds.length === 0" (click)="selectAllCollaborators()">
+              <i class="fa-solid fa-check text-xs" [class.invisible]="(selectedCollaboratorIds || []).length > 0"></i>
+              Todos los colaboradores
+            </button>
+
+            <div *ngFor="let c of filteredCollaborators" class="px-3 py-2 hover:bg-gray-100 rounded flex items-center gap-2 cursor-pointer"
+              (click)="toggleCollaborator(c.id)">
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium text-gray-900 truncate">{{ c.nombre }} {{ c.apellido }}</div>
+                <div class="text-xs text-gray-500 truncate">{{ c.empresaNombre }}</div>
+              </div>
+              <i class="fa-solid fa-check text-xs" [class.invisible]="!(selectedCollaboratorIds || []).includes(c.id)"></i>
+            </div>
+
+            <div *ngIf="filteredCollaborators.length === 0" class="px-3 py-4 text-sm text-gray-500 text-center">
+              No se encontraron colaboradores
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Limpiar -->
+    <button type="button"
+      class="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+      (click)="clearAll()">
+      <i class="fa-solid fa-times text-xs"></i>
+      <span class="hidden sm:inline">Limpiar</span>
+    </button>
+
+    <!-- Indicador de activos -->
+    <div *ngIf="hasActiveFilters" class="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-md text-xs font-medium">
+      <i class="fa-solid fa-filter text-xs"></i>
+      <span class="hidden sm:inline">Activos</span>
+    </div>
+  </div>
+</div>
+
+
