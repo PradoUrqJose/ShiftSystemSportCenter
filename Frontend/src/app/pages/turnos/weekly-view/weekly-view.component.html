@@ -3,8 +3,29 @@
     <tr class="text-gray-800">
       <th class="bg-blue-50 text-center px-2 py-4 colaborador-column w-[100%]">
         <div class="w-full flex justify-around items-center">
+          <!-- Botón de ordenamiento -->
+          <button (click)="toggleSortByCompany()" class="text-blue-200 hover:text-blue-300 transition p-1" title="Ordenar por empresa">
+            <i class="fa-solid fa-sort text-sm" [ngClass]="{'text-blue-700': sortByCompany}"></i>
+          </button>
           <!-- Encabezado -->
           <span>Colaborador</span>
+          <!-- Botón de filtro con flotante -->
+          <div class="relative">
+            <button (click)="toggleFilterDropdown()" class="text-blue-200 hover:text-blue-300 transition p-1" title="Filtrar por empresa">
+              <i class="fa-solid fa-filter text-sm"></i>
+            </button>
+            <div *ngIf="showFilterDropdown"
+            class="absolute left-0 top-full mt-2 w-60 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+            [ngStyle]="{ 'left': filterDropdownPosition.x + 'px', 'top': filterDropdownPosition.y + 'px' }">
+            <ul class="py-1">
+              <li *ngFor="let empresa of empresas"
+                (click)="filterByCompany(empresa)"
+                class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer text-left">
+                {{ empresa === 'all' ? 'Todas las empresas' : empresa }}
+              </li>
+            </ul>
+          </div>
+          </div>
         </div>
       </th>
       <th *ngFor="let dia of completarSemana(diasSemana)"

@@ -47,7 +47,6 @@ import { SemanaService } from '../../services/semana.service';
 import { HeaderComponent } from './header/header.component';
 import { WeeklyViewComponent } from './weekly-view/weekly-view.component';
 import { MonthlyViewComponent } from './monthly-view/monthly-view.component';
-import { FilterComponent, FilterState } from './filter/filter.component';
 
 import { TurnoModalComponent } from './turno-modal/turno-modal.component'; // Nuevo componente
 
@@ -56,7 +55,7 @@ import { TurnoModalComponent } from './turno-modal/turno-modal.component'; // Nu
   templateUrl: './turnos.component.html',
   standalone: true,
   styleUrls: ['./turnos.component.css'],
-  imports: [CommonModule, FormsModule, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterComponent],
+  imports: [CommonModule, FormsModule, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent],
 })
 export default class TurnosComponent implements OnInit, AfterViewChecked {
   //! Variables de estado
@@ -93,16 +92,6 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
   turnosMensuales$: Observable<Turno[]> = of([]); // Turnos mensuales
   colaboradorSeleccionado: number = 0; // Colaborador seleccionado
   semanasDelMes: DiaSemana[][] = []; // Semanas del mes
-
-  // Variables para el filtro avanzado
-  currentFilter: FilterState = {
-    empresaId: null,
-    colaboradorIds: [],
-    searchTerm: ''
-  };
-  empresas: { id: number; nombre: string }[] = [];
-  colaboradoresFiltrados$: Observable<Colaborador[]> = of([]);
-  turnosFiltrados$: Observable<Turno[]> = of([]);
   diasSemana = [
     { nombre: 'Lun' },
     { nombre: 'Mar' },
@@ -157,7 +146,7 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
     this.cargarSemana();
     this.cargarTiendas();
     this.actualizarNombreMes();
-    this.inicializarFiltros();
+
   }
 
   ngAfterViewChecked(): void {
@@ -525,91 +514,5 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
   ): Turno | undefined {
     if (!turnos) return undefined; // Manejo de null
     return this.turnoService.obtenerTurno(turnos, colaboradorId, fecha) || undefined;
-  }
-
-  //! Métodos para el filtro avanzado
-  inicializarFiltros(): void {
-    // Cargar empresas únicas de los colaboradores
-    this.colaboradores$.subscribe(colaboradores => {
-      const empresasUnicas = new Map<number, string>();
-      colaboradores.forEach(colaborador => {
-        if (colaborador.empresaId && colaborador.empresaNombre) {
-          empresasUnicas.set(colaborador.empresaId, colaborador.empresaNombre);
-        }
-      });
-      this.empresas = Array.from(empresasUnicas.entries()).map(([id, nombre]) => ({ id, nombre }));
-    });
-
-    // Inicializar colaboradores filtrados
-    this.colaboradoresFiltrados$ = this.colaboradores$.pipe(
-      map(colaboradores => this.aplicarFiltrosColaboradores(colaboradores))
-    );
-
-    // Inicializar turnos filtrados
-    this.turnosFiltrados$ = this.turnos$.pipe(
-      map(turnos => this.aplicarFiltrosTurnos(turnos))
-    );
-  }
-
-  onFilterChange(filter: FilterState): void {
-    this.currentFilter = filter;
-    this.actualizarDatosFiltrados();
-  }
-
-  onClearFilter(): void {
-    this.currentFilter = {
-      empresaId: null,
-      colaboradorIds: [],
-      searchTerm: ''
-    };
-    this.actualizarDatosFiltrados();
-  }
-
-  private actualizarDatosFiltrados(): void {
-    this.colaboradoresFiltrados$ = this.colaboradores$.pipe(
-      map(colaboradores => this.aplicarFiltrosColaboradores(colaboradores))
-    );
-
-    this.turnosFiltrados$ = this.turnos$.pipe(
-      map(turnos => this.aplicarFiltrosTurnos(turnos))
-    );
-  }
-
-  private aplicarFiltrosColaboradores(colaboradores: Colaborador[]): Colaborador[] {
-    return colaboradores.filter(colaborador => {
-      // Filtrar por empresa
-      if (this.currentFilter.empresaId && colaborador.empresaId !== this.currentFilter.empresaId) {
-        return false;
-      }
-
-      // Filtrar por colaboradores seleccionados
-      if (this.currentFilter.colaboradorIds.length > 0 && !this.currentFilter.colaboradorIds.includes(colaborador.id!)) {
-        return false;
-      }
-
-      // Filtrar por término de búsqueda
-      if (this.currentFilter.searchTerm) {
-        const searchTerm = this.currentFilter.searchTerm.toLowerCase();
-        const nombreCompleto = `${colaborador.nombre} ${colaborador.apellido}`.toLowerCase();
-        const empresaNombre = colaborador.empresaNombre?.toLowerCase() || '';
-
-        if (!nombreCompleto.includes(searchTerm) && !empresaNombre.includes(searchTerm)) {
-          return false;
-        }
-      }
-
-      // Solo colaboradores habilitados
-      return colaborador.habilitado;
-    });
-  }
-
-  private aplicarFiltrosTurnos(turnos: Turno[]): Turno[] {
-    if (this.currentFilter.colaboradorIds.length === 0) {
-      return turnos; // Si no hay filtro de colaboradores, mostrar todos
-    }
-
-    return turnos.filter(turno =>
-      this.currentFilter.colaboradorIds.includes(turno.colaboradorId!)
-    );
   }
 }
