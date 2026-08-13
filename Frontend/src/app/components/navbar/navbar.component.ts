@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -17,7 +18,16 @@ export default class NavbarComponent {
     { nombre: 'Semana Normal', link: '/reportes/semana-normal' }
   ];
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private authService: AuthService) {}
+
+  get username(): string | null {
+    return this.authService.getUsername();
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
 
   // Método para verificar si alguna ruta de "Reportes" está activa
   isReportesActive(): boolean {
