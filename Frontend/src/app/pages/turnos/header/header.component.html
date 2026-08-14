@@ -1,47 +1,36 @@
 <div class="flex flex-wrap items-center justify-between w-full">
   <!-- Título de la vista actual (semana/mes) -->
-  <h2 class="text-2xl font-bold text-gray-800 sm:mr-6 border-b-2 border-blue-400 pb-2 sm:hidden hidden">
+  <h2 class="text-2xl font-bold text-ink sm:mr-6 border-b-2 border-brand pb-2 sm:hidden hidden">
     {{ vistaMensual ? 'Turnos Mensuales' : 'Turnos Semanales' }}
   </h2>
 
-  <!-- Botones de cambio de vista (semana/mes) -->
-  <div class="buttonStyle flex gap-2 flex-wrap justify-between">
-    <!-- Botón para vista semanal -->
-    <button
-      class="changeView font-bold py-2 px-3 rounded-lg transition transform hover:scale-105"
-      [ngClass]="{ 'blue-button': !vistaMensual, 'hidden': !opcionMes }"
-      (click)="toggleVistaMensual('week')">
-      Semana
-    </button>
-
-    <!-- Botón para vista mensual -->
-    <button
-      class="changeView font-bold py-2 px-3 rounded-lg transition transform hover:scale-105"
-      [ngClass]="{ 'blue-button': vistaMensual, 'hidden': !opcionMes }"
-      (click)="toggleVistaMensual('month')">
-      Mes
-    </button>
+  <div class="flex gap-2 flex-wrap items-center justify-between">
+    <!-- Botones de cambio de vista (semana/mes): variant sigue el estado
+         activo directo (primary = seleccionado, secondary = el otro) en vez
+         de necesitar una clase "active" propia del Button. -->
+    <div class="flex gap-2" *ngIf="opcionMes">
+      <app-button [variant]="!vistaMensual ? 'primary' : 'secondary'" (click)="toggleVistaMensual('week')">
+        Semana
+      </app-button>
+      <app-button [variant]="vistaMensual ? 'primary' : 'secondary'" (click)="toggleVistaMensual('month')">
+        Mes
+      </app-button>
+    </div>
 
     <!-- Navegación entre semanas/meses -->
-    <div class="flex gap-3 items-center">
-      <!-- Botón para ir a la semana/mes anterior -->
-      <button
-        class="text-gray-500 py-2 rounded-lg hover:text-blue-700 transition transform hover:scale-105"
-        (click)="cambiarSemanaOMesHandler('anterior')">
+    <div class="flex gap-2 items-center">
+      <app-button variant="icon" hue="neutral" ariaLabel="Anterior" (click)="cambiarSemanaOMesHandler('anterior')">
         <i class="fa-solid fa-angle-left"></i>
-      </button>
+      </app-button>
 
       <!-- Nombre del mes actual -->
-      <div class="text-gray-800 text-sm font-bold py-3">
+      <div class="text-ink text-sm font-bold py-3">
         {{ nombreMesActual }}
       </div>
 
-      <!-- Botón para ir a la semana/mes siguiente -->
-      <button
-        class="text-gray-500 py-2 rounded-lg hover:text-blue-700 transition transform hover:scale-105"
-        (click)="cambiarSemanaOMesHandler('siguiente')">
+      <app-button variant="icon" hue="neutral" ariaLabel="Siguiente" (click)="cambiarSemanaOMesHandler('siguiente')">
         <i class="fa-solid fa-angle-right"></i>
-      </button>
+      </app-button>
     </div>
   </div>
 </div>

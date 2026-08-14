@@ -1,0 +1,34 @@
+.app-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-ink-faint);
+}
+
+.app-empty-state__icon {
+  font-size: 32px;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.app-empty-state__title {
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.app-empty-state__desc {
+  font-size: 13px;
+  margin: 4px 0 0;
+  max-width: 32rem;
+}
+
+.app-empty-state__action:empty {
+  display: none;
+}
+.app-empty-state__action {
+  margin-top: 14px;
+}

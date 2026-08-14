@@ -6,7 +6,48 @@ module.exports = withMT({
     "./src/**/*.{html,ts}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      // Espejan src/app/styles/tokens.css — no duplican valores, solo
+      // exponen los mismos custom properties como utilities de Tailwind
+      // (ej. `bg-brand`, `rounded-pill`) para que el HTML utility-first y
+      // el CSS de componente siempre calcen en el mismo píxel.
+      colors: {
+        brand: {
+          DEFAULT: 'var(--color-brand)',
+          hover: 'var(--color-brand-hover)',
+          soft: 'var(--color-brand-soft)',
+          ink: 'var(--color-brand-ink)',
+        },
+        ink: {
+          DEFAULT: 'var(--color-ink)',
+          soft: 'var(--color-ink-soft)',
+          faint: 'var(--color-ink-faint)',
+        },
+        line: {
+          DEFAULT: 'var(--color-line)',
+          soft: 'var(--color-line-soft)',
+        },
+        paper: 'var(--color-paper)',
+      },
+      borderRadius: {
+        sm: 'var(--radius-sm)',
+        md: 'var(--radius-md)',
+        lg: 'var(--radius-lg)',
+        pill: 'var(--radius-pill)',
+      },
+      boxShadow: {
+        hover: 'var(--shadow-hover)',
+        soft: 'var(--shadow-soft)',
+      },
+      transitionDuration: {
+        fast: 'var(--duration-fast)',
+        base: 'var(--duration-base)',
+        modal: 'var(--duration-modal)',
+      },
+      transitionTimingFunction: {
+        standard: 'var(--ease-standard)',
+      },
+    },
   },
   plugins: [],
 });

@@ -54,20 +54,51 @@
       Semana Normal
     </a> -->
 
-  <!-- Spinner de carga global -->
-  <div *ngIf="calendario.isLoading$ | async" class="sk-circle">
-    <div class="sk-circle1 sk-child"></div>
-    <div class="sk-circle2 sk-child"></div>
-    <div class="sk-circle3 sk-child"></div>
-    <div class="sk-circle4 sk-child"></div>
-    <div class="sk-circle5 sk-child"></div>
-    <div class="sk-circle6 sk-child"></div>
-    <div class="sk-circle7 sk-child"></div>
-    <div class="sk-circle8 sk-child"></div>
-    <div class="sk-circle9 sk-child"></div>
-    <div class="sk-circle10 sk-child"></div>
-    <div class="sk-circle11 sk-child"></div>
-    <div class="sk-circle12 sk-child"></div>
+  <!-- Skeleton de carga: grilla-fantasma con la forma real de cada vista
+       (reemplaza el spinner .sk-circle genérico) — misma condición
+       calendario.isLoading$ que ya controlaba el spinner, no se toca
+       TurnosCalendarService. -->
+  <div *ngIf="!calendario.vistaMensual && (calendario.isLoading$ | async)" class="table-wrapper" aria-hidden="true">
+    <table class="w-full shadow bg-white rounded-lg">
+      <thead>
+        <tr>
+          <th class="bg-blue-50 px-2 py-4 w-[100%]">
+            <app-skeleton width="90px" height="12px"></app-skeleton>
+          </th>
+          <th *ngFor="let _ of skeletonCols" class="bg-blue-50 px-2 py-4">
+            <app-skeleton width="32px" height="32px" shape="circle"></app-skeleton>
+          </th>
+          <th class="bg-blue-50 px-2 py-4 w-[6%]"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let _ of skeletonRows">
+          <td class="py-4 px-4">
+            <div class="flex items-center gap-3">
+              <app-skeleton width="48px" height="48px" shape="circle"></app-skeleton>
+              <div class="flex flex-col gap-2 flex-1">
+                <app-skeleton width="70%" height="12px"></app-skeleton>
+                <app-skeleton width="40%" height="10px"></app-skeleton>
+              </div>
+            </div>
+          </td>
+          <td *ngFor="let _ of skeletonCols" class="text-center px-2">
+            <app-skeleton width="90%" height="46px" radius="10px"></app-skeleton>
+          </td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="calendario.vistaMensual && (calendario.isLoading$ | async)"
+    class="flex flex-col sm:flex-row gap-3" aria-hidden="true">
+    <div class="w-[24%] flex flex-col gap-2">
+      <app-skeleton *ngFor="let _ of skeletonRows" width="100%" height="40px" radius="10px"></app-skeleton>
+    </div>
+    <div class="w-full sm:w-[76%] grid grid-cols-7 gap-2">
+      <app-skeleton *ngFor="let _ of skeletonMonthCells" width="100%" height="8rem" radius="10px"></app-skeleton>
+    </div>
   </div>
 
   <!-- Tabla de turnos semanal -->

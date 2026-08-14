@@ -6,7 +6,7 @@
     <ul class="flex flex-col py-4 space-y-1">
       <li>
         <a routerLink="/empresas" routerLinkActive="active"
-          class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-gray-50 text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6">
+          class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-paper text-ink-soft hover:text-ink border-l-4 border-transparent hover:border-brand pr-6">
           <span class="inline-flex justify-center items-center ml-4">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path
@@ -19,7 +19,7 @@
       </li>
       <li>
         <a routerLink="/colaboradores" routerLinkActive="active"
-          class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-gray-50 text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6">
+          class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-paper text-ink-soft hover:text-ink border-l-4 border-transparent hover:border-brand pr-6">
           <span class="inline-flex justify-center items-center ml-4">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg">
@@ -33,7 +33,7 @@
       </li>
       <li>
         <a routerLink="/turnos" routerLinkActive="active"
-          class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-gray-50 text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6">
+          class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-paper text-ink-soft hover:text-ink border-l-4 border-transparent hover:border-brand pr-6">
           <span class="inline-flex justify-center items-center ml-4">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg">
@@ -47,7 +47,7 @@
       </li>
       <li>
         <a routerLink="/feriados" routerLinkActive="active"
-          class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-gray-50 text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6">
+          class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-paper text-ink-soft hover:text-ink border-l-4 border-transparent hover:border-brand pr-6">
           <span class="inline-flex justify-center items-center ml-4">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg">
@@ -61,7 +61,7 @@
       </li>
       <!-- Reportes -->
       <li>
-        <button (click)="isReportesOpen = !isReportesOpen" [ngClass]="{'active': isReportesActive()}" class="w-full nav-link flex items-center h-11 text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6 focus:outline-none">
+        <button (click)="isReportesOpen = !isReportesOpen" [ngClass]="{'active': isReportesActive()}" class="w-full nav-link flex items-center h-11 text-ink-soft hover:text-ink border-l-4 border-transparent hover:border-brand pr-6 focus:outline-none">
           <span class="inline-flex justify-center items-center ml-4">
               <svg class="w-5 h-5"  viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M15 11L15 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M12 12L12 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M9 14L9 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M17.8284 6.82843C18.4065 7.40649 18.6955 7.69552 18.8478 8.06306C19 8.4306 19 8.83935 19 9.65685L19 17C19 18.8856 19 19.8284 18.4142 20.4142C17.8284 21 16.8856 21 15 21H9C7.11438 21 6.17157 21 5.58579 20.4142C5 19.8284 5 18.8856 5 17L5 7C5 5.11438 5 4.17157 5.58579 3.58579C6.17157 3 7.11438 3 9 3H12.3431C13.1606 3 13.5694 3 13.9369 3.15224C14.3045 3.30448 14.5935 3.59351 15.1716 4.17157L17.8284 6.82843Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path> </g></svg>
           </span>
@@ -72,7 +72,7 @@
         </button>
 
         <ul *ngIf="isReportesOpen" class="overflow-hidden space-y-1">
-          <li *ngFor="let reporte of reportes; let i = index; trackBy: trackByLink" [ngStyle]="{'animation-delay': i * 100 + 'ms'}" class="text-sm ml-5 block text-gray-600 hover:bg-gray-200 transition-all opacity-0 animate-fade-in">
+          <li *ngFor="let reporte of reportes; let i = index; trackBy: trackByLink" [ngStyle]="{'animation-delay': i * 100 + 'ms'}" class="text-sm ml-5 block text-ink-soft hover:bg-paper transition-all opacity-0 animate-fade-in">
             <a class="block px-4 py-2" [routerLink]="reporte.link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">{{ reporte.nombre }}</a>
           </li>
         </ul>
@@ -81,9 +81,9 @@
   </div>
 
   <div class="p-4 border-t">
-    <p class="text-xs text-gray-500 truncate mb-2">{{ username }}</p>
+    <p class="text-xs text-ink-faint truncate mb-2">{{ username }}</p>
     <button (click)="logout()"
-      class="w-full text-sm text-left text-gray-600 hover:text-gray-800 focus:outline-none">
+      class="w-full text-sm text-left text-ink-soft hover:text-ink focus:outline-none">
       Cerrar sesión
     </button>
   </div>

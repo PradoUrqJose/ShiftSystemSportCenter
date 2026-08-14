@@ -1,0 +1,37 @@
+.app-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.app-badge--holiday {
+  background-color: #a1424220;
+  color: var(--shift-holiday-accent);
+}
+
+.app-badge--overtime {
+  background-color: var(--shift-overtime-bg);
+  color: #6b5f1f;
+}
+
+.app-badge--warning {
+  background-color: #ff5e6020;
+  color: #c23b3d;
+}
+
+.app-badge--neutral {
+  background-color: var(--color-paper);
+  color: var(--color-ink-soft);
+  border: 1px solid var(--color-line);
+}
+
+.app-badge--brand {
+  background-color: var(--color-brand-soft);
+  color: var(--color-brand-ink);
+}

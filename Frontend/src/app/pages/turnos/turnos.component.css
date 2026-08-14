@@ -24,10 +24,23 @@
   justify-content: center;
 }
 
+/* ---------- Pill de turno ----------
+   Jerarquía de variantes explícita (Fase 2 del rediseño): antes el turno
+   partido pisaba el fondo verde con bg-blue-100/bg-orange-100 sueltas en el
+   html mientras la barra de acento (::after) seguía respondiendo solo a
+   "almuerzo tomado" — un turno partido en azul podía tener una barra
+   violeta o roja sin relación con su propio color. Ahora cada variante
+   (.shift-split-1/2, .midHours) trae su propio par fondo+acento desde los
+   tokens de tokens.css, y la barra de acento del turno normal usa su propio
+   token en vez del hex a mano. "Almuerzo descontado" (ver más abajo, el
+   campo real es tomoAlmuerzo — el turno cruza la ventana de almuerzo y se
+   le restan 45min, confirmado en Turno.java) ya no vive acá: pasa a
+   .almuerzo-badge, un <app-badge> propio, para no competir por el mismo
+   acento que la variante de color. */
 .container-green {
-  background-color: #cbf9d8;
-  border: 2px solid #abd9c1;
-  color: #565b79;
+  background-color: var(--shift-normal-bg);
+  border: 2px solid var(--shift-normal-border);
+  color: var(--shift-normal-ink);
   border-radius: 10px;
   padding: 15px 5px;
   font-weight: bold;
@@ -48,7 +61,7 @@
   width: 5px;
   height: 60%; /* Se ajusta dinámicamente */
   border-radius: 6px;
-  background-color: #4b4370;
+  background-color: var(--shift-normal-accent);
   position: absolute;
   left: -3px;
   top: 50%;
@@ -63,8 +76,50 @@
   transform: translateY(-50%);
 }
 
-.container-green.almuerzo-tomado::after {
-  background-color: #ff5e60;
+/* Horas extra (>8h en un solo turno) — antes solo cambiaba el fondo
+   (.midHours más abajo), ahora también su acento sigue la misma familia. */
+.container-green.midHours::after {
+  background-color: var(--shift-overtime-accent);
+}
+
+/* Turno partido: 2 turnos el mismo día, cada mitad es su propia variante de
+   color (no un overlay sobre el verde normal). i===0 → mañana, i===1 →
+   tarde, ver weekly-view/monthly-view. */
+.container-green.shift-split-1 {
+  background-color: var(--shift-split-1-bg);
+  border-color: var(--shift-split-1-border);
+}
+.container-green.shift-split-1::after {
+  background-color: var(--shift-split-1-accent);
+}
+.container-green.shift-split-2 {
+  background-color: var(--shift-split-2-bg);
+  border-color: var(--shift-split-2-border);
+}
+.container-green.shift-split-2::after {
+  background-color: var(--shift-split-2-accent);
+}
+
+/* Badge "almuerzo descontado" (app-badge tone=warning) — posicionado como
+   una esquina superior derecha en vez de crecer la altura de la pill, las
+   columnas de la vista semanal y las celdas "minum" de la mensual son
+   angostas. No tiene tooltip propio a propósito: la pill entera ya dispara
+   el tooltip de Tippy (TooltipService) al hover, y un segundo tooltip CSS
+   propio del badge quedaba tapado por el z-index de Tippy (probado en el
+   navegador — se solapan, Tippy siempre gana). El detalle completo
+   ("-45 min de almuerzo") se agregó como línea extra al tooltip de Tippy
+   en su lugar, ver tooltip.service.ts. */
+.almuerzo-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 1;
+  padding: 1px 5px !important;
+  line-height: 1.4 !important;
+}
+.container-green.minum .almuerzo-badge {
+  top: -5px;
+  right: -5px;
 }
 
 .dayNumber {
@@ -80,6 +135,11 @@
   z-index: 2;
 }
 
+/* Textura diagonal de "hoy" — antes era idéntica a la de "feriado" (mismo
+   gris neutro), así que un feriado que cae hoy se veía igual que cualquier
+   otro día normal de hoy. Ahora cada una tinta el rayado con su propio
+   color de acento (--shift-today-accent acá, --shift-holiday-accent en
+   .feriado-semanal más abajo) en vez de gris — sutil, pero distinguible. */
 .dia-actual::before {
   content: "";
   position: absolute;
@@ -90,8 +150,8 @@
   background: repeating-linear-gradient(60deg,
       #fff,
       #fff 7px,
-      #f1f1f17a,
-      #f1f1f187 20px);
+      rgba(52, 69, 179, 0.07),
+      rgba(52, 69, 179, 0.13) 20px);
   pointer-events: none;
   /* Permite que los eventos de clic pasen a través del pseudo-elemento */
   z-index: 1;
@@ -100,8 +160,7 @@
 }
 
 .dia-actual-encabezado {
-  background-color: rgb(52, 69, 179);
-
+  background-color: var(--shift-today-accent);
   color: rgb(255, 255, 255) !important;
 }
 
@@ -118,7 +177,7 @@
 /* FERIADO */
 
 .feriado-semanal-encabezado {
-  background-color: rgb(161, 66, 66);
+  background-color: var(--shift-holiday-accent);
   color: rgb(255, 255, 255) !important;
   opacity: 0.8;
   /* Mantiene el borde redondeado si existe */
@@ -128,8 +187,8 @@
   background: repeating-linear-gradient(60deg,
       #fff,
       #fff 7px,
-      #f1f1f17a,
-      #f1f1f187 20px);
+      rgba(161, 66, 66, 0.07),
+      rgba(161, 66, 66, 0.13) 20px);
 }
 
 .dia-sobrante {
@@ -179,8 +238,8 @@ thead {
 }
 
 .midHours {
-  background-color: #f9f7cb;
-  border: 2px solid #d9d5ab;
+  background-color: var(--shift-overtime-bg);
+  border: 2px solid var(--shift-overtime-border);
 }
 
 /* Estilo para el borde rojo en turnos de feriados */
@@ -227,14 +286,14 @@ thead {
 }
 
 .icon-action.hue-teal {
-  background-color: #e1f5f1;
-  color: #0d8f80;
+  background-color: var(--hue-teal-soft);
+  color: var(--hue-teal);
   border-color: #0d8f8026;
 }
 
 .icon-action.hue-violet {
-  background-color: #ece9fd;
-  color: #5b3df0;
+  background-color: var(--hue-violet-soft);
+  color: var(--hue-violet);
   border-color: #5b3df026;
 }
 
@@ -256,7 +315,7 @@ thead {
   font-weight: 700;
   white-space: nowrap;
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.12s ease, transform 0.12s ease;

@@ -31,12 +31,23 @@ export class TooltipService implements OnDestroy {
     elementos.forEach(({ nativeElement }) => {
       const horasTrabajadas = nativeElement.getAttribute('data-horas-trabajadas');
       const tiendaNombre = nativeElement.getAttribute('data-tienda');
+      // Línea extra si el turno cruza la ventana de almuerzo (ver Turno.java
+      // isTomoAlmuerzo — se descuentan 45min automáticamente). Antes esto
+      // solo se comunicaba con el color de la barra de acento de la pill;
+      // ahora la pill lleva un badge visual ("-45m") y el detalle completo
+      // vive acá, en el mismo tooltip que ya se muestra al hover — un
+      // tooltip propio del badge quedaba tapado por el z-index de Tippy.
+      const tieneAlmuerzo = nativeElement.getAttribute('data-almuerzo') === 'true';
+      const lineaAlmuerzo = tieneAlmuerzo
+        ? '<div class="text-amber-700 text-sm mt-1">🍽 Se descontaron 45 min de almuerzo</div>'
+        : '';
       const instancia = tippy(nativeElement, {
         content: `
           <div class="p-2 flex justify-center flex-col text-center">
             <div class="font-bold mb-2 text-gray-800">Información del Turno</div>
             <div class="mb-1 text-gray-700 text-sm"><strong>Total horas:</strong> ${horasTrabajadas}</div>
             <div class="text-gray-700 font-bold">${tiendaNombre}</div>
+            ${lineaAlmuerzo}
           </div>
         `,
         placement: 'top',

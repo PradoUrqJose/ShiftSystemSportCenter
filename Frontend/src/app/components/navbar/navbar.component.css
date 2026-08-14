@@ -1,7 +1,7 @@
 .nav-link.active {
-  color: #1d4ed8;
+  color: var(--color-brand);
   font-weight: bold;
-  border-left: 4px solid #1d4ed8;
+  border-left: 4px solid var(--color-brand);
 }
 
 @keyframes fadeIn {

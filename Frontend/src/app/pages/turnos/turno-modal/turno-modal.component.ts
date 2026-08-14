@@ -12,6 +12,7 @@ import { GestionarTurnosPredeterminadosModalComponent } from '../gestionar-turno
 import { TimePickerComponent } from '../../../components/time-picker/time-picker.component';
 import { TiendaSelectComponent } from '../../../components/tienda-select/tienda-select.component';
 import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
+import { ButtonComponent } from '../../../components/ui/button/button.component';
 
 @Component({
   selector: 'app-turno-modal',
@@ -24,6 +25,7 @@ import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-
     GestionarTurnosPredeterminadosModalComponent,
     TimePickerComponent,
     TiendaSelectComponent,
+    ButtonComponent,
   ],
   templateUrl: './turno-modal.component.html',
   styleUrls: ['./turno-modal.component.css']

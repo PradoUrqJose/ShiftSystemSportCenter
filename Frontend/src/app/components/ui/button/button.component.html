@@ -1,0 +1,18 @@
+<button
+  [type]="type"
+  class="app-btn"
+  [class.app-btn--primary]="variant === 'primary'"
+  [class.app-btn--secondary]="variant === 'secondary'"
+  [class.app-btn--icon]="variant === 'icon'"
+  [class.hue-teal]="variant === 'icon' && hue === 'teal'"
+  [class.hue-violet]="variant === 'icon' && hue === 'violet'"
+  [class.hue-brand]="variant === 'icon' && hue === 'brand'"
+  [disabled]="disabled || isLoading"
+  [attr.data-tooltip]="variant === 'icon' ? tooltip : null"
+  [attr.aria-label]="ariaLabel || tooltip"
+>
+  <span class="app-btn__spinner" *ngIf="isLoading" aria-hidden="true"></span>
+  <span class="app-btn__content" [class.app-btn__content--hidden]="isLoading">
+    <ng-content></ng-content>
+  </span>
+</button>

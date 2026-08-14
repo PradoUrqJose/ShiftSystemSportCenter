@@ -1,0 +1,90 @@
+/* Sistema de diseño — Fase 0 del rediseño Airbnb.
+ *
+ * Fuente de verdad de color/radio/sombra/motion para toda la app. Los
+ * valores de acá NO se duplican en tailwind.config.js — ese archivo apunta
+ * a estas mismas variables (`var(--token)`), así un componente puede usar
+ * `bg-brand` en el HTML o `background:var(--color-brand)` en su CSS y
+ * siempre es el mismo píxel.
+ *
+ * De dónde salió cada valor: no se inventó nada nuevo acá, se formalizó lo
+ * que ya se armó y Jose ya aprobó en el navegador esta sesión —
+ * filter-bar.component.css (pills, panel, neutros) y turnos.component.css
+ * (.icon-action, hues teal/violeta). Ver memoria "rediseno-airbnb-frontend".
+ */
+
+:root {
+  /* ---------- Color: marca ---------- */
+  /* Antes había 3 azules "de marca" compitiendo (blue-600/700 de Tailwind,
+     #1d4ed8 hardcoded en nav-activo/filter-bar, y el pastel #c6e7ff de
+     .blue-button). Se consolida al que Jose ya validó en pantalla. */
+  --color-brand: #1d4ed8;
+  --color-brand-hover: #1743b8;
+  --color-brand-soft: #e7edfc;
+  --color-brand-ink: #0e334e;
+
+  /* ---------- Color: neutros ---------- */
+  /* Reemplazan gray-500/700/800 de Tailwind, que se usaban sin ningún
+     criterio unificado. Estos son los que ya viven en filter-bar. */
+  --color-ink: #222222;
+  --color-ink-soft: #717171;
+  --color-ink-faint: #9a9a9a;
+  --color-line: #dddddd;
+  --color-line-soft: #eeeeee;
+  --color-surface: #ffffff;
+  --color-paper: #f7f7f7;
+
+  /* ---------- Color: acentos por familia de acción ---------- */
+  /* De .icon-action (turnos.component.css) — "duplicar" vs "operar en
+     lote". Se formalizan acá para poder reusarlos en Badge y en otros
+     lugares sin reinventar el hex cada vez. */
+  --hue-teal: #0d8f80;
+  --hue-teal-soft: #e1f5f1;
+  --hue-violet: #5b3df0;
+  --hue-violet-soft: #ece9fd;
+
+  /* ---------- Color: estados de turno ---------- */
+  /* Slots para la Fase 2 (calendario) — hoy los valores calzan con los
+     colores actuales (verde normal, azul/naranja de turno partido, amarillo
+     de horas extra, rojo de feriado) para no romper nada visualmente hasta
+     que la Fase 2 reconcilie la jerarquía real (ver riesgo #1 del plan:
+     hoy la barra de acento del turno partido no sigue estos colores, eso
+     se arregla recién en Fase 2, no acá). */
+  --shift-normal-bg: #cbf9d8;
+  --shift-normal-border: #abd9c1;
+  --shift-normal-ink: #565b79;
+  --shift-normal-accent: #4b4370;
+  --shift-split-1-bg: #dbeafe;
+  --shift-split-1-border: #93c5fd;
+  --shift-split-1-accent: #2563eb;
+  --shift-split-2-bg: #ffedd5;
+  --shift-split-2-border: #fdba74;
+  --shift-split-2-accent: #ea580c;
+  --shift-overtime-bg: #f9f7cb;
+  --shift-overtime-border: #d9d5ab;
+  --shift-overtime-accent: #a3860f;
+  --shift-holiday-accent: #a14242;
+  --shift-today-accent: #3445b3;
+
+  /* ---------- Radio ---------- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* ---------- Sombra ---------- */
+  /* Las 2 que ya existen en filter-bar .panel / .pill:hover — el resto de
+     la app reinventaba `0 4px 6px -1px rgba(0,0,0,.1)` (shadow-md de
+     Tailwind) a mano en más de un archivo; estas 2 cubren todos los casos
+     reales encontrados. */
+  --shadow-hover: 0 2px 6px rgba(0, 0, 0, 0.12);
+  --shadow-soft: 0 10px 32px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  /* ---------- Motion ---------- */
+  /* Consolida los 120/150/160/200/300ms sueltos que había por la app.
+     modal-timing.ts (MODAL_OPEN_DELAY_MS/MODAL_CLOSE_DELAY_MS) deriva sus
+     constantes de --duration-modal en vez de hardcodear 300. */
+  --duration-fast: 120ms;
+  --duration-base: 160ms;
+  --duration-modal: 300ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+}

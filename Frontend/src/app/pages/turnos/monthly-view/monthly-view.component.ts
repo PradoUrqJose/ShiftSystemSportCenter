@@ -6,11 +6,12 @@ import { Feriado, FeriadoService } from '../../../services/feriado.service';
 import { Observable, Subject, Subscription, takeUntil } from 'rxjs';
 import { TurnosDelDiaPipe } from '../../../pipes/turnos-del-dia.pipe';
 import { TooltipService } from '../../../services/tooltip.service';
+import { BadgeComponent } from '../../../components/ui/badge/badge.component';
 
 @Component({
   selector: 'app-monthly-view',
   standalone: true,
-  imports: [CommonModule, TurnosDelDiaPipe],
+  imports: [CommonModule, TurnosDelDiaPipe, BadgeComponent],
   templateUrl: './monthly-view.component.html',
   styleUrls: ['./monthly-view.component.css', '../turnos.component.css'],
   providers: [TooltipService],
