@@ -2,20 +2,26 @@ import { CommonModule } from '@angular/common';
 import { CalendarioService, DiaSemana } from './../../../services/calendario.service';
 import { Colaborador } from './../../../services/colaborador.service';
 import { Turno, TurnoService } from './../../../services/turno.service';
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { TurnosDelDiaPipe } from '../../../pipes/turnos-del-dia.pipe';
+import { TooltipService } from '../../../services/tooltip.service';
 
 @Component({
   selector: 'app-weekly-view',
   standalone: true,
   imports: [CommonModule, TurnosDelDiaPipe],
   templateUrl: './weekly-view.component.html',
-  styleUrls: ['./weekly-view.component.css', '../turnos.component.css']
+  styleUrls: ['./weekly-view.component.css', '../turnos.component.css'],
+  providers: [TooltipService],
 })
-export class WeeklyViewComponent implements OnInit, OnChanges, OnDestroy {
+export class WeeklyViewComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
+
+  // Celdas de turno renderizadas (ver #turnoCell en el html) — de acá salen
+  // los tooltips, ver ngAfterViewInit.
+  @ViewChildren('turnoCell') turnoCells!: QueryList<ElementRef<HTMLElement>>;
 
   private readonly destroy$ = new Subject<void>();
 
@@ -33,7 +39,8 @@ export class WeeklyViewComponent implements OnInit, OnChanges, OnDestroy {
     private feriadoService: FeriadoService,
     private calendarioService: CalendarioService,
     private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private tooltipService: TooltipService
   ) { }
 
   ngOnInit(): void {
@@ -44,6 +51,20 @@ export class WeeklyViewComponent implements OnInit, OnChanges, OnDestroy {
     }
     this.filteredColaboradores = [...this.colaboradores];
     this.applySortAndFilter();
+  }
+
+  ngAfterViewInit(): void {
+    this.actualizarTooltips();
+    // turnoCells.changes emite cada vez que cambia el set de celdas
+    // renderizadas (turnos nuevos, cambio de semana, filtro de colaborador)
+    // — reemplaza al polling manual que hacía el padre en ngAfterViewChecked.
+    this.turnoCells.changes.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.actualizarTooltips();
+    });
+  }
+
+  private actualizarTooltips(): void {
+    this.tooltipService.inicializar(this.turnoCells.toArray());
   }
 
 

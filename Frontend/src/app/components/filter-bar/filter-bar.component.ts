@@ -1,14 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Colaborador } from '../../services/colaborador.service';
 
+// Componente "dumb": todo su estado cambia por sus propios eventos (clicks,
+// HostListener), y sus @Input siempre llegan como referencias nuevas del
+// padre — candidato seguro para OnPush, primer paso de activarlo en el
+// resto del árbol de turnos/colaboradores.
 @Component({
   selector: 'app-filter-bar',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './filter-bar.component.html',
-  styleUrls: ['./filter-bar.component.css']
+  styleUrls: ['./filter-bar.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FilterBarComponent {
   @Input() companies: string[] = [];

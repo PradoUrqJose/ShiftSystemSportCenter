@@ -30,6 +30,7 @@
             <!-- Múltiples turnos del día -->
             <div *ngIf="turnosDelDia.length > 0; else agregarBoton" class="w-full space-y-1">
               <div *ngFor="let turno of turnosDelDia; let i = index; trackBy: trackByTurnoId"
+                #turnoCell
                 class="container-green minum border-2 border-solid border-[#abd9c1] rounded cursor-pointer transition hover:shadow text-xs"
                 [ngClass]="{
                   'almuerzo-tomado': turno.tomoAlmuerzo,

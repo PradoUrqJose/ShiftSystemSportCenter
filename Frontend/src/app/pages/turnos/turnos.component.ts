@@ -7,7 +7,6 @@ import {
   ChangeDetectorRef,
   Output,
   EventEmitter,
-  AfterViewChecked,
 } from '@angular/core';
 
 // -------------- Service Imports --------------
@@ -31,7 +30,7 @@ import {
 import { es } from 'date-fns/locale'; // Importación de la localización para español
 
 // -------------- RxJS Imports --------------
-import { BehaviorSubject, combineLatest, map, Observable, of, Subject, Subscription, takeUntil, tap} from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable, of, Subject, Subscription, takeUntil } from 'rxjs';
 
 // -------------- Angular Modules Imports --------------
 import { CommonModule } from '@angular/common';
@@ -39,10 +38,6 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 // -------------- External Libraries Imports --------------
-import tippy, { Instance as TippyInstance } from 'tippy.js'; // Herramienta para tooltips interactivos
-import 'tippy.js/dist/tippy.css'; // Estilos de Tippy.js
-import 'tippy.js/animations/shift-away-extreme.css'; // Animación de Tippy.js
-import 'tippy.js/themes/light.css'; // Tema claro de Tippy.js
 import { TurnoStateService } from '../../services/turno-state.service';
 import { ModalService } from '../../services/modal.service';
 import { CalendarioService } from '../../services/calendario.service';
@@ -62,7 +57,7 @@ import { TurnoModalComponent } from './turno-modal/turno-modal.component'; // Nu
   styleUrls: ['./turnos.component.css'],
   imports: [CommonModule, FormsModule, RouterLink, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent],
 })
-export default class TurnosComponent implements OnInit, AfterViewChecked, OnDestroy {
+export default class TurnosComponent implements OnInit, OnDestroy {
   //! Variables de estado
   feriados: Feriado[] = []; // Lista de feriados
   isLoading$!: Observable<boolean>;
@@ -120,8 +115,6 @@ export default class TurnosComponent implements OnInit, AfterViewChecked, OnDest
 
   private turnosSubscription?: Subscription;
   private turnosMensualesSubscription?: Subscription;
-  private needsTooltipInit: boolean = false; // Bandera para inicializar tooltips
-  private tooltipInstances: TippyInstance[] = []; // Tooltips activos, para destruirlos antes de recrearlos
   private readonly destroy$ = new Subject<void>(); // Emite al destruir el componente, corta todas las suscripciones abiertas
 
   constructor(
@@ -177,18 +170,9 @@ export default class TurnosComponent implements OnInit, AfterViewChecked, OnDest
 
   }
 
-  ngAfterViewChecked(): void {
-    if (this.needsTooltipInit && document.querySelectorAll('.container-green').length > 0) {
-      this.inicializarTooltips();
-      this.needsTooltipInit = false; // Evitar inicializaciones repetidas
-      this.cdr.detectChanges();
-    }
-  }
-
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    this.destruirTooltips();
   }
 
   // Método para actualizar mes y año desde semanaActual
@@ -236,7 +220,6 @@ export default class TurnosComponent implements OnInit, AfterViewChecked, OnDest
         this.diasMes = this.semanasDelMes.flat();
         this.turnoStateService.setLoading(false);
         this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
-        this.needsTooltipInit = true; // Marcar para inicializar tooltips
       },
       error: () => {
         this.semanasDelMes = [];
@@ -256,10 +239,6 @@ export default class TurnosComponent implements OnInit, AfterViewChecked, OnDest
         colaboradorId,
         semanaActual.getMonth() + 1,
         semanaActual.getFullYear()
-      ).pipe(
-        tap(() => {
-          this.needsTooltipInit = true; // Marcar para inicializar tooltips cuando los turnos estén listos
-        })
       );
       this.semanasDelMes = this.calendarioService.completarSemanasDelMes(
         this.semanasDelMes,
@@ -317,11 +296,7 @@ export default class TurnosComponent implements OnInit, AfterViewChecked, OnDest
   private cargarTurnosDeSemana(semana: DiaSemana[]): Observable<Turno[]> {
     const inicio = semana[0].fecha;
     const fin = semana[semana.length - 1].fecha;
-    return this.turnoService.getTurnosPorRangoFecha(inicio, fin).pipe(
-      tap(() => {
-        this.needsTooltipInit = true; // Marcar para inicializar tooltips cuando los turnos estén listos
-      })
-    );
+    return this.turnoService.getTurnosPorRangoFecha(inicio, fin);
   }
 
   cargarTiendas(): void {
@@ -340,7 +315,6 @@ export default class TurnosComponent implements OnInit, AfterViewChecked, OnDest
   actualizarResumenMensual(): void {
     if (this.colaboradorSeleccionado) {
       this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
-      this.needsTooltipInit = true; // Marcar para inicializar tooltips tras actualizar
     }
   }
 
@@ -488,40 +462,6 @@ export default class TurnosComponent implements OnInit, AfterViewChecked, OnDest
     this.nombreMesActual = this.calendarioService.obtenerNombreMes(
       this.turnoStateService.getSemanaActual() // ✅ Obtener la fecha actual desde `TurnoStateService`
     );
-  }
-
-  inicializarTooltips(): void {
-    // Antes de crear tooltips nuevos, destruir los de la pasada anterior:
-    // si no, cada re-render (cambio de semana/mes) apila instancias de Tippy
-    // sobre elementos DOM que ya no existen y nunca se liberan.
-    this.destruirTooltips();
-
-    const elementosTurnos = document.querySelectorAll('.container-green');
-    elementosTurnos.forEach((elemento) => {
-      const horasTrabajadas = elemento.getAttribute('data-horas-trabajadas');
-      const tiendaNombre = elemento.getAttribute('data-tienda');
-      const instancia = tippy(elemento, {
-        content: `
-          <div class="p-2 flex justify-center flex-col text-center">
-            <div class="font-bold mb-2 text-gray-800">Información del Turno</div>
-            <div class="mb-1 text-gray-700 text-sm"><strong>Total horas:</strong> ${horasTrabajadas}</div>
-            <div class="text-gray-700 font-bold">${tiendaNombre}</div>
-          </div>
-        `,
-        placement: 'top',
-        arrow: true,
-        theme: 'custom',
-        animation: 'shift-away-extreme',
-        delay: [50, 200],
-        allowHTML: true,
-      });
-      this.tooltipInstances.push(instancia);
-    });
-  }
-
-  private destruirTooltips(): void {
-    this.tooltipInstances.forEach((instancia) => instancia.destroy());
-    this.tooltipInstances = [];
   }
 
   trackByColaboradorId(_index: number, colaborador: Colaborador): number {

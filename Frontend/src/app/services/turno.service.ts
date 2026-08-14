@@ -224,8 +224,7 @@ export class TurnoService {
     return this.http.get<ResumenMensual[]>(url);
   }
 
-    // Método existente que ya tienes
-    getTurnosByColaboradorId(id: number): Observable<any[]> {
-      return this.http.get<any[]>(`${this.apiUrl}/${id}`);
+    getTurnosByColaboradorId(id: number): Observable<Turno[]> {
+      return this.http.get<Turno[]>(`${this.apiUrl}/${id}`);
     }
 }

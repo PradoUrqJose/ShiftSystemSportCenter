@@ -1,19 +1,25 @@
 import { CommonModule } from '@angular/common';
 import { CalendarioService, DiaSemana } from './../../../services/calendario.service';
 import { ResumenMensual, Turno, TurnoService } from './../../../services/turno.service';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
 import { Observable, Subject, Subscription, takeUntil } from 'rxjs';
 import { TurnosDelDiaPipe } from '../../../pipes/turnos-del-dia.pipe';
+import { TooltipService } from '../../../services/tooltip.service';
 
 @Component({
   selector: 'app-monthly-view',
   standalone: true,
   imports: [CommonModule, TurnosDelDiaPipe],
   templateUrl: './monthly-view.component.html',
-  styleUrls: ['./monthly-view.component.css', '../turnos.component.css']
+  styleUrls: ['./monthly-view.component.css', '../turnos.component.css'],
+  providers: [TooltipService],
 })
-export class MonthlyViewComponent implements OnInit, OnDestroy {
+export class MonthlyViewComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
+  // Celdas de turno renderizadas (ver #turnoCell en el html) — de acá salen
+  // los tooltips, ver ngAfterViewInit.
+  @ViewChildren('turnoCell') turnoCells!: QueryList<ElementRef<HTMLElement>>;
+
   @Input() semanasDelMes: DiaSemana[][] = [];
   @Input() colaboradorSeleccionado: number = 0;
   @Input() turnosMensuales$!: Observable<Turno[]>;
@@ -35,7 +41,8 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
     private turnoService: TurnoService,
     private feriadoService: FeriadoService,
     private calendarioService: CalendarioService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private tooltipService: TooltipService
   ) {}
 
   ngOnInit(): void {
@@ -47,6 +54,20 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
     if (changes['turnosMensuales$'] || changes['colaboradorSeleccionado'] || changes['mes'] || changes['anio']) {
       this.subscribeToTurnos();
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.actualizarTooltips();
+    // turnoCells.changes emite cada vez que cambia el set de celdas
+    // renderizadas — reemplaza al polling manual que hacía el padre en
+    // ngAfterViewChecked con document.querySelectorAll.
+    this.turnoCells.changes.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.actualizarTooltips();
+    });
+  }
+
+  private actualizarTooltips(): void {
+    this.tooltipService.inicializar(this.turnoCells.toArray());
   }
 
   ngOnDestroy(): void {
