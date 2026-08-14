@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { CalendarioService, DiaSemana } from './../../../services/calendario.service';
 import { Colaborador } from './../../../services/colaborador.service';
 import { Turno, TurnoService } from './../../../services/turno.service';
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
@@ -16,6 +16,7 @@ import { TooltipService } from '../../../services/tooltip.service';
   templateUrl: './weekly-view.component.html',
   styleUrls: ['./weekly-view.component.css', '../turnos.component.css'],
   providers: [TooltipService],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WeeklyViewComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
 
@@ -218,6 +219,9 @@ export class WeeklyViewComponent implements OnInit, OnChanges, AfterViewInit, On
       next: (data) => {
         this.feriados = data; // Guardar los feriados
         this.recalcularDiasSemana(); // esFeriado por día depende de this.feriados
+        // Esta respuesta llega async, fuera de cualquier click o cambio de
+        // @Input — con OnPush, Angular no la detecta sola sin este aviso.
+        this.cdr.markForCheck();
       },
     });
   }

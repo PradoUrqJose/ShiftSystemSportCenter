@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { CalendarioService, DiaSemana } from './../../../services/calendario.service';
 import { ResumenMensual, Turno, TurnoService } from './../../../services/turno.service';
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
 import { Observable, Subject, Subscription, takeUntil } from 'rxjs';
 import { TurnosDelDiaPipe } from '../../../pipes/turnos-del-dia.pipe';
@@ -14,6 +14,7 @@ import { TooltipService } from '../../../services/tooltip.service';
   templateUrl: './monthly-view.component.html',
   styleUrls: ['./monthly-view.component.css', '../turnos.component.css'],
   providers: [TooltipService],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MonthlyViewComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
   // Celdas de turno renderizadas (ver #turnoCell en el html) — de acá salen
@@ -87,6 +88,9 @@ export class MonthlyViewComponent implements OnInit, OnChanges, AfterViewInit, O
   private cargarFeriados(): void {
     this.feriadoService.getFeriados().pipe(takeUntil(this.destroy$)).subscribe(data => {
       this.feriados = data;
+      // Async, fuera de cualquier click o cambio de @Input — con OnPush,
+      // Angular no la detecta sola sin este aviso.
+      this.cdr.markForCheck();
     });
   }
 
