@@ -52,6 +52,7 @@
                   #turnoCell
                   class="container-green cursor-pointer transition border-green-100 p-1 rounded-lg text-xs"
                   [ngClass]="{
+                    'almuerzo-tomado': turno.tomoAlmuerzo,
                     'border-2 border-red-500': dia.esFeriado,
                     'midHours': (turno.horasTrabajadas ?? 0) > 8,
                     'shift-split-1': turnosDelDia.length > 1 && i === 0,
@@ -62,7 +63,6 @@
                   [attr.data-almuerzo]="turno.tomoAlmuerzo ? 'true' : null"
                   (click)="abrirModalEdicion.emit(turno)"
                   [title]="'Turno ' + (i + 1) + (turnosDelDia.length > 1 ? ' de ' + turnosDelDia.length : '')">
-                  <app-badge *ngIf="turno.tomoAlmuerzo" tone="warning" class="almuerzo-badge">-45m</app-badge>
                   <div class="flex items-center justify-center space-x-1">
                     <span>{{ formatearHora(turno.horaEntrada) }}-{{ formatearHora(turno.horaSalida) }}</span>
                   </div>

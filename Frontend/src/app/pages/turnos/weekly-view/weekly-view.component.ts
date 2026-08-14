@@ -8,12 +8,11 @@ import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { TurnosDelDiaPipe } from '../../../pipes/turnos-del-dia.pipe';
 import { TooltipService } from '../../../services/tooltip.service';
-import { BadgeComponent } from '../../../components/ui/badge/badge.component';
 
 @Component({
   selector: 'app-weekly-view',
   standalone: true,
-  imports: [CommonModule, TurnosDelDiaPipe, BadgeComponent],
+  imports: [CommonModule, TurnosDelDiaPipe],
   templateUrl: './weekly-view.component.html',
   styleUrls: ['./weekly-view.component.css', '../turnos.component.css'],
   providers: [TooltipService],

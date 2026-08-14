@@ -43,16 +43,19 @@
   --hue-violet-soft: #ece9fd;
 
   /* ---------- Color: estados de turno ---------- */
-  /* Slots para la Fase 2 (calendario) — hoy los valores calzan con los
-     colores actuales (verde normal, azul/naranja de turno partido, amarillo
-     de horas extra, rojo de feriado) para no romper nada visualmente hasta
-     que la Fase 2 reconcilie la jerarquía real (ver riesgo #1 del plan:
-     hoy la barra de acento del turno partido no sigue estos colores, eso
-     se arregla recién en Fase 2, no acá). */
+  /* Fase 2 del rediseño reconcilió el fondo de la pill (verde normal vs
+     azul/naranja de turno partido vs amarillo de horas extra — antes
+     bg-blue-100/bg-orange-100 sueltas pisaban el verde, choque de color
+     real). La barra de acento lateral (--shift-normal-accent/
+     --shift-almuerzo-accent) es aparte y a propósito NO sigue estas
+     variantes: es el indicador de "almuerzo descontado" (turno.tomoAlmuerzo)
+     y nada más — Jose prefirió esa simplicidad a que siguiera la variante
+     de color, ver turnos.component.css. */
   --shift-normal-bg: #cbf9d8;
   --shift-normal-border: #abd9c1;
   --shift-normal-ink: #565b79;
   --shift-normal-accent: #4b4370;
+  --shift-almuerzo-accent: #ff5e60;
   --shift-split-1-bg: #dbeafe;
   --shift-split-1-border: #93c5fd;
   --shift-split-1-accent: #2563eb;
@@ -61,7 +64,6 @@
   --shift-split-2-accent: #ea580c;
   --shift-overtime-bg: #f9f7cb;
   --shift-overtime-border: #d9d5ab;
-  --shift-overtime-accent: #a3860f;
   --shift-holiday-accent: #a14242;
   --shift-today-accent: #3445b3;
 
