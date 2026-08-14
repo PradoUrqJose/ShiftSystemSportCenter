@@ -41,13 +41,14 @@ import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../utils/modal-tim
 import { TurnoModalComponent } from './turno-modal/turno-modal.component'; // Nuevo componente
 import { TurnosMasivosModalComponent } from './turnos-masivos-modal/turnos-masivos-modal.component';
 import { SkeletonComponent } from '../../components/ui/skeleton/skeleton.component';
+import { PrimeraPalabraPipe } from '../../pipes/primera-palabra.pipe';
 
 @Component({
   selector: 'app-turnos',
   templateUrl: './turnos.component.html',
   standalone: true,
   styleUrls: ['./turnos.component.css'],
-  imports: [CommonModule, FormsModule, RouterLink, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent, TurnosMasivosModalComponent, SkeletonComponent],
+  imports: [CommonModule, FormsModule, RouterLink, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent, TurnosMasivosModalComponent, SkeletonComponent, PrimeraPalabraPipe],
   // TurnosCalendarService: una instancia propia por página (no singleton),
   // dueña de qué semana/mes se muestra y qué turnos trae — ver el servicio.
   providers: [TurnosCalendarService],

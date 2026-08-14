@@ -1,0 +1,84 @@
+/* Tooltip de turno (Tippy, tema 'custom') — rediseño pedido por Jose
+ * siguiendo convenciones de tooltip empresarial: jerarquía clara
+ * etiqueta/valor, ícono consistente por fila, sin texto de relleno
+ * ("Información del Turno" no aportaba nada que el hover ya no dijera).
+ * El contenido HTML vive en tooltip.service.ts; estas clases son la única
+ * forma de darle estilo porque el popper de Tippy se monta en <body>, fuera
+ * de cualquier componente Angular — ViewEncapsulation no lo alcanza, por
+ * eso no puede vivir en un .component.css.
+ */
+
+.tippy-box[data-theme~='custom'] {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  color: var(--color-ink);
+}
+.tippy-box[data-theme~='custom'] .tippy-content {
+  padding: 0;
+}
+.tippy-box[data-theme~='custom'][data-placement^='top'] > .tippy-arrow:before {
+  border-top-color: var(--color-surface);
+}
+
+.turno-tooltip {
+  min-width: 180px;
+  padding: 11px 13px;
+  font-family: inherit;
+  text-align: left;
+}
+
+/* Fila superior: la tienda es el dato que identifica el turno, no un
+   título genérico — encabeza el tooltip en vez de un "Información del
+   Turno" que no decía nada. */
+.turno-tooltip__store {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-ink);
+  padding-bottom: 7px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--color-line-soft);
+}
+
+.turno-tooltip__row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 0;
+}
+
+.turno-tooltip__store svg,
+.turno-tooltip__row svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  color: var(--color-ink-faint);
+}
+
+/* Patrón etiqueta/valor: la etiqueta en tono apagado no compite por
+   atención, el valor en negro+bold es lo único que hay que leer rápido —
+   convención estándar de panel de detalle (Linear, Notion, Salesforce). */
+.turno-tooltip__label {
+  flex: 1;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+}
+.turno-tooltip__value {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Fila de almuerzo descontado: mismo tono que el badge/acento que ya usa
+   la pill para esta señal (--shift-almuerzo-accent), así el tooltip y la
+   pill hablan el mismo idioma de color en vez de inventar uno nuevo. */
+.turno-tooltip__row--warning svg,
+.turno-tooltip__row--warning .turno-tooltip__value {
+  color: var(--shift-almuerzo-accent);
+}

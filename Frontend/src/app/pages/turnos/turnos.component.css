@@ -45,7 +45,33 @@
   font-weight: bold;
   font-size: 14px;
   position: relative;
-  width: 96%;
+  /* 96% → 84%: prueba pedida por Jose. Deja un margen visible a los lados
+     de la pill (antes casi tocaba el borde de la celda) para que se note
+     el box-shadow de columna de .dia-actual/.feriado-semanal más abajo —
+     con 96% el margen era de ~2px, menos que el spread del shadow, así
+     que quedaba tapado por la pill misma. Solo afecta a la vista semanal:
+     .container-green.minum (mensual) sigue pisando esto con 100%. */
+  width: 84%;
+  /* Es un div de ancho < 100%: el text-center del <td> no lo centra a él
+     mismo (solo centraría contenido inline). margin auto sí. */
+  margin: 0 auto;
+}
+
+/* Hover lift (pedido por Jose junto con el centrado) — la clase Tailwind
+   `transition` que ya trae el html cubre transform/box-shadow, así que acá
+   solo hace falta el estado :hover en sí. */
+.container-green:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .container-green {
+    transition: none;
+  }
+  .container-green:hover {
+    transform: none;
+  }
 }
 
 .container-green.minum {
@@ -95,18 +121,18 @@
   font-size: 0.8rem;
 }
 
-/* "Hoy" y "feriado" (más abajo) marcan la columna con un tinte de fondo
-   sólido y parejo en vez del rayado diagonal que tenían antes. El rayado
-   (repeating-linear-gradient) reinicia su ángulo en el origen de cada
-   celda, y en la vista semanal una columna es una pila de celdas (una por
-   colaborador) — el patrón se veía "cortado" en cada borde de fila en vez
-   de fluir como una sola diagonal. Un color sólido no tiene ese problema:
-   no hay origen que se note, todas las celdas de la columna se ven
-   parejas. De paso ya no hace falta el truco de pseudo-elemento + z-index
-   para que los clics pasen a la celda real — es el background de la celda
-   misma, no un overlay encima. */
+/* "Hoy" y "feriado" (más abajo) marcan la columna entera. Pasó por 2
+   versiones antes de esta (rayado diagonal → se veía cortado por fila;
+   box-shadow inset → a Jose dejó de gustarle el efecto). Versión actual,
+   la más simple de las 3: tinte de fondo plano + un borde muy clarito a los
+   lados. Se aplica igual al <td> y al <th> de esa columna — como comparten
+   ancho/posición horizontal, el borde de una celda calza pixel a pixel con
+   el de la de arriba/abajo, se ve como una sola línea seguida en vez de
+   una por celda. */
 .dia-actual {
-  background-color: rgba(52, 69, 179, 0.08);
+  background-color: rgba(52, 69, 179, 0.05);
+  border-left: 1px solid rgba(52, 69, 179, 0.16);
+  border-right: 1px solid rgba(52, 69, 179, 0.16);
 }
 
 .dia-actual-encabezado {
@@ -134,7 +160,9 @@
 }
 
 .feriado-semanal {
-  background-color: rgba(161, 66, 66, 0.08);
+  background-color: rgba(161, 66, 66, 0.05);
+  border-left: 1px solid rgba(161, 66, 66, 0.16);
+  border-right: 1px solid rgba(161, 66, 66, 0.16);
 }
 
 .dia-sobrante {

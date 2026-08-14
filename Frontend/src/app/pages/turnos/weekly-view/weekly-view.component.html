@@ -7,7 +7,8 @@
         </div>
       </th>
       <th *ngFor="let dia of diasSemanaCompleta; trackBy: trackByFecha"
-        class="bg-blue-50 text-center px-2 py-4 capitalize font-normal semana-column w-[20%] sm:w-[10.57%]">
+        class="bg-blue-50 text-center px-2 py-4 capitalize font-normal semana-column w-[20%] sm:w-[10.57%]"
+        [ngClass]="{ 'dia-actual': dia.esDiaActual, 'feriado-semanal': dia.esFeriado }">
         <span class="text-lg font-bold py-2 px-4 rounded-full" [ngClass]="{
             'dia-actual-encabezado': dia.esDiaActual,
             'feriado-semanal-encabezado': dia.esFeriado
@@ -31,7 +32,7 @@
         </div>
           <div class="colaborador">
             <div class="colaborador-nombre text-sm font-bold">
-              {{ colaborador.nombre }} {{ colaborador.apellido }}
+              {{ colaborador.nombre | primeraPalabra }} {{ colaborador.apellido | primeraPalabra }}
             </div>
             <div class="colaborador-empresa inline-block text-gray-700 font-bold">
               {{ colaborador.empresaNombre }}

@@ -135,7 +135,7 @@
                 </div>
                 <div class="text-left">
                   <div class="colaborador-nombre text-sm font-bold">
-                    {{ colaborador.nombre }} {{ colaborador.apellido }}
+                    {{ colaborador.nombre | primeraPalabra }} {{ colaborador.apellido | primeraPalabra }}
                   </div>
                   <div class="colaborador-empresa inline-block text-gray-700 font-bold">
                     {{ colaborador.empresaNombre }}

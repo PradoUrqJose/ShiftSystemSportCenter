@@ -31,23 +31,32 @@ export class TooltipService implements OnDestroy {
     elementos.forEach(({ nativeElement }) => {
       const horasTrabajadas = nativeElement.getAttribute('data-horas-trabajadas');
       const tiendaNombre = nativeElement.getAttribute('data-tienda');
-      // Línea extra si el turno cruza la ventana de almuerzo (ver Turno.java
-      // isTomoAlmuerzo — se descuentan 45min automáticamente). Antes esto
-      // solo se comunicaba con el color de la barra de acento de la pill;
-      // ahora la pill lleva un badge visual ("-45m") y el detalle completo
-      // vive acá, en el mismo tooltip que ya se muestra al hover — un
-      // tooltip propio del badge quedaba tapado por el z-index de Tippy.
+      // Fila extra si el turno cruza la ventana de almuerzo (ver Turno.java
+      // isTomoAlmuerzo — se descuentan 45min automáticamente). Es la única
+      // señal de este dato: la pill solo tiene el color de su barra de
+      // acento (a pedido de Jose, sin badge aparte), así que el detalle
+      // completo vive acá.
       const tieneAlmuerzo = nativeElement.getAttribute('data-almuerzo') === 'true';
-      const lineaAlmuerzo = tieneAlmuerzo
-        ? '<div class="text-amber-700 text-sm mt-1">🍽 Se descontaron 45 min de almuerzo</div>'
+      const filaAlmuerzo = tieneAlmuerzo
+        ? `<div class="turno-tooltip__row turno-tooltip__row--warning">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
+            <span class="turno-tooltip__label">Almuerzo descontado</span>
+            <span class="turno-tooltip__value">-45 min</span>
+          </div>`
         : '';
       const instancia = tippy(nativeElement, {
         content: `
-          <div class="p-2 flex justify-center flex-col text-center">
-            <div class="font-bold mb-2 text-gray-800">Información del Turno</div>
-            <div class="mb-1 text-gray-700 text-sm"><strong>Total horas:</strong> ${horasTrabajadas}</div>
-            <div class="text-gray-700 font-bold">${tiendaNombre}</div>
-            ${lineaAlmuerzo}
+          <div class="turno-tooltip">
+            <div class="turno-tooltip__store">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l8-6 8 6v12M9 21v-6h6v6"/></svg>
+              ${tiendaNombre}
+            </div>
+            <div class="turno-tooltip__row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+              <span class="turno-tooltip__label">Horas trabajadas</span>
+              <span class="turno-tooltip__value">${horasTrabajadas}</span>
+            </div>
+            ${filaAlmuerzo}
           </div>
         `,
         placement: 'top',

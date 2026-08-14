@@ -1,20 +1,10 @@
 @import 'tippy.js/dist/tippy.css';
 @import 'tippy.js/animations/shift-away-extreme.css';
 @import './app/styles/tokens.css';
+@import './app/styles/turno-tooltip.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-.tippy-box[data-theme~='custom'] {
-  color: #168fff;
-  box-shadow: rgba(136, 165, 191, 0.48) 3px 2px 10px 0px, rgba(136, 165, 191, 0.48)  -3px -2px 10px 0px;
-  background-color: #fff;
-  border-radius: 8px;
-}
-
-.tippy-box[data-theme~='custom'][data-placement^='top'] > .tippy-arrow:before {
-  border-top-color: #fff;
-}
 
 /* Scrollbar estilo moderno */
 ::-webkit-scrollbar {

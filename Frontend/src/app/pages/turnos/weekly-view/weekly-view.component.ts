@@ -7,12 +7,13 @@ import { Feriado, FeriadoService } from '../../../services/feriado.service';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { TurnosDelDiaPipe } from '../../../pipes/turnos-del-dia.pipe';
+import { PrimeraPalabraPipe } from '../../../pipes/primera-palabra.pipe';
 import { TooltipService } from '../../../services/tooltip.service';
 
 @Component({
   selector: 'app-weekly-view',
   standalone: true,
-  imports: [CommonModule, TurnosDelDiaPipe],
+  imports: [CommonModule, TurnosDelDiaPipe, PrimeraPalabraPipe],
   templateUrl: './weekly-view.component.html',
   styleUrls: ['./weekly-view.component.css', '../turnos.component.css'],
   providers: [TooltipService],
