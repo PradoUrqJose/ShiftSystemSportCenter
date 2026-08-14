@@ -4,7 +4,7 @@
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <!-- Navegación (izquierda) -->
       <div class="flex flex-wrap items-center gap-4">
-        <app-header [vistaMensual]="vistaMensual" [nombreMesActual]="nombreMesActual"
+        <app-header [vistaMensual]="calendario.vistaMensual" [nombreMesActual]="calendario.nombreMesActual"
             (cambiarVista)="toggleVistaMensual($event)" (cambiarSemanaOMes)="cambiarSemanaOMesHandler($event)">
           </app-header>
           <a class="buttonStyle gray-button font-bold py-2 px-3 rounded-lg transition transform hover:scale-105"
@@ -31,7 +31,7 @@
     </a> -->
 
   <!-- Spinner de carga global -->
-  <div *ngIf="isLoading$ | async" class="sk-circle">
+  <div *ngIf="calendario.isLoading$ | async" class="sk-circle">
     <div class="sk-circle1 sk-child"></div>
     <div class="sk-circle2 sk-child"></div>
     <div class="sk-circle3 sk-child"></div>
@@ -47,19 +47,19 @@
   </div>
 
   <!-- Tabla de turnos semanal -->
-  <div *ngIf="!vistaMensual && !(isLoading$ | async)" class="table-wrapper">
-    <app-weekly-view [diasSemana]="(diasSemana$ | async) || []" [colaboradores]="(colaboradores$ | async) || []"
-      [turnos]="(turnos$ | async) || []" [externalCompanyFilter]="selectedCompanyForMonthly"
+  <div *ngIf="!calendario.vistaMensual && !(calendario.isLoading$ | async)" class="table-wrapper">
+    <app-weekly-view [diasSemana]="(calendario.diasSemana$ | async) || []" [colaboradores]="(colaboradores$ | async) || []"
+      [turnos]="(calendario.turnos$ | async) || []" [externalCompanyFilter]="selectedCompanyForMonthly"
        [externalCollaboratorFilter]="colaboradoresSeleccionadosSemana"
       (abrirModal)="abrirModal($event.colaboradorId, $event.fecha)" (abrirModalEdicion)="abrirModalEdicion($event)">
     </app-weekly-view>
   </div>
 
   <!-- Contenedor principal para las tablas -->
-  <div class="flex flex-col sm:flex-row gap-3 space-y-6 sm:space-y-0" *ngIf="vistaMensual && !(isLoading$ | async)">
+  <div class="flex flex-col sm:flex-row gap-3 space-y-6 sm:space-y-0" *ngIf="calendario.vistaMensual && !(calendario.isLoading$ | async)">
     <!-- Tabla de selección de colaborador -->
     <div class="w-[24%]">
-      <div *ngIf="colaboradorSeleccionado === 0" class="text-red-500 text-sm py-4 text-center">
+      <div *ngIf="calendario.colaboradorSeleccionado === 0" class="text-red-500 text-sm py-4 text-center">
         * Seleccione un colaborador
       </div>
       <table class="w-full shadow bg-transparent rounded-lg overflow-hidden bg-white">
@@ -71,8 +71,8 @@
         <tbody>
           <tr *ngFor="let colaborador of colaboradoresFiltrados$ | async; trackBy: trackByColaboradorId" class="hover:bg-gray-50 transition">
             <td class="py-4 px-4 flex justify-start items-center gap-3 w-full"
-              [ngClass]="{'bg-blue-100 text-blue-800 font-bold': colaborador.id === colaboradorSeleccionado}">
-              <button (click)="mostrarTurnosMensuales(colaborador.id)"
+              [ngClass]="{'bg-blue-100 text-blue-800 font-bold': colaborador.id === calendario.colaboradorSeleccionado}">
+              <button (click)="calendario.mostrarTurnosMensuales(colaborador.id)"
                 class="flex justify-start items-center w-full gap-3 transition">
                 <div class="photo flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
                   <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
@@ -95,10 +95,10 @@
 
     <!-- Tabla de turnos mensual -->
     <div class="w-full sm:w-[76%]">
-      <app-monthly-view [semanasDelMes]="semanasDelMes" [colaboradorSeleccionado]="colaboradorSeleccionado"
-        [turnosMensuales$]="turnosMensuales$" [diasSemana]="(diasSemana$ | async) || []" [mes]="mes" [anio]="anio"
+      <app-monthly-view [semanasDelMes]="calendario.semanasDelMes" [colaboradorSeleccionado]="calendario.colaboradorSeleccionado"
+        [turnosMensuales$]="calendario.turnosMensuales$" [diasSemana]="(calendario.diasSemana$ | async) || []" [mes]="calendario.mes" [anio]="calendario.anio"
         (abrirModal)="abrirModal($event.colaboradorId, $event.fecha)" (abrirModalEdicion)="abrirModalEdicion($event)"
-        (turnosModificados)="actualizarResumenMensual()"></app-monthly-view>
+        (turnosModificados)="calendario.actualizarResumenMensual()"></app-monthly-view>
     </div>
   </div>
 
