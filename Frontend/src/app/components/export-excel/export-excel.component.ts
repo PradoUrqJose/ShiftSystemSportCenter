@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
+// Import de solo-tipos: no agrega xlsx/file-saver al bundle inicial.
+// El código real se carga recién al exportar (ver exportExcel()).
+import type * as XLSX from 'xlsx';
 
 export interface ExportColumn {
   key: string;
@@ -29,8 +30,14 @@ export class ExportExcelComponent {
   @Input() fileName: string = 'reporte';
   @Input() disabled: boolean = false;
 
-  exportExcel(): void {
+  async exportExcel(): Promise<void> {
     if (!this.data || this.data.length === 0) return;
+
+    // Carga diferida: xlsx y file-saver solo se descargan cuando el usuario exporta.
+    const [XLSX, { saveAs }] = await Promise.all([
+      import('xlsx'),
+      import('file-saver'),
+    ]);
 
     // 🔹 1. Preparar encabezados y datos
     const headers = this.columns.map(col => col.label);
