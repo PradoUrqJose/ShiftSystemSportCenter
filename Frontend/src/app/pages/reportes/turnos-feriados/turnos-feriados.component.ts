@@ -9,15 +9,30 @@ import { ReporteFiltrosToolbarComponent } from '../../../components/reporte-filt
 import { TableShellComponent } from '../../../components/ui/table-shell/table-shell.component';
 import { EmptyStateComponent } from '../../../components/ui/empty-state/empty-state.component';
 import { Subject, takeUntil } from 'rxjs';
+import { SortHeaderComponent } from '../../../components/ui/sort-header/sort-header.component';
+import { SortState, nextSortState, sortRows } from '../../../utils/table-sort.util';
 
 // TurnoDTO del backend + el apellido, agregado acá cruzando con la lista de
 // colaboradores (el reporte solo trae el nombre).
 type ReporteTurnoFeriado = Turno & { apellido: string };
 
+type ReporteFeriadoSortField = 'nombreColaborador' | 'dniColaborador' | 'nombreEmpresa' | 'nombreTienda' | 'fecha' | 'horaEntrada' | 'horaSalida' | 'horasTotalesSemana';
+
+const REPORTE_FERIADO_SORT_SELECTORS: Record<ReporteFeriadoSortField, (r: ReporteTurnoFeriado) => unknown> = {
+  nombreColaborador: (r) => `${r.nombreColaborador} ${r.apellido}`,
+  dniColaborador: (r) => r.dniColaborador,
+  nombreEmpresa: (r) => r.nombreEmpresa,
+  nombreTienda: (r) => r.nombreTienda,
+  fecha: (r) => r.fecha,
+  horaEntrada: (r) => r.horaEntrada,
+  horaSalida: (r) => r.horaSalida,
+  horasTotalesSemana: (r) => r.horasTotalesSemana,
+};
+
 @Component({
   selector: 'app-turnos-feriados',
   standalone: true,
-  imports: [CommonModule, ExportExcelComponent, ReporteFiltrosToolbarComponent, TableShellComponent, EmptyStateComponent],
+  imports: [CommonModule, ExportExcelComponent, ReporteFiltrosToolbarComponent, TableShellComponent, EmptyStateComponent, SortHeaderComponent],
   templateUrl: './turnos-feriados.component.html',
   styleUrls: ['./turnos-feriados.component.css'],
   // Instancia propia de ReporteFiltrosService para esta página (no singleton
@@ -27,6 +42,7 @@ type ReporteTurnoFeriado = Turno & { apellido: string };
 export class TurnosFeriadosComponent implements OnInit, OnDestroy {
   reportes: ReporteTurnoFeriado[] = [];
   buscando: boolean = false;
+  sort: SortState<ReporteFeriadoSortField> = { field: 'fecha', direction: 'desc' };
   exportColumns: ExportColumn[] = [
     { key: 'nombreColaborador', label: 'Colaborador' },
     { key: 'dniColaborador', label: 'DNI' },
@@ -71,6 +87,7 @@ export class TurnosFeriadosComponent implements OnInit, OnDestroy {
             const colaborador = this.filtros.colaboradores.find((c) => c.id === reporte.colaboradorId);
             return { ...reporte, apellido: colaborador ? colaborador.apellido : 'Desconocido' };
           });
+          this.aplicarOrden();
           this.filtros.errorMessage = null;
           this.buscando = false;
         },
@@ -80,6 +97,15 @@ export class TurnosFeriadosComponent implements OnInit, OnDestroy {
           this.buscando = false;
         }
       });
+  }
+
+  onSort(field: ReporteFeriadoSortField): void {
+    this.sort = nextSortState(this.sort, field);
+    this.aplicarOrden();
+  }
+
+  private aplicarOrden(): void {
+    this.reportes = sortRows(this.reportes, REPORTE_FERIADO_SORT_SELECTORS[this.sort.field], this.sort.direction);
   }
 
   formatearHora(hora: string | undefined): string {

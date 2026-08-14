@@ -8,16 +8,28 @@ import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-
 import { TableShellComponent } from '../../../components/ui/table-shell/table-shell.component';
 import { SkeletonComponent } from '../../../components/ui/skeleton/skeleton.component';
 import { ButtonComponent } from '../../../components/ui/button/button.component';
+import { SortHeaderComponent } from '../../../components/ui/sort-header/sort-header.component';
+import { SortState, nextSortState, sortRows } from '../../../utils/table-sort.util';
+
+type FeriadoSortField = 'fecha' | 'descripcion';
+
+const FERIADO_SORT_SELECTORS: Record<FeriadoSortField, (f: Feriado) => unknown> = {
+  fecha: (f) => f.fecha,
+  descripcion: (f) => f.descripcion,
+};
 
 @Component({
   selector: 'app-gestionar-feriados',
   standalone: true,
-  imports: [CommonModule, AgregarFeriadoModalComponent, TableShellComponent, SkeletonComponent, ButtonComponent],
+  imports: [CommonModule, AgregarFeriadoModalComponent, TableShellComponent, SkeletonComponent, ButtonComponent, SortHeaderComponent],
   templateUrl: './gestionar-feriados.component.html',
   styleUrls: ['./gestionar-feriados.component.css']
 })
 export default class GestionarFeriadosComponent implements OnInit, OnDestroy {
   feriados: Feriado[] = [];
+  // Orden cronológico descendente por defecto (más reciente primero) —
+  // mismo criterio que ya tenía cargarFeriados() antes del rediseño.
+  sort: SortState<FeriadoSortField> = { field: 'fecha', direction: 'desc' };
   mostrarModalAgregarFeriado: boolean = false;
   // Estado separado de mostrarModalAgregarFeriado (y con un tick de retraso al
   // abrir/cerrar) para que la transición CSS del modal hijo tenga margen de
@@ -45,9 +57,8 @@ export default class GestionarFeriadosComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.feriadoService.getFeriados().pipe(takeUntil(this.destroy$)).subscribe({
       next: (feriados) => {
-        // Orden cronológico descendente (más reciente primero): la lista tal
-        // como viene del backend no garantiza ningún orden en particular.
-        this.feriados = [...feriados].sort((a, b) => b.fecha.localeCompare(a.fecha));
+        this.feriados = feriados;
+        this.aplicarOrden();
         this.isLoading = false;
       },
       error: (err) => {
@@ -84,8 +95,26 @@ export default class GestionarFeriadosComponent implements OnInit, OnDestroy {
     } else {
       this.feriados.push(feriado);
     }
-    this.feriados.sort((a, b) => b.fecha.localeCompare(a.fecha));
+    this.aplicarOrden();
     this.cerrarModalAgregarFeriado();
+  }
+
+  onSort(field: FeriadoSortField): void {
+    this.sort = nextSortState(this.sort, field);
+    this.aplicarOrden();
+  }
+
+  private aplicarOrden(): void {
+    this.feriados = sortRows(this.feriados, FERIADO_SORT_SELECTORS[this.sort.field], this.sort.direction);
+  }
+
+  // Reparte el string "YYYY-MM-DD" a mano en vez de pasar por Date/DatePipe
+  // a propósito: un Date parseado de una fecha "date-only" se interpreta en
+  // UTC, y formatearlo en una zona horaria negativa (ej. Perú, UTC-5)
+  // muestra un día antes del real.
+  formatearFecha(fecha: string): string {
+    const [anio, mes, dia] = fecha.split('-');
+    return `${dia}/${mes}/${anio.slice(-2)}`;
   }
 
   eliminarFeriado(id: number | undefined): void {

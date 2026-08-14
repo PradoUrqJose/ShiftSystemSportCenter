@@ -1,0 +1,62 @@
+/* Tabla de datos compartida — CRUD (Colaboradores, Empresas, Puestos,
+ * Feriados) y Reportes (Horas trabajadas, Turnos en feriados).
+ *
+ * Antes cada página repetía a mano `bg-paper text-ink` en el header y
+ * `border-t border-line-soft hover:bg-paper transition` en cada fila
+ * (6 copias del mismo string). Se centraliza acá para que las 6 tablas
+ * compartan el mismo hover y sumen la animación de entrada de filas sin
+ * duplicar CSS por página. Ver DESIGN.md, sección "Tablas de datos".
+ *
+ * Scope con la clase .app-table (no `table` a secas) para no tocar tablas
+ * ajenas al patrón, ej. el calendario mensual de turnos.
+ */
+
+.app-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.app-table thead tr {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.app-table th {
+  padding: 16px;
+  text-align: left;
+  font-weight: 700;
+}
+
+.app-table tbody tr {
+  border-top: 1px solid var(--color-line-soft);
+  transition: background-color var(--duration-base) var(--ease-standard);
+  /* --row-i lo setea cada página con [style.--row-i]="i" en el *ngFor —
+     stagger de entrada, fila por fila, en vez de un fade-in en bloque. */
+  animation: app-table-row-in var(--duration-modal) var(--ease-standard) backwards;
+  animation-delay: calc(var(--row-i, 0) * 30ms);
+}
+
+.app-table tbody tr:hover {
+  background-color: var(--color-paper);
+}
+
+.app-table td {
+  padding: 16px;
+}
+
+@keyframes app-table-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-table tbody tr {
+    animation: none;
+  }
+}

@@ -1,15 +1,15 @@
-<div class="monthly-view -mt-10">
+<div class="monthly-view -mt-8">
   <table class="w-full bg-transparent rounded-lg overflow-hidden">
     <thead>
       <tr class="text-gray-500">
-        <th class="text-right p-2 capitalize nunito font-extralight" *ngFor="let dia of diasSemana; trackBy: trackByFecha">
+        <th class="text-right pt-3 pb-2 px-2 capitalize nunito font-extralight" *ngFor="let dia of diasSemana; trackBy: trackByFecha">
           <span class="text-lg font-bold">{{ dia.nombre }}</span>
         </th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let semana of semanasDelMes; trackBy: trackBySemanaIndex">
-        <td *ngFor="let dia of semana; trackBy: trackByFecha" class="text-center w-[8rem] h-[8rem] bg-transparent 2xl:w-[10rem] 2xl:h-[10rem]"
+      <tr *ngFor="let semana of semanasDelMes; let i = index; trackBy: trackBySemanaIndex" [style.--row-i]="i">
+        <td *ngFor="let dia of semana; trackBy: trackByFecha" class="text-center w-[8rem] h-[6.5rem] bg-transparent 2xl:w-[10rem] 2xl:h-[8rem]"
           [ngClass]="{ 'dia-sobrante': dia.esSobrante}">
           <ng-container *ngIf="turnos | turnosDelDia:colaboradorSeleccionado:dia.fecha as turnosDelDia">
             <div

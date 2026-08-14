@@ -14,21 +14,21 @@
 
 <!-- Tabla de Resultados -->
 <app-table-shell *ngIf="reportes.length > 0">
-  <table class="w-full">
+  <table class="app-table">
     <thead>
-      <tr class="bg-paper text-ink">
-        <th class="p-4 text-left font-bold">Colaborador</th>
-        <th class="p-4 text-left font-bold">DNI</th>
-        <th class="p-4 text-left font-bold">Empresa</th>
-        <th class="p-4 text-left font-bold">Tienda</th>
-        <th class="p-4 text-left font-bold">Fecha</th>
-        <th class="p-4 text-left font-bold">Ingreso</th>
-        <th class="p-4 text-left font-bold">Salida</th>
-        <th class="p-4 text-left font-bold">SubTotal</th>
+      <tr>
+        <th class="text-left"><app-sort-header [active]="sort.field === 'nombreColaborador'" [direction]="sort.direction" (sort)="onSort('nombreColaborador')">Colaborador</app-sort-header></th>
+        <th class="text-left"><app-sort-header [active]="sort.field === 'dniColaborador'" [direction]="sort.direction" (sort)="onSort('dniColaborador')">DNI</app-sort-header></th>
+        <th class="text-left"><app-sort-header [active]="sort.field === 'nombreEmpresa'" [direction]="sort.direction" (sort)="onSort('nombreEmpresa')">Empresa</app-sort-header></th>
+        <th class="text-left"><app-sort-header [active]="sort.field === 'nombreTienda'" [direction]="sort.direction" (sort)="onSort('nombreTienda')">Tienda</app-sort-header></th>
+        <th class="text-left"><app-sort-header [active]="sort.field === 'fecha'" [direction]="sort.direction" (sort)="onSort('fecha')">Fecha</app-sort-header></th>
+        <th class="text-left"><app-sort-header [active]="sort.field === 'horaEntrada'" [direction]="sort.direction" (sort)="onSort('horaEntrada')">Ingreso</app-sort-header></th>
+        <th class="text-left"><app-sort-header [active]="sort.field === 'horaSalida'" [direction]="sort.direction" (sort)="onSort('horaSalida')">Salida</app-sort-header></th>
+        <th class="text-left"><app-sort-header [active]="sort.field === 'horasTrabajadas'" [direction]="sort.direction" (sort)="onSort('horasTrabajadas')">SubTotal</app-sort-header></th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let reporte of reportes; trackBy: trackByReporte" class="border-t border-line-soft hover:bg-paper transition">
+      <tr *ngFor="let reporte of reportes; let i = index; trackBy: trackByReporte" [style.--row-i]="i">
         <td class="p-4">{{ reporte.nombreColaborador }} {{ reporte.apellido }}</td>
         <td class="p-4">{{ reporte.dniColaborador }}</td>
         <td class="p-4">{{ reporte.nombreEmpresa }}</td>

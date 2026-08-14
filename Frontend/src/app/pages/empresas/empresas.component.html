@@ -12,30 +12,27 @@
   <!-- Tabla -->
   <div class="mt-6">
     <app-table-shell>
-      <table class="w-full">
+      <table class="app-table">
         <thead>
-          <tr class="bg-paper text-ink">
-            <th class="p-4 w-1/12 text-left font-bold cursor-pointer" (click)="sortTable('id')">
-              ID
-              <i *ngIf="sortColumn === 'id'" class="ml-2" [ngClass]="{'fa-solid fa-arrow-up': sortDirection === 'asc', 'fa-solid fa-arrow-down': sortDirection === 'desc'}"></i>
+          <tr>
+            <th class="w-1/12 text-left">
+              <app-sort-header [active]="sort.field === 'id'" [direction]="sort.direction" (sort)="sortTable('id')">ID</app-sort-header>
             </th>
-            <th class="p-4 w-3/12 text-left font-bold cursor-pointer" (click)="sortTable('nombre')">
-              Razón Social
-              <i *ngIf="sortColumn === 'nombre'" class="ml-2" [ngClass]="{'fa-solid fa-arrow-up': sortDirection === 'asc', 'fa-solid fa-arrow-down': sortDirection === 'desc'}"></i>
+            <th class="w-3/12 text-left">
+              <app-sort-header [active]="sort.field === 'nombre'" [direction]="sort.direction" (sort)="sortTable('nombre')">Razón Social</app-sort-header>
             </th>
-            <th class="p-4 w-2/12 text-left font-bold cursor-pointer" (click)="sortTable('ruc')">
-              RUC
-              <i *ngIf="sortColumn === 'ruc'" class="ml-2" [ngClass]="{'fa-solid fa-arrow-up': sortDirection === 'asc', 'fa-solid fa-arrow-down': sortDirection === 'desc'}"></i>
+            <th class="w-2/12 text-left">
+              <app-sort-header [active]="sort.field === 'ruc'" [direction]="sort.direction" (sort)="sortTable('ruc')">RUC</app-sort-header>
             </th>
-            <th class="p-4 w-1/12 text-center font-bold">
+            <th class="w-1/12 text-center">
               <i class="fa-solid fa-users"></i> <!-- Ícono para Número de Empleados -->
             </th>
-            <th class="p-4 w-2/12 text-center font-bold">Acciones</th> <!-- Columna para acciones -->
+            <th class="w-2/12 text-center">Acciones</th> <!-- Columna para acciones -->
           </tr>
         </thead>
         <tbody>
           <ng-container *ngIf="!isLoading; else empresasSkeleton">
-            <tr *ngFor="let empresa of empresasHabilitadas; trackBy: trackByEmpresaId" class="border-t border-line-soft hover:bg-paper transition">
+            <tr *ngFor="let empresa of empresasHabilitadas; let i = index; trackBy: trackByEmpresaId" [style.--row-i]="i">
               <td class="p-4">{{ empresa.id }}</td>
               <td class="p-4">{{ empresa.nombre }}</td>
               <td class="p-4">{{ empresa.ruc }}</td>
@@ -57,7 +54,7 @@
             </tr>
             <!-- Empresas deshabilitadas (mostradas si mostrarDeshabilitadas = true) -->
             <ng-container *ngIf="mostrarDeshabilitadas">
-              <tr *ngFor="let empresa of empresasDeshabilitadas; trackBy: trackByEmpresaId" class="border-t border-line-soft bg-paper hover:bg-line-soft transition">
+              <tr *ngFor="let empresa of empresasDeshabilitadas; let i = index; trackBy: trackByEmpresaId" class="bg-paper" [style.--row-i]="i">
                 <td class="p-4">{{ empresa.id }}</td>
                 <td class="p-4">{{ empresa.nombre }}</td>
                 <td class="p-4">{{ empresa.ruc }}</td>

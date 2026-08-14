@@ -13,24 +13,34 @@
   <!-- Tabla -->
   <div class="mt-6">
     <app-table-shell>
-      <table class="w-full">
+      <table class="app-table">
         <thead>
-          <tr class="bg-paper text-ink">
-            <th class="p-4 w-1/12 text-left font-bold">Foto</th>
-            <th class="p-4 w-1/12 text-left font-bold">Nombre</th>
-            <th class="p-4 w-2/12 text-left font-bold">Apellido</th>
+          <tr>
+            <th class="w-1/12 text-left">Foto</th>
+            <th class="w-1/12 text-left">
+              <app-sort-header [active]="sort.field === 'nombre'" [direction]="sort.direction" (sort)="onSort('nombre')">Nombre</app-sort-header>
+            </th>
+            <th class="w-2/12 text-left">
+              <app-sort-header [active]="sort.field === 'apellido'" [direction]="sort.direction" (sort)="onSort('apellido')">Apellido</app-sort-header>
+            </th>
             <!-- <th class="p-4 w-1/12 text-left">DNI</th> -->
-            <th class="p-4 w-2/12 text-left font-bold">Email</th>
-            <th class="p-4 w-2/12 text-left font-bold">Teléfono</th>
-            <th class="p-4 w-3/12 text-left font-bold">Empresa</th>
-            <th class="p-4 w-1/12 text-center font-bold">
+            <th class="w-2/12 text-left">
+              <app-sort-header [active]="sort.field === 'email'" [direction]="sort.direction" (sort)="onSort('email')">Email</app-sort-header>
+            </th>
+            <th class="w-2/12 text-left">
+              <app-sort-header [active]="sort.field === 'telefono'" [direction]="sort.direction" (sort)="onSort('telefono')">Teléfono</app-sort-header>
+            </th>
+            <th class="w-3/12 text-left">
+              <app-sort-header [active]="sort.field === 'empresaNombre'" [direction]="sort.direction" (sort)="onSort('empresaNombre')">Empresa</app-sort-header>
+            </th>
+            <th class="w-1/12 text-center">
               <i class="fa-solid fa-gear"></i> <!-- Ícono para Acciones -->
             </th>
           </tr>
         </thead>
         <tbody>
           <ng-container *ngIf="!isTableLoading; else colaboradoresSkeleton">
-            <tr *ngFor="let colaborador of colaboradoresHabilitados; trackBy: trackByColaboradorId" class="border-t border-line-soft hover:bg-paper transition">
+            <tr *ngFor="let colaborador of colaboradoresHabilitados; let i = index; trackBy: trackByColaboradorId" [style.--row-i]="i">
               <!-- Foto -->
               <td class="p-4">
                 <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
@@ -66,8 +76,8 @@
               </td>
             </tr>
             <ng-container *ngIf="mostrarDeshabilitados">
-              <tr *ngFor="let colaborador of colaboradoresDeshabilitados; trackBy: trackByColaboradorId"
-                class="border-t border-line-soft bg-paper hover:bg-line-soft transition">
+              <tr *ngFor="let colaborador of colaboradoresDeshabilitados; let i = index; trackBy: trackByColaboradorId"
+                class="bg-paper" [style.--row-i]="i">
                 <td class="p-4">
                   <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
                     alt="Foto de {{ colaborador.nombre }}"

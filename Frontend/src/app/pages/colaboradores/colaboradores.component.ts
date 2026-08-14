@@ -14,17 +14,31 @@ import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../utils/modal-tim
 import { TableShellComponent } from '../../components/ui/table-shell/table-shell.component';
 import { SkeletonComponent } from '../../components/ui/skeleton/skeleton.component';
 import { ButtonComponent } from '../../components/ui/button/button.component';
+import { SortHeaderComponent } from '../../components/ui/sort-header/sort-header.component';
+import { SortState, nextSortState, sortRows } from '../../utils/table-sort.util';
+
+type ColaboradorSortField = 'nombre' | 'apellido' | 'email' | 'telefono' | 'empresaNombre';
+
+const COLABORADOR_SORT_SELECTORS: Record<ColaboradorSortField, (c: Colaborador) => unknown> = {
+  nombre: (c) => c.nombre,
+  apellido: (c) => c.apellido,
+  email: (c) => c.email,
+  telefono: (c) => c.telefono,
+  empresaNombre: (c) => c.empresaNombre,
+};
 
 @Component({
   selector: 'app-colaboradores',
   standalone: true,
-  imports: [CommonModule, ColaboradorFormComponent, TableShellComponent, SkeletonComponent, ButtonComponent],
+  imports: [CommonModule, ColaboradorFormComponent, TableShellComponent, SkeletonComponent, ButtonComponent, SortHeaderComponent],
   templateUrl: './colaboradores.component.html',
   styleUrls: ['./colaboradores.component.css'],
 })
 export default class ColaboradoresComponent implements OnInit, OnDestroy {
   isTableLoading: boolean = true;  // Controla el estado de carga de la tabla
   readonly skeletonRows = Array.from({ length: 5 });
+
+  sort: SortState<ColaboradorSortField> = { field: 'nombre', direction: 'asc' };
 
   colaboradores: Colaborador[] = [];
   empresas: Empresa[] = [];
@@ -96,6 +110,7 @@ export default class ColaboradoresComponent implements OnInit, OnDestroy {
         this.colaboradoresDeshabilitados = this.colaboradores.filter(
           (c) => !c.habilitado
         );
+        this.aplicarOrden();
         this.isTableLoading = false;  // Desactivar loading
       },
       error: () => {
@@ -107,6 +122,17 @@ export default class ColaboradoresComponent implements OnInit, OnDestroy {
 
   toggleDeshabilitados(): void {
     this.mostrarDeshabilitados = !this.mostrarDeshabilitados;
+  }
+
+  onSort(field: ColaboradorSortField): void {
+    this.sort = nextSortState(this.sort, field);
+    this.aplicarOrden();
+  }
+
+  private aplicarOrden(): void {
+    const selector = COLABORADOR_SORT_SELECTORS[this.sort.field];
+    this.colaboradoresHabilitados = sortRows(this.colaboradoresHabilitados, selector, this.sort.direction);
+    this.colaboradoresDeshabilitados = sortRows(this.colaboradoresDeshabilitados, selector, this.sort.direction);
   }
 
   // Método para limpiar la caché de la imagen

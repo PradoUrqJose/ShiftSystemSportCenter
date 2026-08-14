@@ -10,16 +10,24 @@ import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-
 import { TableShellComponent } from '../../../components/ui/table-shell/table-shell.component';
 import { SkeletonComponent } from '../../../components/ui/skeleton/skeleton.component';
 import { ButtonComponent } from '../../../components/ui/button/button.component';
+import { SortHeaderComponent } from '../../../components/ui/sort-header/sort-header.component';
+import { SortState, nextSortState, sortRows } from '../../../utils/table-sort.util';
+
+type PuestoSortField = 'nombre' | 'descripcion' | 'colaboradores';
 
 @Component({
   selector: 'app-gestionar-puestos',
   standalone: true,
-  imports: [CommonModule, AgregarPuestoModalComponent, TableShellComponent, SkeletonComponent, ButtonComponent],
+  imports: [CommonModule, AgregarPuestoModalComponent, TableShellComponent, SkeletonComponent, ButtonComponent, SortHeaderComponent],
   templateUrl: './gestionar-puestos.component.html',
   styleUrls: ['./gestionar-puestos.component.css']
 })
 export default class GestionarPuestosComponent implements OnInit, OnDestroy {
   puestos: Puesto[] = [];
+  // "Colaboradores" es una columna calculada (conteoColaboradoresPorPuesto),
+  // por eso el selector de orden vive acá y no en un Record estático como
+  // en Empresas/Colaboradores — necesita leer ese mapa en cada comparación.
+  sort: SortState<PuestoSortField> = { field: 'nombre', direction: 'asc' };
   mostrarModalAgregarPuesto: boolean = false;
   // Separado de mostrarModalAgregarPuesto (con un tick de retraso al abrir)
   // para que la transición CSS del modal hijo tenga margen de animar — antes
@@ -55,6 +63,7 @@ export default class GestionarPuestosComponent implements OnInit, OnDestroy {
     this.puestoService.getPuestos().pipe(takeUntil(this.destroy$)).subscribe({
       next: (puestos) => {
         this.puestos = puestos;
+        this.aplicarOrden();
         this.isLoading = false;
       },
       error: (err) => {
@@ -73,11 +82,35 @@ export default class GestionarPuestosComponent implements OnInit, OnDestroy {
           }
           return acc;
         }, {} as { [key: number]: number });
+        // El conteo llega después que los puestos — si la columna activa es
+        // "Colaboradores" hay que reordenar con los valores recién cargados.
+        if (this.sort.field === 'colaboradores') {
+          this.aplicarOrden();
+        }
       },
       error: (err) => {
         this.errorMessage = 'Error al cargar el conteo de colaboradores.';
       }
     });
+  }
+
+  onSort(field: PuestoSortField): void {
+    this.sort = nextSortState(this.sort, field);
+    this.aplicarOrden();
+  }
+
+  private aplicarOrden(): void {
+    const selector = (p: Puesto): unknown => {
+      switch (this.sort.field) {
+        case 'descripcion':
+          return p.descripcion;
+        case 'colaboradores':
+          return this.conteoColaboradoresPorPuesto[p.id || 0] || 0;
+        default:
+          return p.nombre;
+      }
+    };
+    this.puestos = sortRows(this.puestos, selector, this.sort.direction);
   }
 
   abrirModalAgregarPuesto(): void {
@@ -100,6 +133,7 @@ export default class GestionarPuestosComponent implements OnInit, OnDestroy {
     } else {
       this.puestos.push(puesto); // Agrega si es nuevo
     }
+    this.aplicarOrden();
     this.cargarConteoColaboradores();
     this.cerrarModalAgregarPuesto();
   }

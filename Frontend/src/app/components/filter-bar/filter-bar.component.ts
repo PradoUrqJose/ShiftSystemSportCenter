@@ -54,12 +54,12 @@ export class FilterBarComponent {
   }
 
   getSelectedEmpresaName(): string {
-    if (!this.selectedCompany || this.selectedCompany === 'all') return 'Todas las empresas';
+    if (!this.selectedCompany || this.selectedCompany === 'all') return 'Empresa';
     return this.selectedCompany;
   }
 
   getSelectedColaboradorName(): string {
-    if (!this.selectedCollaboratorIds || this.selectedCollaboratorIds.length === 0) return 'Todos los colaboradores';
+    if (!this.selectedCollaboratorIds || this.selectedCollaboratorIds.length === 0) return 'Colaborador';
     if (this.selectedCollaboratorIds.length === 1) {
       const c = this.collaborators.find(x => x.id === this.selectedCollaboratorIds[0]);
       return c ? `${c.nombre} ${c.apellido}` : '1 seleccionado';

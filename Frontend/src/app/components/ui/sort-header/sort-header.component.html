@@ -1,0 +1,10 @@
+<button
+  type="button"
+  class="app-sort-header"
+  [class.app-sort-header--active]="active"
+  [class.app-sort-header--desc]="active && direction === 'desc'"
+  (click)="sort.emit()"
+>
+  <ng-content></ng-content>
+  <i class="fa-solid fa-arrow-up app-sort-header__icon" aria-hidden="true"></i>
+</button>

@@ -7,6 +7,13 @@ module.exports = withMT({
   ],
   theme: {
     extend: {
+      // Inter como fuente principal (ver body en styles.css) — se declara
+      // también acá para que `font-sans` y el fallback por defecto de
+      // Tailwind (cuando una clase no especifica fuente) calcen con Inter
+      // en vez del stack de sistema.
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
       // Espejan src/app/styles/tokens.css — no duplican valores, solo
       // exponen los mismos custom properties como utilities de Tailwind
       // (ej. `bg-brand`, `rounded-pill`) para que el HTML utility-first y

@@ -2,9 +2,18 @@
 @import 'tippy.js/animations/shift-away-extreme.css';
 @import './app/styles/tokens.css';
 @import './app/styles/turno-tooltip.css';
+@import './app/styles/data-table.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Inter es la fuente principal de toda la app (antes no había una fuente
+   por defecto declarada — el body caía en el sans-serif del sistema).
+   Nunito/Quicksand/Poiret One quedan solo para los usos puntuales y
+   decorativos que ya tenían (.nunito/.quicksand/.poiret-one, ver abajo). */
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
 
 /* Scrollbar estilo moderno */
 ::-webkit-scrollbar {
@@ -23,6 +32,25 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Contenedores con scroll de tablas: se necesita el overflow para que el
+ * contenido siga siendo desplazable (rueda/trackpad/drag), pero sin la
+ * barra nativa — en las tablas CRUD (.app-table-shell__scroll) aparecía un
+ * flash de ~1s mientras cargaba el skeleton, y en la tabla de turnos
+ * (.table-wrapper, altura fija) quedaba una barra vertical permanente.
+ * .scrollbar-hidden queda como utilidad genérica para el mismo caso en
+ * cualquier otro contenedor (ver semana-normal.component.html). */
+.app-table-shell__scroll,
+.table-wrapper,
+.scrollbar-hidden {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Edge legacy */
+}
+.app-table-shell__scroll::-webkit-scrollbar,
+.table-wrapper::-webkit-scrollbar,
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Edge Chromium */
 }
 
 

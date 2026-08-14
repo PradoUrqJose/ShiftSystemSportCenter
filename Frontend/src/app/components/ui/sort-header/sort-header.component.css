@@ -1,0 +1,33 @@
+.app-sort-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  cursor: pointer;
+}
+
+.app-sort-header:hover,
+.app-sort-header:focus-visible {
+  color: var(--color-brand);
+}
+
+.app-sort-header__icon {
+  font-size: 10px;
+  opacity: 0.3;
+  transition: transform var(--duration-base) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
+}
+
+.app-sort-header--active .app-sort-header__icon {
+  opacity: 1;
+  color: var(--color-brand);
+}
+
+.app-sort-header--desc .app-sort-header__icon {
+  transform: rotate(180deg);
+}

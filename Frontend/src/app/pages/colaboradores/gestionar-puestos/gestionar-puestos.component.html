@@ -14,18 +14,24 @@
   </div>
   <div class="mt-6">
     <app-table-shell>
-      <table class="w-full">
+      <table class="app-table">
         <thead>
-          <tr class="bg-paper text-ink">
-            <th class="p-4 text-left font-bold">Nombre</th>
-            <th class="p-4 text-left font-bold">Descripción</th>
-            <th class="p-4 text-left font-bold">Colaboradores</th>
-            <th class="p-4 text-center font-bold"><i class="fa-solid fa-gear"></i></th>
+          <tr>
+            <th class="text-left">
+              <app-sort-header [active]="sort.field === 'nombre'" [direction]="sort.direction" (sort)="onSort('nombre')">Nombre</app-sort-header>
+            </th>
+            <th class="text-left">
+              <app-sort-header [active]="sort.field === 'descripcion'" [direction]="sort.direction" (sort)="onSort('descripcion')">Descripción</app-sort-header>
+            </th>
+            <th class="text-left">
+              <app-sort-header [active]="sort.field === 'colaboradores'" [direction]="sort.direction" (sort)="onSort('colaboradores')">Colaboradores</app-sort-header>
+            </th>
+            <th class="text-center"><i class="fa-solid fa-gear"></i></th>
           </tr>
         </thead>
         <tbody>
           <ng-container *ngIf="!isLoading; else puestosSkeleton">
-            <tr *ngFor="let puesto of puestos; trackBy: trackByPuestoId" class="border-t border-line-soft hover:bg-paper transition">
+            <tr *ngFor="let puesto of puestos; let i = index; trackBy: trackByPuestoId" [style.--row-i]="i">
               <td class="p-4">{{ puesto.nombre }}</td>
               <td class="p-4">{{ puesto.descripcion || 'Sin descripción' }}</td>
               <td class="p-4">{{ conteoColaboradoresPorPuesto[puesto.id || 0] || 0 }}</td>

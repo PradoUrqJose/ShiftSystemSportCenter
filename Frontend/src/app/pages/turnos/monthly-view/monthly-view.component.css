@@ -1,0 +1,25 @@
+/* Entrada sutil por semana — mismo criterio que weekly-view.component.css
+   y .app-table (data-table.css): al vista mes le faltaba la misma señal de
+   "esto se acaba de cargar" que ya tienen las demás vistas/tablas.
+   --row-i lo setea monthly-view.component.html con [style.--row-i]. */
+tbody tr {
+  animation: monthly-row-in var(--duration-modal) var(--ease-standard) backwards;
+  animation-delay: calc(var(--row-i, 0) * 30ms);
+}
+
+@keyframes monthly-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  tbody tr {
+    animation: none;
+  }
+}

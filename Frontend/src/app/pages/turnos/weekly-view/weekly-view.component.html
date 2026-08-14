@@ -23,7 +23,7 @@
 
   <tbody>
     <ng-container *ngIf="filteredColaboradores as colaboradores">
-      <tr *ngFor="let colaborador of colaboradores; trackBy: trackByColaboradorId" class="hover:bg-gray-50 transition">
+      <tr *ngFor="let colaborador of colaboradores; let i = index; trackBy: trackByColaboradorId" class="hover:bg-gray-50 transition" [style.--row-i]="i">
         <!-- Columna de colaborador -->
         <td class="py-4 px-4 flex justify-start items-center gap-3 w-full">
           <div (click)="viewProfile(colaborador.id)"

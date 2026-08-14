@@ -15,11 +15,21 @@ import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../utils/modal-tim
 import { TableShellComponent } from '../../components/ui/table-shell/table-shell.component';
 import { SkeletonComponent } from '../../components/ui/skeleton/skeleton.component';
 import { ButtonComponent } from '../../components/ui/button/button.component';
+import { SortHeaderComponent } from '../../components/ui/sort-header/sort-header.component';
+import { SortState, nextSortState, sortRows } from '../../utils/table-sort.util';
+
+type EmpresaSortField = 'id' | 'nombre' | 'ruc';
+
+const EMPRESA_SORT_SELECTORS: Record<EmpresaSortField, (e: Empresa) => unknown> = {
+  id: (e) => e.id,
+  nombre: (e) => e.nombre,
+  ruc: (e) => e.ruc,
+};
 
 @Component({
   selector: 'app-empresas',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, TableShellComponent, SkeletonComponent, ButtonComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, TableShellComponent, SkeletonComponent, ButtonComponent, SortHeaderComponent],
   templateUrl: './empresas.component.html',
   styleUrls: ['./empresas.component.css'],
 })
@@ -42,9 +52,8 @@ export default class EmpresasComponent implements OnInit, OnDestroy {
   errorMessage: string | null = null; // Almacena mensajes de error
 
 
-  // Propiedades para controlar el ordenamiento
-  sortColumn: string = 'id';  // Columna por la que se ordenará
-  sortDirection: 'asc' | 'desc' = 'asc';  // Dirección de orden (ascendente o descendente)
+  // Propiedades para controlar el ordenamiento (ver table-sort.util.ts)
+  sort: SortState<EmpresaSortField> = { field: 'id', direction: 'asc' };
   private readonly destroy$ = new Subject<void>();
 
   constructor(
@@ -74,37 +83,14 @@ export default class EmpresasComponent implements OnInit, OnDestroy {
 
   // Método para ordenar las empresas
   ordenarEmpresas() {
-    const compare = (a: Empresa, b: Empresa) => {
-      let valueA = a[this.sortColumn as keyof Empresa];
-      let valueB = b[this.sortColumn as keyof Empresa];
-
-      // Convertir a número si es 'id' o 'numeroEmpleados'
-      if (this.sortColumn === 'id' || this.sortColumn === 'numeroEmpleados') {
-        valueA = Number(valueA);
-        valueB = Number(valueB);
-      }
-
-      if (this.sortDirection === 'asc') {
-        return valueA > valueB ? 1 : (valueA < valueB ? -1 : 0);
-      } else {
-        return valueA < valueB ? 1 : (valueA > valueB ? -1 : 0);
-      }
-    };
-
-    this.empresasHabilitadas.sort(compare);
-    this.empresasDeshabilitadas.sort(compare);
+    const selector = EMPRESA_SORT_SELECTORS[this.sort.field];
+    this.empresasHabilitadas = sortRows(this.empresasHabilitadas, selector, this.sort.direction);
+    this.empresasDeshabilitadas = sortRows(this.empresasDeshabilitadas, selector, this.sort.direction);
   }
 
   // Cambiar la columna por la que se ordena y la dirección
-  sortTable(column: string) {
-    if (this.sortColumn === column) {
-      // Si ya está ordenado por esa columna, cambia la dirección
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      // Si se hace clic en una columna diferente, ordena ascendente por esa columna
-      this.sortColumn = column;
-      this.sortDirection = 'asc';
-    }
+  sortTable(column: EmpresaSortField) {
+    this.sort = nextSortState(this.sort, column);
     this.ordenarEmpresas();
   }
 

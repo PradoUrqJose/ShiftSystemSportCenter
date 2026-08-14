@@ -13,19 +13,23 @@
   </div>
   <div class="mt-6">
     <app-table-shell>
-      <table class="w-full">
+      <table class="app-table">
         <thead>
-          <tr class="bg-paper text-ink">
-            <th class="p-4 text-left font-bold">Fecha</th>
-            <th class="p-4 text-left font-bold">Descripción</th>
-            <th class="p-4 text-center font-bold"><i class="fa-solid fa-gear"></i></th>
+          <tr>
+            <th class="text-left">
+              <app-sort-header [active]="sort.field === 'descripcion'" [direction]="sort.direction" (sort)="onSort('descripcion')">Descripción</app-sort-header>
+            </th>
+            <th class="text-left">
+              <app-sort-header [active]="sort.field === 'fecha'" [direction]="sort.direction" (sort)="onSort('fecha')">Fecha</app-sort-header>
+            </th>
+            <th class="text-center"><i class="fa-solid fa-gear"></i></th>
           </tr>
         </thead>
         <tbody>
           <ng-container *ngIf="!isLoading; else feriadosSkeleton">
-            <tr *ngFor="let feriado of feriados; trackBy: trackByFeriadoId" class="border-t border-line-soft hover:bg-paper transition">
-              <td class="p-4">{{ feriado.fecha }}</td>
+            <tr *ngFor="let feriado of feriados; let i = index; trackBy: trackByFeriadoId" [style.--row-i]="i">
               <td class="p-4">{{ feriado.descripcion || 'Sin descripción' }}</td>
+              <td class="p-4">{{ formatearFecha(feriado.fecha) }}</td>
               <td class="p-4 flex justify-center items-center space-x-2">
                 <button (click)="editarFeriado(feriado)" class="text-blue-600 hover:text-blue-800 transition">
                   <i class="fa-solid fa-pen-to-square"></i>
@@ -41,8 +45,8 @@
           </ng-container>
           <ng-template #feriadosSkeleton>
             <tr *ngFor="let _ of skeletonRows">
-              <td class="p-4"><app-skeleton width="40%"></app-skeleton></td>
               <td class="p-4"><app-skeleton width="70%"></app-skeleton></td>
+              <td class="p-4"><app-skeleton width="40%"></app-skeleton></td>
               <td class="p-4 flex justify-center gap-2">
                 <app-skeleton width="18px" height="18px" shape="circle"></app-skeleton>
                 <app-skeleton width="18px" height="18px" shape="circle"></app-skeleton>

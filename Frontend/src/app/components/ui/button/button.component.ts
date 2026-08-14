@@ -19,7 +19,7 @@ export type ButtonHue = 'brand' | 'teal' | 'violet' | 'neutral';
 })
 export class ButtonComponent {
   @Input() variant: ButtonVariant = 'primary';
-  /** Solo aplica cuando variant='icon' — familia de color del acento. */
+  /** Aplica en variant='icon' o 'secondary' — familia de color del acento. */
   @Input() hue: ButtonHue = 'neutral';
   @Input() type: 'button' | 'submit' = 'button';
   @Input() disabled: boolean = false;
