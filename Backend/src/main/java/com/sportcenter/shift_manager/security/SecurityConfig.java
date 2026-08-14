@@ -2,6 +2,7 @@ package com.sportcenter.shift_manager.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -20,12 +21,25 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 /**
- * Punto central de la autenticación: qué rutas son públicas, cómo se
- * verifica la identidad (JWT, no sesión), y qué pasa cuando falla.
+ * Punto central de la autenticación Y autorización: qué rutas son
+ * públicas, qué rol requiere cada una, cómo se verifica la identidad (JWT,
+ * no sesión), y qué pasa cuando falla.
  *
- * Con anyRequest().authenticated() de abajo, TODOS los controllers que ya
- * existían (ColaboradorController, TurnoController, etc.) quedan
- * protegidos automáticamente, sin tocar un solo archivo de ellos.
+ * Todas las reglas de rol viven acá (por URL/verbo), no en los
+ * controllers: así queda todo el mapa de permisos en un solo archivo,
+ * auditable de una mirada, sin sembrar @PreAuthorize por los 8
+ * controllers existentes. Por defecto (anyRequest) todo es ADMIN — fail
+ * closed: un endpoint nuevo que alguien agregue mañana sin tocar este
+ * archivo queda protegido automáticamente en vez de quedar abierto.
+ *
+ * Hoy el rol COLABORADOR casi no tiene nada habilitado más allá de los
+ * catálogos de lectura (tiendas/puestos/feriados): no existe vínculo
+ * entre Usuario (cuenta de login) y Colaborador (empleado, ver
+ * Usuario.java), así que no hay forma de verificar "son mis propios
+ * turnos" — abrir por ejemplo GET /turnos/{colaboradorId} a cualquier
+ * autenticado dejaría a un colaborador ver los turnos de cualquier otro.
+ * Cuando exista ese vínculo (probablemente en el rebuild v2) vale la pena
+ * revisar esto de nuevo.
  */
 @Configuration
 @EnableWebSecurity
@@ -54,7 +68,16 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/auth/**").hasRole("ADMIN")
                         .requestMatchers("/swagger-ui/**", "/api-docs/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                        // Catálogos de solo lectura sin PII: sirven para cualquier
+                        // usuario autenticado, incluido un futuro colaborador viendo
+                        // su propio calendario (necesita saber nombres de tienda,
+                        // puesto y qué días son feriado).
+                        .requestMatchers(HttpMethod.GET, "/api/tiendas/**", "/api/puestos/**", "/api/feriados/**").authenticated()
+                        // Todo lo demás (alta/edición/borrado de cualquier recurso,
+                        // y toda lectura que exponga datos de otros colaboradores o
+                        // reportes) queda para ADMIN. Ver el porqué en el javadoc de
+                        // la clase.
+                        .anyRequest().hasRole("ADMIN")
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authEntryPoint)

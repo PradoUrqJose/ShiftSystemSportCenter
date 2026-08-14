@@ -7,6 +7,10 @@
         <app-header [vistaMensual]="vistaMensual" [nombreMesActual]="nombreMesActual"
             (cambiarVista)="toggleVistaMensual($event)" (cambiarSemanaOMes)="cambiarSemanaOMesHandler($event)">
           </app-header>
+          <a class="buttonStyle gray-button font-bold py-2 px-3 rounded-lg transition transform hover:scale-105"
+            [routerLink]="['/feriados']">
+            Feriados
+          </a>
         </div>
 
         <!-- Filtros (derecha) -->

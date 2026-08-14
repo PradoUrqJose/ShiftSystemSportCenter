@@ -28,6 +28,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'feriados',
+    loadComponent: () => import('./pages/turnos/gestionar-feriados/gestionar-feriados.component'),
+    canActivate: [authGuard],
+  },
+  {
     path: 'reportes',
     loadComponent: () => import('./pages/reportes/reportes.component'),
     canActivate: [authGuard],

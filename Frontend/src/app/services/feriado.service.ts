@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface Feriado {
+  id?: number;
   fecha: string; // Formato YYYY-MM-DD
   descripcion: string;
 }
@@ -25,5 +26,17 @@ export class FeriadoService {
 
   isFeriado(fecha: string): Observable<boolean> {
     return this.http.get<boolean>(`${this.apiUrl}/es-feriado`, { params: { fecha } });
+  }
+
+  crearFeriado(feriado: Feriado): Observable<Feriado> {
+    return this.http.post<Feriado>(this.apiUrl, feriado);
+  }
+
+  actualizarFeriado(id: number, feriado: Feriado): Observable<Feriado> {
+    return this.http.put<Feriado>(`${this.apiUrl}/${id}`, feriado);
+  }
+
+  eliminarFeriado(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

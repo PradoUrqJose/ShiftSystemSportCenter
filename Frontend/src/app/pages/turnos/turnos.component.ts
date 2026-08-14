@@ -35,6 +35,7 @@ import { BehaviorSubject, combineLatest, map, Observable, of, Subject, Subscript
 // -------------- Angular Modules Imports --------------
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 // -------------- External Libraries Imports --------------
 import tippy, { Instance as TippyInstance } from 'tippy.js'; // Herramienta para tooltips interactivos
@@ -57,7 +58,7 @@ import { TurnoModalComponent } from './turno-modal/turno-modal.component'; // Nu
   templateUrl: './turnos.component.html',
   standalone: true,
   styleUrls: ['./turnos.component.css'],
-  imports: [CommonModule, FormsModule, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent],
+  imports: [CommonModule, FormsModule, RouterLink, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent],
 })
 export default class TurnosComponent implements OnInit, AfterViewChecked, OnDestroy {
   //! Variables de estado
