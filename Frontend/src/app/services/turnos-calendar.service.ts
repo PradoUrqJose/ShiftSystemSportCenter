@@ -1,9 +1,10 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, of, Subject, Subscription, takeUntil } from 'rxjs';
-import { format, startOfMonth } from 'date-fns';
+import { BehaviorSubject, forkJoin, Observable, of, Subject, Subscription, switchMap, takeUntil } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { format, startOfMonth, subDays } from 'date-fns';
 import { CalendarioService, DiaSemana } from './calendario.service';
 import { SemanaService } from './semana.service';
-import { Turno, TurnoService } from './turno.service';
+import { Turno, TurnoPayload, TurnoService } from './turno.service';
 import { TurnoStateService } from './turno-state.service';
 
 // Orquestación de "qué semana/mes se está mostrando y qué turnos trae" —
@@ -171,6 +172,70 @@ export class TurnosCalendarService implements OnDestroy {
         this.turnoStateService.setLoading(false);
       },
     });
+  }
+
+  // Duplica los turnos de la semana -7 días a la semana que se está viendo,
+  // día a día por índice (Lunes->Lunes, ..., Domingo->Domingo). Usa las
+  // fechas ISO reales de diasSemana$, que siempre son 7 días Lunes-Domingo
+  // aunque la grilla semanal oculte visualmente los días que caen en el mes
+  // vecino (ver esSobrante/completarSemana en weekly-view.component.ts) —
+  // por eso no hace falta ningún caso especial para corte de mes acá.
+  // No pisa turnos existentes: si el colaborador ya tiene algo cargado ese
+  // día en la semana destino se omite (evita duplicar si se corre dos veces,
+  // y no descarta ediciones manuales que el operador ya haya hecho).
+  copiarSemanaAnterior(): Observable<{ creados: number; omitidos: number }> {
+    const semanaActual = this.diasSemana$.value;
+    if (semanaActual.length === 0) return of({ creados: 0, omitidos: 0 });
+
+    const fechasAnteriorAActual = new Map<string, string>();
+    semanaActual.forEach((dia) => {
+      const fechaAnterior = format(subDays(new Date(`${dia.fecha}T00:00:00`), 7), 'yyyy-MM-dd');
+      fechasAnteriorAActual.set(fechaAnterior, dia.fecha);
+    });
+    const fechasAnteriorOrdenadas = Array.from(fechasAnteriorAActual.keys()).sort();
+    const inicioAnterior = fechasAnteriorOrdenadas[0];
+    const finAnterior = fechasAnteriorOrdenadas[fechasAnteriorOrdenadas.length - 1];
+
+    return forkJoin({
+      anterior: this.turnoService.getTurnosPorRangoFecha(inicioAnterior, finAnterior),
+      actual: this.turnoService.getTurnosPorRangoFecha(semanaActual[0].fecha, semanaActual[semanaActual.length - 1].fecha),
+    }).pipe(
+      switchMap(({ anterior, actual }) => {
+        const existentes = new Set(actual.map((t) => `${t.colaboradorId}_${t.fecha}`));
+        const yaContado = new Set<string>();
+        const porCrear: TurnoPayload[] = [];
+        let omitidos = 0;
+
+        for (const turno of anterior) {
+          const fechaDestino = fechasAnteriorAActual.get(turno.fecha);
+          if (!fechaDestino || !turno.colaboradorId || !turno.empresaId || !turno.tiendaId) continue;
+
+          const clave = `${turno.colaboradorId}_${fechaDestino}`;
+          if (existentes.has(clave)) {
+            if (!yaContado.has(clave)) {
+              omitidos++;
+              yaContado.add(clave);
+            }
+            continue;
+          }
+
+          porCrear.push({
+            colaborador: { id: turno.colaboradorId },
+            fecha: fechaDestino,
+            horaEntrada: turno.horaEntrada,
+            horaSalida: turno.horaSalida,
+            empresa: { id: turno.empresaId },
+            tienda: { id: turno.tiendaId },
+          });
+        }
+
+        if (porCrear.length === 0) return of({ creados: 0, omitidos });
+
+        return forkJoin(porCrear.map((t) => this.turnoService.addTurno(t))).pipe(
+          map(() => ({ creados: porCrear.length, omitidos }))
+        );
+      })
+    );
   }
 
   private actualizarMesAnio(): void {

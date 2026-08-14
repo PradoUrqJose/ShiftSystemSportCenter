@@ -11,6 +11,14 @@
             [routerLink]="['/feriados']">
             Feriados
           </a>
+          <button type="button" *ngIf="!calendario.vistaMensual"
+            class="buttonStyle gray-button font-bold py-2 px-3 rounded-lg transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            [disabled]="copiandoSemana"
+            (click)="copiarSemanaAnterior()"
+            title="Duplica los turnos de la semana pasada en la semana actual">
+            <i class="fa-solid fa-copy mr-1"></i>
+            Copiar semana anterior
+          </button>
         </div>
 
         <!-- Filtros (derecha) -->

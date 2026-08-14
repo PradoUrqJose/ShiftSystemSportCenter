@@ -29,6 +29,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 // -------------- External Libraries Imports --------------
+import Notiflix from 'notiflix';
 import { ModalService } from '../../services/modal.service';
 import { TurnosCalendarService } from '../../services/turnos-calendar.service';
 import { HeaderComponent } from './header/header.component';
@@ -55,6 +56,7 @@ export default class TurnosComponent implements OnInit, OnDestroy {
   colaboradoresFiltrados$: Observable<Colaborador[]> = of([]);
   tiendas$: Observable<Tienda[]> = of([]); // Observable de tiendas
   isSubmitting: boolean = false; // Bandera para deshabilitar el botón de envío
+  copiandoSemana: boolean = false; // Bandera para deshabilitar "Copiar semana anterior" mientras corre
 
   //? Manejo de MODAL
   mostrarModal$!: Observable<boolean>;
@@ -166,6 +168,53 @@ export default class TurnosComponent implements OnInit, OnDestroy {
     } else {
       this.cambiarSemana(direccion);
     }
+  }
+
+  copiarSemanaAnterior(): void {
+    if (this.copiandoSemana) return;
+
+    Notiflix.Confirm.show(
+      'Copiar semana anterior',
+      'Se van a duplicar los turnos de la semana pasada en la semana actual. Los días que ya tengan un turno cargado no se van a tocar. ¿Continuar?',
+      'Copiar',
+      'Cancelar',
+      () => {
+        this.copiandoSemana = true;
+        this.calendario.copiarSemanaAnterior().pipe(takeUntil(this.destroy$)).subscribe({
+          next: ({ creados, omitidos }) => {
+            this.copiandoSemana = false;
+            if (creados === 0 && omitidos === 0) {
+              Notiflix.Notify.info('La semana anterior no tiene turnos para copiar', {
+                position: 'right-bottom',
+                cssAnimationStyle: 'from-right',
+              });
+              return;
+            }
+            if (creados === 0) {
+              Notiflix.Notify.info(`Ya había turnos cargados en los ${omitidos} día(s) con datos; no se copió nada nuevo`, {
+                position: 'right-bottom',
+                cssAnimationStyle: 'from-right',
+              });
+              return;
+            }
+            const detalleOmitidos = omitidos > 0 ? `, ${omitidos} omitido(s) por ya tener turno` : '';
+            Notiflix.Notify.success(`${creados} turno(s) copiado(s) de la semana anterior${detalleOmitidos}`, {
+              position: 'right-bottom',
+              cssAnimationStyle: 'from-right',
+            });
+            this.manejarTurnoGuardado();
+          },
+          error: (err) => {
+            this.copiandoSemana = false;
+            Notiflix.Notify.failure(err.message || 'Error al copiar la semana anterior', {
+              position: 'right-bottom',
+              cssAnimationStyle: 'from-right',
+            });
+          },
+        });
+      },
+      () => {}
+    );
   }
 
   //! Métodos de modal
