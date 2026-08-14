@@ -45,6 +45,20 @@
           <span class="ml-2 text-sm tracking-wide truncate">Turnos</span>
         </a>
       </li>
+      <li>
+        <a routerLink="/feriados" routerLinkActive="active"
+          class="nav-link relative flex flex-row items-center h-11 focus:outline-none hover:bg-gray-50 text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6">
+          <span class="inline-flex justify-center items-center ml-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7V3M16 7V3M7 11H17M5 21H19C20.1046 21 21 20.1046 21 19V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V19C3 20.1046 3.89543 21 5 21Z">
+              </path>
+            </svg>
+          </span>
+          <span class="ml-2 text-sm tracking-wide truncate">Feriados</span>
+        </a>
+      </li>
       <!-- Reportes -->
       <li>
         <button (click)="isReportesOpen = !isReportesOpen" [ngClass]="{'active': isReportesActive()}" class="w-full nav-link flex items-center h-11 text-gray-600 hover:text-gray-800 border-l-4 border-transparent hover:border-indigo-500 pr-6 focus:outline-none">

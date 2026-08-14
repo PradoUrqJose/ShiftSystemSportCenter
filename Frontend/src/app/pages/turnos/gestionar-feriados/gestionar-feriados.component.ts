@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 import Notiflix from 'notiflix';
 import { Subject, takeUntil } from 'rxjs';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
@@ -27,10 +26,7 @@ export default class GestionarFeriadosComponent implements OnInit, OnDestroy {
   isLoading: boolean = false;
   private readonly destroy$ = new Subject<void>();
 
-  constructor(
-    private feriadoService: FeriadoService,
-    private router: Router
-  ) {}
+  constructor(private feriadoService: FeriadoService) {}
 
   ngOnInit(): void {
     this.cargarFeriados();
@@ -45,9 +41,9 @@ export default class GestionarFeriadosComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.feriadoService.getFeriados().pipe(takeUntil(this.destroy$)).subscribe({
       next: (feriados) => {
-        // Orden cronológico: la lista tal como viene del backend no
-        // garantiza ningún orden en particular.
-        this.feriados = [...feriados].sort((a, b) => a.fecha.localeCompare(b.fecha));
+        // Orden cronológico descendente (más reciente primero): la lista tal
+        // como viene del backend no garantiza ningún orden en particular.
+        this.feriados = [...feriados].sort((a, b) => b.fecha.localeCompare(a.fecha));
         this.isLoading = false;
       },
       error: (err) => {
@@ -84,7 +80,7 @@ export default class GestionarFeriadosComponent implements OnInit, OnDestroy {
     } else {
       this.feriados.push(feriado);
     }
-    this.feriados.sort((a, b) => a.fecha.localeCompare(b.fecha));
+    this.feriados.sort((a, b) => b.fecha.localeCompare(a.fecha));
     this.cerrarModalAgregarFeriado();
   }
 
@@ -114,10 +110,6 @@ export default class GestionarFeriadosComponent implements OnInit, OnDestroy {
         });
       }
     );
-  }
-
-  goBack(): void {
-    this.router.navigate(['/turnos']);
   }
 
   trackByFeriadoId(_index: number, feriado: Feriado): number | undefined {
