@@ -11,16 +11,19 @@ import { Router, RouterModule } from '@angular/router';
 import { Puesto, PuestoService } from '../../services/puesto.service';
 import { ColaboradorFormComponent } from './colaborador-form/colaborador-form.component';
 import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../utils/modal-timing';
+import { TableShellComponent } from '../../components/ui/table-shell/table-shell.component';
+import { SkeletonComponent } from '../../components/ui/skeleton/skeleton.component';
 
 @Component({
   selector: 'app-colaboradores',
   standalone: true,
-  imports: [CommonModule, RouterModule, ColaboradorFormComponent],
+  imports: [CommonModule, RouterModule, ColaboradorFormComponent, TableShellComponent, SkeletonComponent],
   templateUrl: './colaboradores.component.html',
   styleUrls: ['./colaboradores.component.css'],
 })
 export default class ColaboradoresComponent implements OnInit, OnDestroy {
   isTableLoading: boolean = true;  // Controla el estado de carga de la tabla
+  readonly skeletonRows = Array.from({ length: 5 });
 
   colaboradores: Colaborador[] = [];
   empresas: Empresa[] = [];

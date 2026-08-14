@@ -5,11 +5,13 @@ import { Subject, takeUntil } from 'rxjs';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
 import { AgregarFeriadoModalComponent } from '../agregar-feriado-modal/agregar-feriado-modal.component';
 import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
+import { TableShellComponent } from '../../../components/ui/table-shell/table-shell.component';
+import { SkeletonComponent } from '../../../components/ui/skeleton/skeleton.component';
 
 @Component({
   selector: 'app-gestionar-feriados',
   standalone: true,
-  imports: [CommonModule, AgregarFeriadoModalComponent],
+  imports: [CommonModule, AgregarFeriadoModalComponent, TableShellComponent, SkeletonComponent],
   templateUrl: './gestionar-feriados.component.html',
   styleUrls: ['./gestionar-feriados.component.css']
 })
@@ -24,6 +26,7 @@ export default class GestionarFeriadosComponent implements OnInit, OnDestroy {
   feriadoActual: Feriado = { fecha: '', descripcion: '' };
   errorMessage: string | null = null;
   isLoading: boolean = false;
+  readonly skeletonRows = Array.from({ length: 5 });
   private readonly destroy$ = new Subject<void>();
 
   constructor(private feriadoService: FeriadoService) {}

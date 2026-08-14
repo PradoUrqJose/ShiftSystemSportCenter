@@ -7,11 +7,13 @@ import { AgregarPuestoModalComponent } from '../agregar-puesto-modal/agregar-pue
 import { Subject, takeUntil } from 'rxjs';
 import Notiflix from 'notiflix';
 import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
+import { TableShellComponent } from '../../../components/ui/table-shell/table-shell.component';
+import { SkeletonComponent } from '../../../components/ui/skeleton/skeleton.component';
 
 @Component({
   selector: 'app-gestionar-puestos',
   standalone: true,
-  imports: [CommonModule, AgregarPuestoModalComponent],
+  imports: [CommonModule, AgregarPuestoModalComponent, TableShellComponent, SkeletonComponent],
   templateUrl: './gestionar-puestos.component.html',
   styleUrls: ['./gestionar-puestos.component.css']
 })
@@ -25,7 +27,10 @@ export default class GestionarPuestosComponent implements OnInit, OnDestroy {
   puestoActual: Puesto = { nombre: '', descripcion: '' };
   conteoColaboradoresPorPuesto: { [key: number]: number } = {};
   errorMessage: string | null = null; // Añadir para mostrar errores
-  isLoading: boolean = false; // Añadir para indicar carga
+  // Ya se seteaba en cargarPuestos() pero el template nunca lo leía — la
+  // tabla se renderizaba vacía un instante en cada carga sin ningún feedback.
+  isLoading: boolean = false;
+  readonly skeletonRows = Array.from({ length: 5 });
   private readonly destroy$ = new Subject<void>();
 
   constructor(

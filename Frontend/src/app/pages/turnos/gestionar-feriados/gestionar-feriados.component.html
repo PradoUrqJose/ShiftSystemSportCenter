@@ -15,32 +15,46 @@
     {{ errorMessage }}
   </div>
   <div class="mt-6">
-    <table class="w-full bg-white shadow rounded-lg overflow-hidden">
-      <thead>
-        <tr class="bg-blue-50 text-gray-800">
-          <th class="p-4 text-left">Fecha</th>
-          <th class="p-4 text-left">Descripción</th>
-          <th class="p-4 text-center"><i class="fa-solid fa-gear"></i></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let feriado of feriados; trackBy: trackByFeriadoId" class="border-t hover:bg-gray-50 transition">
-          <td class="p-4">{{ feriado.fecha }}</td>
-          <td class="p-4">{{ feriado.descripcion || 'Sin descripción' }}</td>
-          <td class="p-4 flex justify-center items-center space-x-2">
-            <button (click)="editarFeriado(feriado)" class="text-blue-600 hover:text-blue-800 transition">
-              <i class="fa-solid fa-pen-to-square"></i>
-            </button>
-            <button (click)="eliminarFeriado(feriado.id)" class="text-red-600 hover:text-red-800 transition">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </td>
-        </tr>
-        <tr *ngIf="!isLoading && feriados.length === 0">
-          <td colspan="3" class="p-4 text-center text-gray-500">No hay feriados registrados.</td>
-        </tr>
-      </tbody>
-    </table>
+    <app-table-shell>
+      <table class="w-full">
+        <thead>
+          <tr class="bg-paper text-ink">
+            <th class="p-4 text-left font-bold">Fecha</th>
+            <th class="p-4 text-left font-bold">Descripción</th>
+            <th class="p-4 text-center font-bold"><i class="fa-solid fa-gear"></i></th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngIf="!isLoading; else feriadosSkeleton">
+            <tr *ngFor="let feriado of feriados; trackBy: trackByFeriadoId" class="border-t border-line-soft hover:bg-paper transition">
+              <td class="p-4">{{ feriado.fecha }}</td>
+              <td class="p-4">{{ feriado.descripcion || 'Sin descripción' }}</td>
+              <td class="p-4 flex justify-center items-center space-x-2">
+                <button (click)="editarFeriado(feriado)" class="text-blue-600 hover:text-blue-800 transition">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button (click)="eliminarFeriado(feriado.id)" class="text-red-600 hover:text-red-800 transition">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="feriados.length === 0">
+              <td colspan="3" class="p-4 text-center text-ink-faint">No hay feriados registrados.</td>
+            </tr>
+          </ng-container>
+          <ng-template #feriadosSkeleton>
+            <tr *ngFor="let _ of skeletonRows">
+              <td class="p-4"><app-skeleton width="40%"></app-skeleton></td>
+              <td class="p-4"><app-skeleton width="70%"></app-skeleton></td>
+              <td class="p-4 flex justify-center gap-2">
+                <app-skeleton width="18px" height="18px" shape="circle"></app-skeleton>
+                <app-skeleton width="18px" height="18px" shape="circle"></app-skeleton>
+              </td>
+            </tr>
+          </ng-template>
+        </tbody>
+      </table>
+    </app-table-shell>
   </div>
 
   <!-- Modal de agregar/editar feriado -->

@@ -12,11 +12,13 @@ import { CommonModule } from '@angular/common';
 import Notiflix from 'notiflix';
 import { Observable, Subject, takeUntil } from 'rxjs';
 import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../utils/modal-timing';
+import { TableShellComponent } from '../../components/ui/table-shell/table-shell.component';
+import { SkeletonComponent } from '../../components/ui/skeleton/skeleton.component';
 
 @Component({
   selector: 'app-empresas',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, TableShellComponent, SkeletonComponent],
   templateUrl: './empresas.component.html',
   styleUrls: ['./empresas.component.css'],
 })
@@ -28,6 +30,10 @@ export default class EmpresasComponent implements OnInit, OnDestroy {
   empresasHabilitadas: Empresa[] = [];
   empresasDeshabilitadas: Empresa[] = [];
   mostrarDeshabilitadas: boolean = false; // Controla si se muestran las deshabilitadas
+  // Esta tabla no tenía ningún estado de carga (a diferencia de Colaboradores,
+  // que sí traía el spinner .sk-circle viejo) — se agrega junto al skeleton.
+  isLoading: boolean = true;
+  readonly skeletonRows = Array.from({ length: 5 });
 
   // MODAL CONTROL
   mostrarModal$!: Observable<boolean>;  // Controla si el modal está abierto o cerrado
@@ -112,11 +118,19 @@ export default class EmpresasComponent implements OnInit, OnDestroy {
 
   // Obtener empresas
   getEmpresas(): void {
-    this.empresaService.getEmpresas().pipe(takeUntil(this.destroy$)).subscribe((data) => {
-      this.empresas = data;
-      this.empresasHabilitadas = this.empresas.filter((e) => e.habilitada);
-      this.empresasDeshabilitadas = this.empresas.filter((e) => !e.habilitada);
-      this.ordenarEmpresas(); // Reaplica el ordenamiento después de cargar los datos
+    this.isLoading = true;
+    this.empresaService.getEmpresas().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (data) => {
+        this.empresas = data;
+        this.empresasHabilitadas = this.empresas.filter((e) => e.habilitada);
+        this.empresasDeshabilitadas = this.empresas.filter((e) => !e.habilitada);
+        this.ordenarEmpresas(); // Reaplica el ordenamiento después de cargar los datos
+        this.isLoading = false;
+      },
+      error: () => {
+        this.errorMessage = 'Error al obtener las empresas.';
+        this.isLoading = false;
+      },
     });
   }
 
