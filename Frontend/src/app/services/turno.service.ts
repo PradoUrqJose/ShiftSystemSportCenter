@@ -1,11 +1,9 @@
 import { Feriado } from './feriado.service';
-import { DiaSemana } from './calendario.service';
 // turno.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable, forkJoin } from 'rxjs';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { environment } from '../../environments/environment';
 import { PageResponse, PAGE_SIZE_ALL } from '../models/page-response.model';
 
@@ -26,6 +24,23 @@ export interface Turno {
   tomoAlmuerzo?: boolean;
   esFeriado?: boolean;
   horasTotalesSemana?: number;
+}
+
+// Turno "vacío" para inicializar el formulario de alta. Antes cada
+// componente que abre el modal de turno (turnos, turno-modal, semana-normal)
+// tenía su propia copia idéntica de este objeto literal.
+export function crearTurnoVacio(): Turno {
+  return {
+    id: 0,
+    nombreColaborador: '',
+    dniColaborador: '',
+    nombreEmpresa: '',
+    fecha: '',
+    horaEntrada: '',
+    horaSalida: '',
+    horasTrabajadas: 0,
+    tiendaId: null,
+  };
 }
 
 export interface TurnoPayload {
@@ -169,44 +184,15 @@ export class TurnoService {
   }
 
   // ---- AGREGADOS PARA LA OPTIMIZACIÓN --------
-  getSemanasDelMes(mes: number, anio: number): Observable<DiaSemana[][]> {
-    return this.http
-      .get<string[][]>(`${this.apiUrl}/semanas-del-mes?mes=${mes}&anio=${anio}`)
-      .pipe(
-        map((semanas) =>
-          semanas.map((semana) =>
-            semana.map((fechaStr) => {
-              const fecha = new Date(fechaStr + 'T00:00:00'); // Corregir la conversión de zona horaria
-              const diaSemana: DiaSemana = {
-                fecha: format(fecha, 'yyyy-MM-dd'),
-                nombre: format(fecha, 'EEE', { locale: es }), // Aquí estaba el error
-                dayNumber: format(fecha, 'd'), // Se estaba asignando el día de la fecha anterior
-                monthNombre: format(fecha, 'MMMM', { locale: es }),
-                yearName: format(fecha, 'yyyy'),
-              };
-              return diaSemana;
-            })
-          )
-        )
-      );
-  }
-
-  // ✅ Método para obtener turnos semanales según las semanas del mes
-  getTurnosPorSemanaEstricta(mes: number, anio: number, semana: number): Observable<Turno[]> {
-    return this.http.get<Turno[]>(`${this.apiUrl}/semanal-estricto?mes=${mes}&anio=${anio}&semana=${semana}`);
-  }
-
-  /**
- * Filtra los turnos de un colaborador específico en una fecha específica.
- * @param turnos Lista de turnos.
- * @param colaboradorId ID del colaborador.
- * @param fecha Fecha a buscar.
- * @returns Turno correspondiente o `null` si no existe.
- */
-  obtenerTurno(turnos: Turno[], colaboradorId: number, fecha: string): Turno | null {
-    return turnos.find(
-      (turno) => turno.colaboradorId === colaboradorId && turno.fecha === fecha
-    ) || null;
+  // Reemplaza a los viejos getSemanasDelMes()/getTurnosPorSemanaEstricta():
+  // esos le pedían al backend que recalculara "las semanas del mes" (aritmética
+  // de fechas pura) solo para volver a preguntarle "cuál es la semana número N"
+  // — el mismo cálculo que CalendarioService ya hace en el navegador para
+  // dibujar la grilla. Ahora el componente le manda el rango de fechas que ya
+  // tiene calculado localmente. Los endpoints viejos siguen respondiendo
+  // (backend los dejó @Deprecated) por si queda algún caller suelto.
+  getTurnosPorRangoFecha(inicio: string, fin: string): Observable<Turno[]> {
+    return this.http.get<Turno[]>(`${this.apiUrl}/semanal`, { params: { inicio, fin } });
   }
 
   /**

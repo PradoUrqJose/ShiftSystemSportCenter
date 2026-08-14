@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TiendaService, Tienda } from '../../../services/tienda.service';
 import Notiflix from 'notiflix';
 import { Subject, takeUntil } from 'rxjs';
+import { MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
 
   @Component({
     selector: 'app-agregar-tienda-modal',
@@ -42,7 +43,7 @@ import { Subject, takeUntil } from 'rxjs';
         this.tiendaActual = this.resetTienda();
         this.isSubmitting = false;
         this.errorMessage = null;
-      }, 300);
+      }, MODAL_CLOSE_DELAY_MS);
     }
 
     guardarTienda(): void {

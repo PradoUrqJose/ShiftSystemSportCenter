@@ -4,12 +4,12 @@ import { ResumenMensual, Turno, TurnoService } from './../../../services/turno.s
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
 import { Observable, Subject, Subscription, takeUntil } from 'rxjs';
-import { shareReplay } from 'rxjs/operators';
+import { TurnosDelDiaPipe } from '../../../pipes/turnos-del-dia.pipe';
 
 @Component({
   selector: 'app-monthly-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TurnosDelDiaPipe],
   templateUrl: './monthly-view.component.html',
   styleUrls: ['./monthly-view.component.css', '../turnos.component.css']
 })
@@ -81,21 +81,6 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
       this.resumenMensual = undefined;
       this.cdr.detectChanges();
     }
-  }
-
-  obtenerTurno(turnos: Turno[], colaboradorId: number, fecha: string): Turno | undefined {
-    return turnos.find(t => t.colaboradorId === colaboradorId && t.fecha === fecha);
-  }
-
-  obtenerTurnos(turnos: Turno[], colaboradorId: number, fecha: string): Turno[] {
-    return turnos.filter(turno =>
-      turno.colaboradorId === colaboradorId && turno.fecha === fecha
-    ).sort((a, b) => {
-      // Ordenar por hora de entrada
-      const horaA = a.horaEntrada || '00:00';
-      const horaB = b.horaEntrada || '00:00';
-      return horaA.localeCompare(horaB);
-    });
   }
 
   formatearHorasDia(horasTrabajadas: number | undefined): string {

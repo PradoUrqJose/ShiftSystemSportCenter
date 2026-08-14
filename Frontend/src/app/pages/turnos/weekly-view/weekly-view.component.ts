@@ -6,11 +6,12 @@ import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
+import { TurnosDelDiaPipe } from '../../../pipes/turnos-del-dia.pipe';
 
 @Component({
   selector: 'app-weekly-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TurnosDelDiaPipe],
   templateUrl: './weekly-view.component.html',
   styleUrls: ['./weekly-view.component.css', '../turnos.component.css']
 })
@@ -129,33 +130,6 @@ export class WeeklyViewComponent implements OnInit, OnChanges, OnDestroy {
   filteredColaboradores: Colaborador[] = []; // Lista filtrada y ordenada
   selectedCollaboratorId: number | null = null; // Filtro por colaborador
   selectedCollaboratorIds: number[] = []; // Multi-select
-
-  // Método para obtener el turno de un colaborador en una fecha específica
-  obtenerTurno(
-    turnos: Turno[] | null,
-    colaboradorId: number,
-    fecha: string
-  ): Turno | undefined {
-    if (!turnos) return undefined; // Manejo de null
-    return this.turnoService.obtenerTurno(turnos, colaboradorId, fecha) || undefined;
-  }
-
-  // Método para obtener múltiples turnos de un colaborador en una fecha específica
-  obtenerTurnos(
-    turnos: Turno[] | null,
-    colaboradorId: number,
-    fecha: string
-  ): Turno[] {
-    if (!turnos) return []; // Manejo de null
-    return turnos.filter(turno =>
-      turno.colaboradorId === colaboradorId && turno.fecha === fecha
-    ).sort((a, b) => {
-      // Ordenar por hora de entrada
-      const horaA = a.horaEntrada || '00:00';
-      const horaB = b.horaEntrada || '00:00';
-      return horaA.localeCompare(horaB);
-    });
-  }
 
   // Método para formatear las horas trabajadas
   formatearHorasDia(horasTrabajadas: number | undefined): string {

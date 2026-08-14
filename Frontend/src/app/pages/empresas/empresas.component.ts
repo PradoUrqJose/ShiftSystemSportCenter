@@ -1,5 +1,5 @@
 import { ModalService } from './../../services/modal.service';
-import { Component, NgModule, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -11,6 +11,7 @@ import { EmpresaService, Empresa } from '../../services/empresa.service';
 import { CommonModule } from '@angular/common';
 import Notiflix from 'notiflix';
 import { Observable, Subject, takeUntil } from 'rxjs';
+import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../utils/modal-timing';
 
 @Component({
   selector: 'app-empresas',
@@ -187,13 +188,6 @@ export default class EmpresasComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Eliminar empresa
-  deleteEmpresa(id: number): void {
-    this.empresaService.deleteEmpresa(id).pipe(takeUntil(this.destroy$)).subscribe(() => {
-      this.getEmpresas();
-    });
-  }
-
   // Abrir modal
   openModal(): void {
     this.errorMessage = null; // Limpiar mensaje de error
@@ -204,7 +198,7 @@ export default class EmpresasComponent implements OnInit, OnDestroy {
       this.empresaForm.reset({ habilitada: true }); // Establece habilitada en true
     }
 
-    this.modalService.abrirModal(50);
+    this.modalService.abrirModal(MODAL_OPEN_DELAY_MS);
   }
 
   // Cerrar el modal con animación
@@ -213,7 +207,9 @@ export default class EmpresasComponent implements OnInit, OnDestroy {
     if (this.isEditing) {
       this.cancelEditCleanup();
     }
-    this.modalService.cerrarModal(100);
+    // Antes cerraba a los 100ms, cortando de golpe la transición CSS de
+    // salida (dura 300ms, ver empresas.component.html).
+    this.modalService.cerrarModal(MODAL_CLOSE_DELAY_MS);
   }
 
   // Método para limpiar edición después del cierre del modal

@@ -39,10 +39,6 @@ export class EmpresaService {
     return this.http.put<Empresa>(`${this.apiUrl}/${id}`, empresa);
   }
 
-  deleteEmpresa(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
-  }
-
   // En empresa.service.ts
   toggleHabilitacion(id: number, habilitada: boolean): Observable<Empresa> {
     return this.http.put<Empresa>(`${this.apiUrl}/${id}/habilitacion`, null, {

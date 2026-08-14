@@ -5,6 +5,7 @@ import Notiflix from 'notiflix';
 import { Subject, takeUntil } from 'rxjs';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
 import { AgregarFeriadoModalComponent } from '../agregar-feriado-modal/agregar-feriado-modal.component';
+import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
 
 @Component({
   selector: 'app-gestionar-feriados',
@@ -60,20 +61,20 @@ export default class GestionarFeriadosComponent implements OnInit, OnDestroy {
     this.feriadoActual = { fecha: '', descripcion: '' };
     this.mostrarModalAgregarFeriado = true;
     this.errorMessage = null;
-    setTimeout(() => (this.isModalAgregarFeriadoVisible = true), 50);
+    setTimeout(() => (this.isModalAgregarFeriadoVisible = true), MODAL_OPEN_DELAY_MS);
   }
 
   cerrarModalAgregarFeriado(): void {
     this.isModalAgregarFeriadoVisible = false;
     this.errorMessage = null;
-    setTimeout(() => (this.mostrarModalAgregarFeriado = false), 300);
+    setTimeout(() => (this.mostrarModalAgregarFeriado = false), MODAL_CLOSE_DELAY_MS);
   }
 
   editarFeriado(feriado: Feriado): void {
     this.feriadoActual = { ...feriado };
     this.mostrarModalAgregarFeriado = true;
     this.errorMessage = null;
-    setTimeout(() => (this.isModalAgregarFeriadoVisible = true), 50);
+    setTimeout(() => (this.isModalAgregarFeriadoVisible = true), MODAL_OPEN_DELAY_MS);
   }
 
   onFeriadoGuardado(feriado: Feriado): void {

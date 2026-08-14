@@ -49,7 +49,7 @@
   <!-- Modal de agregar puesto -->
   <app-agregar-puesto-modal
     [mostrarModal]="mostrarModalAgregarPuesto"
-    [isModalVisible]="mostrarModalAgregarPuesto"
+    [isModalVisible]="isModalAgregarPuestoVisible"
     [puestoActual]="puestoActual"
     (cerrarModalEvent)="cerrarModalAgregarPuesto()"
     (puestoAgregado)="onPuestoAgregado($event)">

@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TurnoService, Turno, TurnoPayload, TurnoPartidoPayload } from '../../../services/turno.service';
+import { TurnoService, Turno, TurnoPayload, TurnoPartidoPayload, crearTurnoVacio } from '../../../services/turno.service';
 import { TiendaService, Tienda } from '../../../services/tienda.service';
-import { ModalService } from '../../../services/modal.service';
 import { Observable, Subject, map, takeUntil } from 'rxjs';
 import Notiflix from 'notiflix';
 import { AgregarTiendaModalComponent } from '../agregar-tienda-modal/agregar-tienda-modal.component';
 import { GestionarTiendasModalComponent } from '../gestionar-tiendas-modal/gestionar-tiendas-modal.component';
+import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
 
 @Component({
   selector: 'app-turno-modal',
@@ -19,7 +19,7 @@ import { GestionarTiendasModalComponent } from '../gestionar-tiendas-modal/gesti
 export class TurnoModalComponent implements OnDestroy {
   @Input() mostrarModal: boolean = false;
   @Input() isModalVisible: boolean = false;
-  @Input() turnoActual: Turno = this.resetTurno();
+  @Input() turnoActual: Turno = crearTurnoVacio();
   @Input() turnoOriginal: Turno | null = null;
   @Input() tiendas$: Observable<Tienda[]> = new Observable<Tienda[]>();
   @Input() tiendasInput$: Observable<Tienda[]> = new Observable<Tienda[]>();
@@ -56,7 +56,6 @@ export class TurnoModalComponent implements OnDestroy {
 
   constructor(
     private turnoService: TurnoService,
-    private modalService: ModalService,
     private tiendaService: TiendaService
   ) {
     // Aplicar el ordenamiento a tiendas$ internamente
@@ -70,20 +69,6 @@ export class TurnoModalComponent implements OnDestroy {
     this.destroy$.complete();
   }
 
-  resetTurno(): Turno {
-    return {
-      id: 0,
-      nombreColaborador: '',
-      dniColaborador: '',
-      nombreEmpresa: '',
-      fecha: '',
-      horaEntrada: '',
-      horaSalida: '',
-      horasTrabajadas: 0,
-      tiendaId: null,
-    };
-  }
-
   cerrarModal(): void {
     this.isSubmitting = true;
     this.cerrarModalEvent.emit();
@@ -92,7 +77,7 @@ export class TurnoModalComponent implements OnDestroy {
       this.errorHoraEntrada = null;
       this.errorHoraSalida = null;
       this.resetTurnoPartido();
-    }, 300);
+    }, MODAL_CLOSE_DELAY_MS);
   }
 
   resetTurnoPartido(): void {
@@ -256,21 +241,36 @@ export class TurnoModalComponent implements OnDestroy {
     );
   }
 
+  // Antes cada validarHorarioX repetía el mismo cuerpo (obligatoriedad +
+  // rango horas/minutos), solo cambiando los límites y el mensaje — este
+  // helper compacta las 5 que comparten exactamente la misma forma
+  // (`horas < min || horas > max || (horas === max && minutos > 0)`).
+  // validarHorarioSalida (turno simple) queda aparte porque su regla es
+  // distinta (permite cruzar medianoche) y no encaja en este patrón.
+  private validarRangoHora(
+    hora: string | undefined,
+    minHora: number,
+    maxHora: number,
+    mensajeObligatoria: string,
+    mensajeRango: string
+  ): string | null {
+    if (!hora) return mensajeObligatoria;
+
+    const horaFormateada = this.formatearHora(hora);
+    const [horas, minutos] = horaFormateada.split(':').map(Number);
+
+    if (horas < minHora || horas > maxHora || (horas === maxHora && minutos > 0)) {
+      return mensajeRango;
+    }
+    return null;
+  }
+
   validarHorarioEntrada(): void {
-    let hora = this.turnoActual.horaEntrada;
-    if (!hora) {
-      this.errorHoraEntrada = 'La hora de entrada es obligatoria.';
-      return;
-    }
-
-    hora = this.formatearHora(hora);
-    const [horas, minutos] = hora.split(':').map(Number);
-
-    if (horas < 5 || horas > 22 || (horas === 22 && minutos > 0)) {
-      this.errorHoraEntrada = 'La hora de entrada debe ser entre las 5:00 AM y las 10:00 PM.';
-    } else {
-      this.errorHoraEntrada = null;
-    }
+    this.errorHoraEntrada = this.validarRangoHora(
+      this.turnoActual.horaEntrada, 5, 22,
+      'La hora de entrada es obligatoria.',
+      'La hora de entrada debe ser entre las 5:00 AM y las 10:00 PM.'
+    );
   }
 
   validarHorarioSalida(): void {
@@ -307,71 +307,35 @@ export class TurnoModalComponent implements OnDestroy {
   }
 
   validarHorarioEntradaManana(): void {
-    let hora = this.turnoManana.horaEntrada;
-    if (!hora) {
-      this.errorHoraEntradaManana = 'La hora de entrada de mañana es obligatoria.';
-      return;
-    }
-
-    hora = this.formatearHora(hora);
-    const [horas, minutos] = hora.split(':').map(Number);
-
-    if (horas < 5 || horas > 12 || (horas === 12 && minutos > 0)) {
-      this.errorHoraEntradaManana = 'La hora de entrada de mañana debe ser entre las 5:00 AM y las 12:00 PM.';
-    } else {
-      this.errorHoraEntradaManana = null;
-    }
+    this.errorHoraEntradaManana = this.validarRangoHora(
+      this.turnoManana.horaEntrada, 5, 12,
+      'La hora de entrada de mañana es obligatoria.',
+      'La hora de entrada de mañana debe ser entre las 5:00 AM y las 12:00 PM.'
+    );
   }
 
   validarHorarioSalidaManana(): void {
-    let hora = this.turnoManana.horaSalida;
-    if (!hora) {
-      this.errorHoraSalidaManana = 'La hora de salida de mañana es obligatoria.';
-      return;
-    }
-
-    hora = this.formatearHora(hora);
-    const [horas, minutos] = hora.split(':').map(Number);
-
-    if (horas < 8 || horas > 14 || (horas === 14 && minutos > 0)) {
-      this.errorHoraSalidaManana = 'La hora de salida de mañana debe ser entre las 8:00 AM y las 2:00 PM.';
-    } else {
-      this.errorHoraSalidaManana = null;
-    }
+    this.errorHoraSalidaManana = this.validarRangoHora(
+      this.turnoManana.horaSalida, 8, 14,
+      'La hora de salida de mañana es obligatoria.',
+      'La hora de salida de mañana debe ser entre las 8:00 AM y las 2:00 PM.'
+    );
   }
 
   validarHorarioEntradaTarde(): void {
-    let hora = this.turnoTarde.horaEntrada;
-    if (!hora) {
-      this.errorHoraEntradaTarde = 'La hora de entrada de tarde es obligatoria.';
-      return;
-    }
-
-    hora = this.formatearHora(hora);
-    const [horas, minutos] = hora.split(':').map(Number);
-
-    if (horas < 13 || horas > 18 || (horas === 18 && minutos > 0)) {
-      this.errorHoraEntradaTarde = 'La hora de entrada de tarde debe ser entre las 1:00 PM y las 6:00 PM.';
-    } else {
-      this.errorHoraEntradaTarde = null;
-    }
+    this.errorHoraEntradaTarde = this.validarRangoHora(
+      this.turnoTarde.horaEntrada, 13, 18,
+      'La hora de entrada de tarde es obligatoria.',
+      'La hora de entrada de tarde debe ser entre las 1:00 PM y las 6:00 PM.'
+    );
   }
 
   validarHorarioSalidaTarde(): void {
-    let hora = this.turnoTarde.horaSalida;
-    if (!hora) {
-      this.errorHoraSalidaTarde = 'La hora de salida de tarde es obligatoria.';
-      return;
-    }
-
-    hora = this.formatearHora(hora);
-    const [horas, minutos] = hora.split(':').map(Number);
-
-    if (horas < 16 || horas > 22 || (horas === 22 && minutos > 0)) {
-      this.errorHoraSalidaTarde = 'La hora de salida de tarde debe ser entre las 4:00 PM y las 10:00 PM.';
-    } else {
-      this.errorHoraSalidaTarde = null;
-    }
+    this.errorHoraSalidaTarde = this.validarRangoHora(
+      this.turnoTarde.horaSalida, 16, 22,
+      'La hora de salida de tarde es obligatoria.',
+      'La hora de salida de tarde debe ser entre las 4:00 PM y las 10:00 PM.'
+    );
   }
 
   validarSolapamientoHorarios(): void {
@@ -415,22 +379,24 @@ export class TurnoModalComponent implements OnDestroy {
   // Agregar Tienda
   abrirModalAgregarTienda(): void {
     this.mostrarModalAgregarTienda = true;
-    setTimeout(() => this.isModalAgregarTiendaVisible = true, 50);
+    setTimeout(() => this.isModalAgregarTiendaVisible = true, MODAL_OPEN_DELAY_MS);
   }
 
   cerrarModalAgregarTienda(): void {
     this.isModalAgregarTiendaVisible = false;
-    setTimeout(() => this.mostrarModalAgregarTienda = false, 50);
+    // Antes desmontaba a los 50ms, cortando de golpe la transición CSS de
+    // salida (dura 300ms, ver agregar-tienda-modal.component.html).
+    setTimeout(() => this.mostrarModalAgregarTienda = false, MODAL_CLOSE_DELAY_MS);
   }
 
   abrirModalGestionarTiendas(): void {
     this.mostrarModalGestionarTiendas = true;
-    setTimeout(() => this.isModalGestionarTiendasVisible = true, 50);
+    setTimeout(() => this.isModalGestionarTiendasVisible = true, MODAL_OPEN_DELAY_MS);
   }
 
   cerrarModalGestionarTiendas(): void {
     this.isModalGestionarTiendasVisible = false;
-    setTimeout(() => this.mostrarModalGestionarTiendas = false, 50);
+    setTimeout(() => this.mostrarModalGestionarTiendas = false, MODAL_CLOSE_DELAY_MS);
   }
 
   manejarTiendaGuardada(): void {

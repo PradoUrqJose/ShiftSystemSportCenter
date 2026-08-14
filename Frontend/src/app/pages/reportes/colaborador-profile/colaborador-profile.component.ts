@@ -250,8 +250,10 @@ export class ColaboradorProfileComponent implements OnInit, OnDestroy {
         this.turnosRecientes = turnosOrdenados.slice(0, 5);
         this.horasPorMes = this.calcularHorasPorMes(horasTrabajadas);
 
-        // Determinar el mes actual (febrero en este contexto: índice 1)
-        const mesActual = 1; // Febrero (0-based: Ene=0, Feb=1, etc.)
+        // Antes hardcodeado a 1 (febrero) — el resaltado del mes actual en el
+        // gráfico anual solo era correcto en febrero, cualquier otro mes
+        // resaltaba el mes equivocado.
+        const mesActual = new Date().getMonth(); // 0-based: Ene=0, Feb=1, etc.
         const empresaColor = this.getEmpresaColor(this.colaborador?.empresaNombre);
 
         // Asignar colores: empresa para el mes actual, gris oscuro para los demás

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TiendaService, Tienda } from '../../../services/tienda.service';
 import Notiflix from 'notiflix';
 import { Observable, Subject, takeUntil } from 'rxjs';
+import { MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
 
 @Component({
   selector: 'app-gestionar-tiendas-modal',
@@ -34,7 +35,7 @@ export class GestionarTiendasModalComponent implements OnDestroy {
 
   cerrarModal(): void {
     this.isModalVisible = false;
-    setTimeout(() => this.cerrarModalEvent.emit(), 300);
+    setTimeout(() => this.cerrarModalEvent.emit(), MODAL_CLOSE_DELAY_MS);
   }
 
   abrirModalAgregarTienda(): void {

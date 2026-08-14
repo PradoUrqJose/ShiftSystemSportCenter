@@ -5,23 +5,26 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { ExportExcelComponent, ExportColumn } from '../../../components/export-excel/export-excel.component';
 import { ReporteService } from '../../../services/reporte.service';
 import { CalendarioService } from '../../../services/calendario.service';
-import { ColaboradorService, Colaborador } from '../../../services/colaborador.service';
+import { Turno } from '../../../services/turno.service';
+import { ReporteFiltrosService } from '../../../services/reporte-filtros.service';
 import { Subject, takeUntil } from 'rxjs';
+
+// TurnoDTO del backend + el apellido, agregado acá cruzando con la lista de
+// colaboradores (el reporte solo trae el nombre).
+type ReporteTurnoFeriado = Turno & { apellido: string };
 
 @Component({
   selector: 'app-turnos-feriados',
   standalone: true,
   imports: [CommonModule, FormsModule, NgSelectModule, ExportExcelComponent],
   templateUrl: './turnos-feriados.component.html',
-  styleUrls: ['./turnos-feriados.component.css']
+  styleUrls: ['./turnos-feriados.component.css'],
+  // Instancia propia de ReporteFiltrosService para esta página (no singleton
+  // de root) — ver el comentario en el servicio.
+  providers: [ReporteFiltrosService],
 })
 export class TurnosFeriadosComponent implements OnInit, OnDestroy {
-  reportes: any[] = [];
-  fechaInicio: string = '';
-  fechaFin: string = '';
-  colaboradores: Colaborador[] = [];
-  colaboradoresSeleccionados: number[] = []; // Almacena IDs de colaboradores seleccionados
-  errorMessage: string | null = null;
+  reportes: ReporteTurnoFeriado[] = [];
   exportColumns: ExportColumn[] = [
     { key: 'nombreColaborador', label: 'Colaborador' },
     { key: 'dniColaborador', label: 'DNI' },
@@ -32,21 +35,17 @@ export class TurnosFeriadosComponent implements OnInit, OnDestroy {
     { key: 'horaSalida', label: 'Salida' },
     { key: 'horasTotalesSemana', label: 'Horas en Feriado' },
   ];
-  empresas: { id: number; nombre: string }[] = [];
-  empresaSeleccionada: number | 'all' = 'all';
-  estadoSeleccionado: 'all' | true | false = 'all';
 
   private readonly destroy$ = new Subject<void>();
 
   constructor(
+    public filtros: ReporteFiltrosService,
     private reporteService: ReporteService,
     private calendarioService: CalendarioService,
-    private colaboradorService: ColaboradorService
   ) { }
 
   ngOnInit(): void {
-    this.setFechasMesActual();
-    this.getColaboradores();
+    this.filtros.inicializar();
   }
 
   ngOnDestroy(): void {
@@ -54,92 +53,25 @@ export class TurnosFeriadosComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private setFechasMesActual(): void {
-    const hoy = new Date();
-    const first = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    const last = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
-    this.fechaInicio = this.formatDate(first);
-    this.fechaFin = this.formatDate(last);
-  }
-
-  private formatDate(d: Date): string {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
-
-  getColaboradores(): void {
-    this.colaboradorService.getColaboradores().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (data) => {
-        this.colaboradores = data;
-        const mapa = new Map<number, string>();
-        data.forEach(c => { if (c.empresaId) mapa.set(c.empresaId, c.empresaNombre); });
-        this.empresas = [{ id: -1, nombre: 'Todas las empresas' }, ...Array.from(mapa.entries()).map(([id, nombre]) => ({ id, nombre: nombre || 'Sin Empresa' }))];
-      },
-      error: () => {
-        this.errorMessage = 'Error al obtener colaboradores.';
-      }
-    });
-  }
-
-  toggleSelection(colaboradorId: number) {
-    const index = this.colaboradoresSeleccionados.indexOf(colaboradorId);
-    if (index === -1) {
-      this.colaboradoresSeleccionados.push(colaboradorId);
-    } else {
-      this.colaboradoresSeleccionados.splice(index, 1);
-    }
-  }
-
-  onEmpresaChange(): void {
-    if (this.empresaSeleccionada === 'all' && this.estadoSeleccionado === 'all') {
-      this.colaboradoresSeleccionados = [];
-      return;
-    }
-    this.updateSelectionFromFilters();
-  }
-
-  onEstadoChange(): void {
-    if (this.empresaSeleccionada === 'all' && this.estadoSeleccionado === 'all') {
-      this.colaboradoresSeleccionados = [];
-      return;
-    }
-    this.updateSelectionFromFilters();
-  }
-
-  private updateSelectionFromFilters(): void {
-    const ids = this.colaboradores
-      .filter(c => (this.empresaSeleccionada === 'all' || c.empresaId === this.empresaSeleccionada)
-        && (this.estadoSeleccionado === 'all' || c.habilitado === this.estadoSeleccionado))
-      .map(c => c.id);
-    this.colaboradoresSeleccionados = ids;
-  }
-
-  obtenerTurnosFeriados() {
-    if (!this.fechaInicio || !this.fechaFin) {
-      this.errorMessage = 'Por favor, seleccione un rango de fechas.';
+  obtenerTurnosFeriados(): void {
+    if (!this.filtros.fechaInicio || !this.filtros.fechaFin) {
+      this.filtros.errorMessage = 'Por favor, seleccione un rango de fechas.';
       return;
     }
 
-    const colaboradoresIds = this.colaboradoresSeleccionados;
-
-    this.reporteService.getTurnosFeriados(this.fechaInicio, this.fechaFin, colaboradoresIds)
+    this.reporteService
+      .getTurnosFeriados(this.filtros.fechaInicio, this.filtros.fechaFin, this.filtros.colaboradoresSeleccionados)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
-          // Fusionar datos con apellidos de colaboradores
-          this.reportes = data.map(reporte => {
-            const colaborador = this.colaboradores.find(c => c.id === reporte.colaboradorId);
-            return {
-              ...reporte,
-              apellido: colaborador ? colaborador.apellido : "Desconocido"
-            };
+          this.reportes = data.map((reporte) => {
+            const colaborador = this.filtros.colaboradores.find((c) => c.id === reporte.colaboradorId);
+            return { ...reporte, apellido: colaborador ? colaborador.apellido : 'Desconocido' };
           });
-          this.errorMessage = null;
+          this.filtros.errorMessage = null;
         },
         error: () => {
-          this.errorMessage = 'Error al obtener el reporte de turnos en feriados.';
+          this.filtros.errorMessage = 'Error al obtener el reporte de turnos en feriados.';
           this.reportes = [];
         }
       });
@@ -150,26 +82,21 @@ export class TurnosFeriadosComponent implements OnInit, OnDestroy {
     return this.calendarioService.formatearHoras(horasTotales);
   }
 
-  formatearHorasFeriado(reporte: any): string {
+  formatearHorasFeriado(reporte: ReporteTurnoFeriado): string {
     // Las horas en feriados están en horasTotalesSemana (calculadas en el backend)
-    const horasFeriado = reporte.horasTotalesSemana || 0;
-    return this.calendarioService.formatearHoras(horasFeriado);
+    return this.calendarioService.formatearHoras(reporte.horasTotalesSemana ?? 0);
   }
 
   calcularTotalHorasFeriados(): string {
-    const totalHorasFeriados = this.reportes.reduce((total, reporte) => total + (reporte.horasTotalesSemana || 0), 0);
+    const totalHorasFeriados = this.reportes.reduce((total, reporte) => total + (reporte.horasTotalesSemana ?? 0), 0);
     return this.calendarioService.formatearHoras(totalHorasFeriados);
   }
 
-  obtenerNumerosDeTienda(nombreTienda: string): string {
-    return nombreTienda.replace(/[^0-9]/g, '');
+  obtenerNumerosDeTienda(nombreTienda: string | undefined): string {
+    return (nombreTienda ?? '').replace(/[^0-9]/g, '');
   }
 
-  trackByEmpresaId(_index: number, empresa: { id: number }): number {
-    return empresa.id;
-  }
-
-  trackByReporte(_index: number, reporte: any): string {
+  trackByReporte(_index: number, reporte: ReporteTurnoFeriado): string {
     return `${reporte.colaboradorId}-${reporte.fecha}-${reporte.horaEntrada}`;
   }
 }

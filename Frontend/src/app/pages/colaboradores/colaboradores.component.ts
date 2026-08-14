@@ -51,7 +51,7 @@ export default class ColaboradoresComponent implements OnInit, OnDestroy {
   // Nueva funcionalidad
   fotoPreview: string | ArrayBuffer | null =
     'assets/user-circle-svgrepo-com.svg'; // Inicializar con una imagen por defecto
-  @ViewChild('fileInput', { static: false }) fileInput!: ElementRef; // Referencia al input de archivos
+  @ViewChild('fileInput', { static: false }) fileInput!: ElementRef<HTMLInputElement>; // Referencia al input de archivos
 
   puestos: Puesto[] = [];
   mostrarModalAgregarPuesto: boolean = false;
@@ -142,15 +142,6 @@ export default class ColaboradoresComponent implements OnInit, OnDestroy {
     }
   }
 
-  highlightError(controlName: string): void {
-    const element = document.querySelector(
-      `[formControlName="${controlName}"]`
-    );
-    if (element) {
-      (element as HTMLElement).classList.add('border-red-500');
-    }
-  }
-
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -174,8 +165,10 @@ export default class ColaboradoresComponent implements OnInit, OnDestroy {
   }
 
   triggerFileInput(): void {
-    const fileInput = document.getElementById('foto') as HTMLInputElement;
-    fileInput.click(); // Simular clic en el input de archivo
+    // Ya existía @ViewChild('fileInput') apuntando a este mismo <input> (ver
+    // #fileInput en el html) — antes se lo esquivaba con
+    // document.getElementById('foto') en vez de usarlo.
+    this.fileInput.nativeElement.click();
   }
 
   getEmpresasAndColaboradores(): void {
@@ -330,13 +323,6 @@ addColaborador(): void {
         const img = new Image();
         img.src = colaborador.fotoUrl + '?t=' + new Date().getTime(); // Agrega un parámetro de tiempo para evitar la caché
       }
-    });
-  }
-
-  deleteColaborador(id: number): void {
-    this.colaboradorService.deleteColaborador(id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => this.getColaboradores(),
-      error: () => (this.errorMessage = 'Error al eliminar colaborador.'),
     });
   }
 

@@ -1,11 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, map, takeUntil } from 'rxjs';
 import { WeeklyViewComponent } from '../../turnos/weekly-view/weekly-view.component';
-import { CalendarioService, DiaSemana } from '../../../services/calendario.service';
+import { DiaSemana } from '../../../services/calendario.service';
 import { Colaborador, ColaboradorService } from '../../../services/colaborador.service';
-import { Turno, TurnoService } from '../../../services/turno.service';
+import { Turno, TurnoService, crearTurnoVacio } from '../../../services/turno.service';
 import { TurnoStateService } from '../../../services/turno-state.service';
-import { SemanaService } from '../../../services/semana.service';
 import { HeaderComponent } from '../../turnos/header/header.component';
 import { CommonModule } from '@angular/common';
 import { format, startOfWeek, addDays, eachDayOfInterval } from 'date-fns';
@@ -14,6 +13,7 @@ import { RouterModule } from '@angular/router';
 import { TurnoModalComponent } from '../../turnos/turno-modal/turno-modal.component'; // Importar el modal
 import { ModalService } from '../../../services/modal.service';
 import { TiendaService } from '../../../services/tienda.service';
+import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
 
 @Component({
   selector: 'app-semana-normal',
@@ -33,19 +33,17 @@ export class SemanaNormalComponent implements OnInit, OnDestroy {
   // Propiedades para el modal
   mostrarModal$!: Observable<boolean>;
   isModalVisible$!: Observable<boolean>;
-  turnoActual: Turno = this.resetTurno();
+  turnoActual: Turno = crearTurnoVacio();
   turnoOriginal: Turno | null = null;
   tiendas$!: Observable<any[]>;
   private readonly destroy$ = new Subject<void>();
 
   constructor(
-    private calendarioService: CalendarioService,
     private colaboradorService: ColaboradorService,
     private turnoService: TurnoService,
     private turnoStateService: TurnoStateService,
-    private semanaService: SemanaService,
-    private modalService: ModalService, // Inyectar ModalService
-    private tiendaService: TiendaService // Inyectar TiendaService
+    private modalService: ModalService,
+    private tiendaService: TiendaService
   ) {
     this.isLoading$ = this.turnoStateService.isLoading$;
     this.nombreMesActual = format(this.turnoStateService.getSemanaActual(), 'MMMM yyyy', { locale: es });
@@ -158,7 +156,7 @@ export class SemanaNormalComponent implements OnInit, OnDestroy {
             horasTrabajadas: 0,
             tiendaId: null,
           };
-          this.modalService.abrirModal(50);
+          this.modalService.abrirModal(MODAL_OPEN_DELAY_MS);
         }
       });
   }
@@ -167,30 +165,16 @@ export class SemanaNormalComponent implements OnInit, OnDestroy {
     this.resetearEstadoModal();
     this.turnoOriginal = { ...turno, tiendaId: turno.tiendaId };
     this.turnoActual = { ...turno, tiendaId: turno.tiendaId };
-    this.modalService.abrirModal(50);
+    this.modalService.abrirModal(MODAL_OPEN_DELAY_MS);
   }
 
   cerrarModal(): void {
-    this.modalService.cerrarModal(300);
+    this.modalService.cerrarModal(MODAL_CLOSE_DELAY_MS);
   }
 
   resetearEstadoModal(): void {
     this.turnoOriginal = null;
-    this.turnoActual = this.resetTurno();
-  }
-
-  resetTurno(): Turno {
-    return {
-      id: 0,
-      nombreColaborador: '',
-      dniColaborador: '',
-      nombreEmpresa: '',
-      fecha: '',
-      horaEntrada: '',
-      horaSalida: '',
-      horasTrabajadas: 0,
-      tiendaId: null,
-    };
+    this.turnoActual = crearTurnoVacio();
   }
 
   manejarTurnoGuardado(): void {

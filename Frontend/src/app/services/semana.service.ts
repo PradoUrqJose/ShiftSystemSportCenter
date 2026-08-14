@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { TurnoService } from './turno.service';
+import { CalendarioService, DiaSemana } from './calendario.service';
 import { TurnoStateService } from './turno-state.service';
-import { DiaSemana } from './calendario.service';
 import { Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { format, subMonths, addMonths } from 'date-fns';
 
 @Injectable({
@@ -11,15 +10,20 @@ import { format, subMonths, addMonths } from 'date-fns';
 })
 export class SemanaService {
   constructor(
-    private turnoService: TurnoService,
+    // Antes le pedía las semanas del mes a TurnoService (un viaje HTTP al
+    // backend solo para recalcular aritmética de fechas). CalendarioService
+    // ya hace exactamente ese cálculo en el navegador para dibujar la
+    // grilla — usar la misma fuente acá evita el viaje redundante y una
+    // segunda implementación del mismo cálculo que podía desincronizarse.
+    private calendarioService: CalendarioService,
     private turnoStateService: TurnoStateService
   ) {}
 
-  cambiarSemana(direccion: 'anterior' | 'siguiente'): Observable<{ nuevaSemana: DiaSemana[]; turnos: any[] }> {
+  cambiarSemana(direccion: 'anterior' | 'siguiente'): Observable<DiaSemana[]> {
     const semanaActual = this.turnoStateService.getSemanaActual();
 
-    return this.turnoService
-      .getSemanasDelMes(semanaActual.getMonth() + 1, semanaActual.getFullYear())
+    return this.calendarioService
+      .obtenerSemanasDelMes(semanaActual)
       .pipe(
         switchMap((semanas) => {
           let indiceSemanaActual = this.obtenerIndiceSemanaActual(semanas);
@@ -47,15 +51,11 @@ export class SemanaService {
     const semanaActual = this.turnoStateService.getSemanaActual();
 
     return semanas.findIndex((semana) =>
-      semana.some(
-        (dia) =>
-          dia.fecha !== 'filler' &&
-          dia.fecha === format(semanaActual, 'yyyy-MM-dd')
-      )
+      semana.some((dia) => dia.fecha === format(semanaActual, 'yyyy-MM-dd'))
     );
   }
 
-  private cargarSemanaDeOtroMes(direccion: 'anterior' | 'siguiente'): Observable<{ nuevaSemana: DiaSemana[]; turnos: any[] }> {
+  private cargarSemanaDeOtroMes(direccion: 'anterior' | 'siguiente'): Observable<DiaSemana[]> {
     const semanaActual = this.turnoStateService.getSemanaActual();
 
     const nuevaSemana =
@@ -65,8 +65,8 @@ export class SemanaService {
 
     this.turnoStateService.setSemanaActual(nuevaSemana);
 
-    return this.turnoService
-      .getSemanasDelMes(nuevaSemana.getMonth() + 1, nuevaSemana.getFullYear())
+    return this.calendarioService
+      .obtenerSemanasDelMes(nuevaSemana)
       .pipe(
         switchMap((semanas) => {
           if (semanas.length > 0) {
@@ -82,8 +82,8 @@ export class SemanaService {
       );
   }
 
-  private actualizarSemana(nuevaSemana: DiaSemana[]): { nuevaSemana: DiaSemana[]; turnos: any[] } {
-    const primerDiaValido = nuevaSemana.find((dia) => dia.fecha !== 'filler');
+  private actualizarSemana(nuevaSemana: DiaSemana[]): DiaSemana[] {
+    const primerDiaValido = nuevaSemana[0];
 
     if (primerDiaValido) {
       const [year, month, day] = primerDiaValido.fecha.split('-').map(Number);
@@ -92,9 +92,6 @@ export class SemanaService {
       this.turnoStateService.setSemanaActual(nuevaFecha);
     }
 
-    return {
-      nuevaSemana,
-      turnos: [] // Aquí puedes devolver los turnos si es necesario
-    };
+    return nuevaSemana;
   }
 }

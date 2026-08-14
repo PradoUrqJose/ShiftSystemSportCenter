@@ -5,6 +5,8 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AgregarPuestoModalComponent } from '../agregar-puesto-modal/agregar-puesto-modal.component';
 import { Subject, takeUntil } from 'rxjs';
+import Notiflix from 'notiflix';
+import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
 
 @Component({
   selector: 'app-gestionar-puestos',
@@ -16,6 +18,10 @@ import { Subject, takeUntil } from 'rxjs';
 export default class GestionarPuestosComponent implements OnInit, OnDestroy {
   puestos: Puesto[] = [];
   mostrarModalAgregarPuesto: boolean = false;
+  // Separado de mostrarModalAgregarPuesto (con un tick de retraso al abrir)
+  // para que la transición CSS del modal hijo tenga margen de animar — antes
+  // las dos banderas cambiaban juntas y el fade-in/out nunca se veía.
+  isModalAgregarPuestoVisible: boolean = false;
   puestoActual: Puesto = { nombre: '', descripcion: '' };
   conteoColaboradoresPorPuesto: { [key: number]: number } = {};
   errorMessage: string | null = null; // Añadir para mostrar errores
@@ -72,11 +78,13 @@ export default class GestionarPuestosComponent implements OnInit, OnDestroy {
     this.puestoActual = { nombre: '', descripcion: '' };
     this.mostrarModalAgregarPuesto = true;
     this.errorMessage = null;
+    setTimeout(() => (this.isModalAgregarPuestoVisible = true), MODAL_OPEN_DELAY_MS);
   }
 
   cerrarModalAgregarPuesto(): void {
-    this.mostrarModalAgregarPuesto = false;
+    this.isModalAgregarPuestoVisible = false;
     this.errorMessage = null;
+    setTimeout(() => (this.mostrarModalAgregarPuesto = false), MODAL_CLOSE_DELAY_MS);
   }
 
   onPuestoAgregado(puesto: Puesto): void {
@@ -92,21 +100,32 @@ export default class GestionarPuestosComponent implements OnInit, OnDestroy {
 
   eliminarPuesto(id: number | undefined): void {
     if (!id) return;
-    this.puestoService.deletePuesto(id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        this.puestos = this.puestos.filter(p => p.id !== id);
-        this.cargarConteoColaboradores();
-      },
-      error: (err) => {
-        this.errorMessage = err.message || 'Error al eliminar el puesto.';
+    // Antes borraba directo sin confirmar, inconsistente con eliminarTienda/
+    // eliminarTurno que sí piden confirmación.
+    Notiflix.Confirm.show(
+      'Confirmar Eliminación',
+      '¿Estás seguro de que deseas eliminar este puesto?',
+      'Eliminar',
+      'Cancelar',
+      () => {
+        this.puestoService.deletePuesto(id).pipe(takeUntil(this.destroy$)).subscribe({
+          next: () => {
+            this.puestos = this.puestos.filter(p => p.id !== id);
+            this.cargarConteoColaboradores();
+          },
+          error: (err) => {
+            this.errorMessage = err.message || 'Error al eliminar el puesto.';
+          }
+        });
       }
-    });
+    );
   }
 
   editarPuesto(puesto: Puesto): void {
     this.puestoActual = { ...puesto };
     this.mostrarModalAgregarPuesto = true;
     this.errorMessage = null;
+    setTimeout(() => (this.isModalAgregarPuestoVisible = true), MODAL_OPEN_DELAY_MS);
   }
 
   goBack(): void {

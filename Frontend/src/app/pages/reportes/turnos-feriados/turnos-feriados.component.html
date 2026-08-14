@@ -2,6 +2,10 @@
   📊 Reporte de Turnos en Feriados
 </h2>
 
+<div *ngIf="filtros.errorMessage" class="bg-red-100 text-red-700 p-3 rounded-lg mb-4 border border-red-400">
+  {{ filtros.errorMessage }}
+</div>
+
 <!-- 🔹 Filtros alineados uniformemente -->
 <div
   class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 mb-8 items-end bg-gray-50 p-4 rounded-xl shadow-sm border border-gray-100"
@@ -13,7 +17,7 @@
     </label>
     <input
       type="date"
-      [(ngModel)]="fechaInicio"
+      [(ngModel)]="filtros.fechaInicio"
       class="h-10 w-full border border-gray-300 rounded-lg px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
     />
   </div>
@@ -25,7 +29,7 @@
     </label>
     <input
       type="date"
-      [(ngModel)]="fechaFin"
+      [(ngModel)]="filtros.fechaFin"
       class="h-10 w-full border border-gray-300 rounded-lg px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
     />
   </div>
@@ -36,12 +40,12 @@
       <i class="fa-solid fa-building"></i> Empresa
     </label>
     <select
-      [(ngModel)]="empresaSeleccionada"
-      (change)="onEmpresaChange()"
+      [(ngModel)]="filtros.empresaSeleccionada"
+      (change)="filtros.onEmpresaChange()"
       class="h-10 w-full border border-gray-300 rounded-lg px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
     >
       <option [ngValue]="'all'">Todas las empresas</option>
-      <option *ngFor="let e of empresas; trackBy: trackByEmpresaId" [ngValue]="e.id" [disabled]="e.id === -1">
+      <option *ngFor="let e of filtros.empresas; trackBy: filtros.trackByEmpresaId" [ngValue]="e.id" [disabled]="e.id === -1">
         {{ e.nombre }}
       </option>
     </select>
@@ -53,8 +57,8 @@
       <i class="fa-solid fa-toggle-on"></i> Estado
     </label>
     <select
-      [(ngModel)]="estadoSeleccionado"
-      (change)="onEstadoChange()"
+      [(ngModel)]="filtros.estadoSeleccionado"
+      (change)="filtros.onEstadoChange()"
       class="h-10 w-full border border-gray-300 rounded-lg px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
     >
       <option [ngValue]="'all'">Todos</option>
@@ -70,10 +74,10 @@
     </label>
     <ng-select
       class="custom-ng-select h-10 w-full"
-      [items]="colaboradores"
+      [items]="filtros.colaboradores"
       bindLabel="nombre"
       bindValue="id"
-      [(ngModel)]="colaboradoresSeleccionados"
+      [(ngModel)]="filtros.colaboradoresSeleccionados"
       [closeOnSelect]="false"
       [multiple]="true"
       [clearable]="true"
@@ -84,8 +88,8 @@
           <div class="flex items-center">
             <input
               type="checkbox"
-              [checked]="colaboradoresSeleccionados.includes(item.id)"
-              (change)="toggleSelection(item.id)"
+              [checked]="filtros.colaboradoresSeleccionados.includes(item.id)"
+              (change)="filtros.toggleSelection(item.id)"
               class="mr-2 w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
             />
             <div class="flex flex-col">

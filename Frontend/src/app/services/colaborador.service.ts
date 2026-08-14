@@ -74,10 +74,6 @@ export class ColaboradorService {
     return this.http.put<Colaborador>(`${this.apiUrl}/${id}`, formData);
   }
 
-  deleteColaborador(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
-  }
-
   toggleHabilitacion(id: number, habilitado: boolean): Observable<Colaborador> {
     return this.http.put<Colaborador>(
       `${this.apiUrl}/${id}/habilitacion`,
