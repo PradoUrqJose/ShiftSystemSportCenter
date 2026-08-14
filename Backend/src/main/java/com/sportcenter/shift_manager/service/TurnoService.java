@@ -153,31 +153,35 @@ public class TurnoService {
     }
 
     public TurnoDTO convertToDTO(Turno turno) {
-        return new TurnoDTO(
-                turno.getId(),
-                turno.getColaborador() != null ? turno.getColaborador().getId() : null,
-                turno.getColaborador() != null ? turno.getColaborador().getNombre() : "Sin Nombre",
-                turno.getColaborador() != null ? turno.getColaborador().getDni() : "Sin DNI",
-                turno.getEmpresa() != null ? turno.getEmpresa().getNombre() : "Sin Empresa",
-                turno.getEmpresa() != null ? turno.getEmpresa().getId() : null, // Añadir empresaId
-                turno.getTienda() != null ? turno.getTienda().getId() : null,
-                turno.getTienda() != null ? turno.getTienda().getNombre() : "Sin Tienda",
-                turno.getFecha(),
-                turno.getHoraEntrada(),
-                turno.getHoraSalida(),
-                turno.getHorasTrabajadas(),
-                turno.isTomoAlmuerzo(),
-                0.0, // horasTotalesSemana inicializado en 0
-                turno.isEsFeriado() // persistido en la entidad; ya no se vuelve a consultar feriadoService por turno
-        );
+        return TurnoDTO.builder()
+                .id(turno.getId())
+                .colaboradorId(turno.getColaborador() != null ? turno.getColaborador().getId() : null)
+                .nombreColaborador(turno.getColaborador() != null ? turno.getColaborador().getNombre() : "Sin Nombre")
+                .dniColaborador(turno.getColaborador() != null ? turno.getColaborador().getDni() : "Sin DNI")
+                .nombreEmpresa(turno.getEmpresa() != null ? turno.getEmpresa().getNombre() : "Sin Empresa")
+                .empresaId(turno.getEmpresa() != null ? turno.getEmpresa().getId() : null)
+                .tiendaId(turno.getTienda() != null ? turno.getTienda().getId() : null)
+                .nombreTienda(turno.getTienda() != null ? turno.getTienda().getNombre() : "Sin Tienda")
+                .fecha(turno.getFecha())
+                .horaEntrada(turno.getHoraEntrada())
+                .horaSalida(turno.getHoraSalida())
+                .horasTrabajadas(turno.getHorasTrabajadas())
+                .tomoAlmuerzo(turno.isTomoAlmuerzo())
+                .horasTotalesSemana(0.0) // se completa aparte, ver calcularHorasPorColaborador
+                .esFeriado(turno.isEsFeriado()) // persistido en la entidad; ya no se vuelve a consultar feriadoService por turno
+                .build();
     }
 
     // ---- AGREGADOS PARA LA OPTIMIZACIÓN --------
 
-    // Devuelve solo los rangos de fechas de cada semana del mes (para armar el
-    // selector de semanas en el frontend). No consulta turnos: antes traía y
-    // recalculaba horas trabajadas de cada semana acá adentro sin usar el
-    // resultado para nada (el valor real se pide aparte, ver getTurnosPorSemanaEstricta).
+    // Deprecado: es aritmética de fechas pura (no consulta turnos), y el
+    // frontend (CalendarioService, Angular) ya calcula exactamente lo mismo
+    // en el navegador para dibujar la grilla del calendario — antes esto se
+    // volvía a pedir acá por HTTP en cada cambio de semana, dos fuentes de
+    // verdad del mismo cálculo que podían desincronizarse. Se mantiene solo
+    // porque getTurnosPorSemanaEstricta (deprecado también) todavía depende
+    // de esto hasta que el frontend migre a getTurnosPorRangoFecha.
+    @Deprecated
     public List<List<String>> calcularSemanasDelMes(int mes, int anio) {
         List<List<String>> semanas = new ArrayList<>();
         List<String> semanaActual = new ArrayList<>();
@@ -214,33 +218,46 @@ public class TurnoService {
         return semanas;
     }
 
+    // Deprecado: el frontend calcula las semanas del mes localmente (mismo
+    // cálculo que calcularSemanasDelMes, ver ese método) y hoy le pide a este
+    // método que vuelva a resolver "qué semana es la número N" solo para
+    // llegar al rango de fechas real. getTurnosPorRangoFecha (más abajo) hace
+    // lo mismo recibiendo el rango directo, sin ese viaje redundante. Se
+    // mantiene este método hasta que el frontend migre (Etapa 6 del plan de
+    // mantenibilidad); recién ahí se borra junto con calcularSemanasDelMes y
+    // el endpoint /semanas-del-mes.
+    @Deprecated
     public List<TurnoDTO> getTurnosPorSemanaEstricta(int mes, int anio, int numeroSemana) {
         List<List<String>> semanasDelMes = calcularSemanasDelMes(mes, anio);
-        List<TurnoDTO> turnosDTO = new ArrayList<>();
 
-        // Validar que el número de semana sea válido
         if (numeroSemana < 1 || numeroSemana > semanasDelMes.size()) {
             throw new IllegalArgumentException("El número de semana " + numeroSemana + " no es válido para el mes " + mes + "/" + anio + ". Hay " + semanasDelMes.size() + " semanas.");
         }
 
-        // Obtener la semana específica (el índice es numeroSemana - 1 porque las listas empiezan en 0)
         List<String> semana = semanasDelMes.get(numeroSemana - 1);
-
-        if (!semana.isEmpty()) {
-            LocalDate inicioSemana = LocalDate.parse(semana.get(0));
-            LocalDate finSemana = LocalDate.parse(semana.get(semana.size() - 1));
-
-            List<Turno> turnos = turnoRepository.findByFechaBetween(inicioSemana, finSemana);
-            Map<Long, Double> horasSemanalesPorColaborador = calcularHorasPorColaborador(turnos);
-
-            // Convertir turnos a DTO y asignar horas semanales
-            for (Turno turno : turnos) {
-                TurnoDTO dto = convertToDTO(turno);
-                dto.setHorasTotalesSemana(horasSemanalesPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0));
-                turnosDTO.add(dto);
-            }
+        if (semana.isEmpty()) {
+            return new ArrayList<>();
         }
 
+        LocalDate inicioSemana = LocalDate.parse(semana.get(0));
+        LocalDate finSemana = LocalDate.parse(semana.get(semana.size() - 1));
+        return getTurnosPorRangoFecha(inicioSemana, finSemana);
+    }
+
+    // Turnos de un rango de fechas arbitrario (una semana, típicamente) con
+    // horasTotalesSemana ya calculado por colaborador. El caller (frontend)
+    // decide el rango — no hace falta que el backend sepa nada de "semanas
+    // del mes" para esto, es aritmética de fechas que ya vive del otro lado.
+    public List<TurnoDTO> getTurnosPorRangoFecha(LocalDate inicio, LocalDate fin) {
+        List<Turno> turnos = turnoRepository.findByFechaBetween(inicio, fin);
+        Map<Long, Double> horasSemanalesPorColaborador = calcularHorasPorColaborador(turnos);
+
+        List<TurnoDTO> turnosDTO = new ArrayList<>();
+        for (Turno turno : turnos) {
+            TurnoDTO dto = convertToDTO(turno);
+            dto.setHorasTotalesSemana(horasSemanalesPorColaborador.getOrDefault(turno.getColaborador().getId(), 0.0));
+            turnosDTO.add(dto);
+        }
         return turnosDTO;
     }
 

@@ -190,9 +190,17 @@ public class ColaboradorService {
     }
 
     // Eliminar un colaborador
-    public void deleteColaborador(Long id) {
+    public void deleteColaborador(Long id) throws IOException {
         Colaborador colaborador = colaboradorRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Colaborador con ID " + id + " no encontrado"));
+
+        // Antes esto nunca se llamaba: cada colaborador borrado dejaba su foto
+        // huérfana en Cloudinary para siempre (mismo patrón que updateColaborador
+        // ya usa al reemplazar una foto, ver más arriba).
+        if (colaborador.getFotoUrl() != null) {
+            cloudinaryService.deleteImage(getPublicIdFromUrl(colaborador.getFotoUrl()));
+        }
+
         colaboradorRepository.delete(colaborador);
         log.info("Colaborador eliminado: id={}", id);
     }

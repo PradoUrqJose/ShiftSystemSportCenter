@@ -2,6 +2,7 @@ package com.sportcenter.shift_manager.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +47,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 errores.put(fe.getField(), fe.getDefaultMessage()));
         log.debug("400 (validación): {}", errores);
         return ResponseEntity.badRequest().body(errores);
+    }
+
+    // Borrar un colaborador/tienda/puesto que todavía tiene turnos asociados
+    // viola la FK y Postgres lo rechaza — antes esto caía en el catch-all de
+    // abajo (500 "error interno"). 409 Conflict es el código correcto para
+    // "no se puede completar la operación por el estado actual del recurso".
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<String> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        log.debug("409 (integridad referencial): {}", ex.getMessage());
+        return ResponseEntity.status(409).body("No se puede eliminar: tiene registros asociados (por ejemplo, turnos).");
     }
 
     // Login fallido: nunca decimos si falló el usuario o la contraseña,

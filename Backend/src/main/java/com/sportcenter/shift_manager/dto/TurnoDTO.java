@@ -1,15 +1,21 @@
 package com.sportcenter.shift_manager.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+// @Builder en vez de armar esto con el constructor posicional de 14
+// parámetros (varios del mismo tipo Long/String): con nombre de campo por
+// valor, reordenar dos campos por error ya no compila silenciosamente
+// distinto — ver TurnoService.convertToDTO.
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class TurnoDTO {
     private Long id;
     private Long colaboradorId;

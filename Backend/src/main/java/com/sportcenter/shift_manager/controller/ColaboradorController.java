@@ -67,7 +67,7 @@ public class ColaboradorController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteColaborador(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteColaborador(@PathVariable Long id) throws IOException {
         colaboradorService.deleteColaborador(id);
         return ResponseEntity.noContent().build();
     }
