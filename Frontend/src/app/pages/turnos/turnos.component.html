@@ -19,6 +19,13 @@
             <i class="fa-solid fa-copy mr-1"></i>
             Copiar semana anterior
           </button>
+          <button type="button"
+            class="buttonStyle gray-button font-bold py-2 px-3 rounded-lg transition transform hover:scale-105"
+            (click)="abrirModalTurnosMasivos()"
+            title="Asigna el mismo turno a varios colaboradores a la vez">
+            <i class="fa-solid fa-users mr-1"></i>
+            Turnos masivos
+          </button>
         </div>
 
         <!-- Filtros (derecha) -->
@@ -116,3 +123,9 @@
     [tiendas$]="tiendas$" (cerrarModalEvent)="cerrarModal()" (turnoGuardado)="manejarTurnoGuardado()"
     (turnoEliminado)="manejarTurnoEliminado()">
   </app-turno-modal>
+
+  <!-- Modal para Turnos Masivos -->
+  <app-turnos-masivos-modal [mostrarModal]="mostrarModalTurnosMasivos" [isModalVisible]="isModalTurnosMasivosVisible"
+    [colaboradores]="(colaboradores$ | async) || []" [tiendas]="(tiendas$ | async) || []"
+    (cerrarModalEvent)="cerrarModalTurnosMasivos()" (turnosCreados)="manejarTurnosMasivosCreados()">
+  </app-turnos-masivos-modal>

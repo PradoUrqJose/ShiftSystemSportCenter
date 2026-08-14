@@ -39,13 +39,14 @@ import { FilterBarComponent } from '../../components/filter-bar/filter-bar.compo
 import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../utils/modal-timing';
 
 import { TurnoModalComponent } from './turno-modal/turno-modal.component'; // Nuevo componente
+import { TurnosMasivosModalComponent } from './turnos-masivos-modal/turnos-masivos-modal.component';
 
 @Component({
   selector: 'app-turnos',
   templateUrl: './turnos.component.html',
   standalone: true,
   styleUrls: ['./turnos.component.css'],
-  imports: [CommonModule, FormsModule, RouterLink, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent],
+  imports: [CommonModule, FormsModule, RouterLink, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent, TurnosMasivosModalComponent],
   // TurnosCalendarService: una instancia propia por página (no singleton),
   // dueña de qué semana/mes se muestra y qué turnos trae — ver el servicio.
   providers: [TurnosCalendarService],
@@ -57,6 +58,10 @@ export default class TurnosComponent implements OnInit, OnDestroy {
   tiendas$: Observable<Tienda[]> = of([]); // Observable de tiendas
   isSubmitting: boolean = false; // Bandera para deshabilitar el botón de envío
   copiandoSemana: boolean = false; // Bandera para deshabilitar "Copiar semana anterior" mientras corre
+
+  //? Manejo de modal de Turnos Masivos
+  mostrarModalTurnosMasivos: boolean = false;
+  isModalTurnosMasivosVisible: boolean = false;
 
   //? Manejo de MODAL
   mostrarModal$!: Observable<boolean>;
@@ -261,6 +266,21 @@ export default class TurnosComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.isSubmitting = false; // Rehabilitar el botón después de que termine la animación
     }, MODAL_CLOSE_DELAY_MS); // Debe coincidir con la duración de la animación CSS
+  }
+
+  //! Métodos de modal de Turnos Masivos
+  abrirModalTurnosMasivos(): void {
+    this.mostrarModalTurnosMasivos = true;
+    setTimeout(() => (this.isModalTurnosMasivosVisible = true), MODAL_OPEN_DELAY_MS);
+  }
+
+  cerrarModalTurnosMasivos(): void {
+    this.isModalTurnosMasivosVisible = false;
+    setTimeout(() => (this.mostrarModalTurnosMasivos = false), MODAL_CLOSE_DELAY_MS);
+  }
+
+  manejarTurnosMasivosCreados(): void {
+    this.manejarTurnoGuardado();
   }
 
   resetearEstadoModal(): void {

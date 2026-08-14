@@ -1,0 +1,161 @@
+<div *ngIf="mostrarModal"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm p-4"
+  (click)="cerrarModal()">
+  <div
+    class="bg-white p-8 rounded-2xl shadow-2xl transform transition-all duration-200 w-full max-w-[920px] max-h-[90vh] overflow-y-auto relative"
+    [ngClass]="{'opacity-0 -translate-y-10': !isModalVisible, 'opacity-100 translate-y-0': isModalVisible}"
+    (click)="$event.stopPropagation()">
+    <!-- Botón de cierre -->
+    <button (click)="cerrarModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition"
+      aria-label="Cerrar">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+
+    <!-- Encabezado -->
+    <div class="text-center pb-6 border-b border-gray-100">
+      <h3 class="text-2xl font-bold text-gray-800 mb-2">Turnos Masivos</h3>
+      <p class="text-gray-500 text-sm">Asigna el mismo horario a varios colaboradores durante un período.</p>
+    </div>
+
+    <div class="mt-6 grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6">
+      <!-- ============ Colaboradores ============ -->
+      <div>
+        <div class="flex items-baseline justify-between mb-2">
+          <span class="text-sm font-semibold text-gray-700">Colaboradores</span>
+          <span class="text-xs font-bold text-blue-600">{{ seleccionados.size }} seleccionado{{ seleccionados.size === 1 ? '' : 's' }}</span>
+        </div>
+        <input type="text" [(ngModel)]="busquedaColaborador" placeholder="Buscar por nombre…"
+          class="w-full p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm mb-2" />
+        <div class="flex gap-3 mb-2">
+          <button type="button" class="text-xs font-semibold text-blue-500 hover:text-blue-700 transition" (click)="seleccionarTodos()">Seleccionar todos</button>
+          <button type="button" class="text-xs font-semibold text-blue-500 hover:text-blue-700 transition" (click)="deseleccionarTodos()">Ninguno</button>
+        </div>
+        <div class="border border-gray-200 rounded-xl bg-gray-50 max-h-80 overflow-y-auto">
+          <label *ngFor="let colaborador of colaboradoresFiltrados; trackBy: trackByColaboradorId"
+            class="flex items-center gap-2 px-3 py-2 border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-blue-50 transition">
+            <input type="checkbox" class="w-4 h-4 text-blue-600 focus:ring-blue-500 flex-shrink-0"
+              [checked]="estaSeleccionado(colaborador.id)" (change)="toggleColaborador(colaborador.id)" />
+            <span class="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+              {{ iniciales(colaborador) }}
+            </span>
+            <span class="min-w-0">
+              <span class="block text-sm font-semibold text-gray-800 truncate">{{ colaborador.nombre }} {{ colaborador.apellido }}</span>
+              <span class="block text-xs text-gray-400 truncate">{{ colaborador.empresaNombre }}</span>
+            </span>
+          </label>
+          <div *ngIf="colaboradoresFiltrados.length === 0" class="px-3 py-6 text-sm text-gray-400 text-center">
+            No se encontraron colaboradores
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ Formulario ============ -->
+      <div class="space-y-6">
+        <!-- Horario -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Horario</label>
+          <div class="p-4 bg-gray-50 rounded-xl space-y-3" *ngIf="plantillas.length > 0">
+            <div class="flex flex-wrap gap-2">
+              <button type="button" *ngFor="let plantilla of plantillas; trackBy: trackByPlantillaId"
+                (click)="seleccionarPlantilla(plantilla)"
+                class="inline-flex items-center px-3 py-2 rounded-full border text-xs font-mono font-semibold transition"
+                [ngClass]="esPlantillaSeleccionada(plantilla) ? 'bg-blue-100 border-blue-400 text-blue-700' : 'bg-white border-gray-300 text-gray-700 hover:border-blue-400'">
+                {{ formatearHora(plantilla.horaEntrada) }}–{{ formatearHora(plantilla.horaSalida) }}
+              </button>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4 mt-3">
+            <div>
+              <span class="block text-xs font-medium text-gray-500 mb-1">Entrada</span>
+              <app-time-picker [value]="horaEntrada" (valueChange)="onHoraEntradaChange($event)"></app-time-picker>
+            </div>
+            <div>
+              <span class="block text-xs font-medium text-gray-500 mb-1">Salida</span>
+              <app-time-picker [value]="horaSalida" (valueChange)="onHoraSalidaChange($event)"></app-time-picker>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tienda -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Tienda</label>
+          <app-tienda-select [tiendas]="tiendas" [value]="tiendaId" (valueChange)="onTiendaChange($event)"></app-tienda-select>
+          <p class="text-xs text-gray-400 mt-1.5">Una sola tienda para todo el lote.</p>
+        </div>
+
+        <!-- Período -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Período</label>
+          <app-date-range-picker [inicio]="fechaInicio" [fin]="fechaFin" (rangoChange)="onRangoChange($event)"></app-date-range-picker>
+        </div>
+
+        <!-- Días a incluir -->
+        <div>
+          <div class="flex items-baseline justify-between mb-2">
+            <label class="block text-sm font-medium text-gray-700">Días a incluir</label>
+            <div class="flex gap-3">
+              <button type="button" class="text-xs font-semibold text-blue-500 hover:text-blue-700 transition" (click)="aplicarPresetDias('habiles')">Lun–Vie</button>
+              <button type="button" class="text-xs font-semibold text-blue-500 hover:text-blue-700 transition" (click)="aplicarPresetDias('todos')">Todos</button>
+            </div>
+          </div>
+          <div class="flex gap-1.5 flex-wrap">
+            <button type="button" *ngFor="let label of diasSemanaLabels; let i = index"
+              (click)="toggleDia(i + 1)"
+              class="w-9 h-9 rounded-lg border text-xs font-bold transition"
+              [ngClass]="diaActivo(i + 1) ? 'bg-blue-500 border-blue-500 text-white' : 'bg-white border-gray-300 text-gray-500 hover:border-blue-400'">
+              {{ label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Vista previa / detalle antes de crear -->
+        <div class="p-4 rounded-xl border" [ngClass]="previewListo ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'">
+          <div class="flex items-start gap-3">
+            <span class="text-lg leading-none">📋</span>
+            <div class="flex-1 min-w-0">
+              <ng-container *ngIf="previewCargando">
+                <p class="text-sm font-bold text-gray-400">Calculando…</p>
+              </ng-container>
+              <ng-container *ngIf="!previewCargando">
+                <p class="text-sm font-bold" [ngClass]="previewListo ? 'text-blue-700' : 'text-gray-400'">
+                  <ng-container *ngIf="previewListo; else sinDatos">
+                    {{ totalACrear }} turno{{ totalACrear === 1 ? '' : 's' }} {{ totalACrear === 1 ? 'se va a crear' : 'se van a crear' }}
+                    <ng-container *ngIf="conflictos.length > 0">, {{ conflictos.length }} se omiten</ng-container>
+                  </ng-container>
+                  <ng-template #sinDatos>Completa colaboradores, horario, tienda y período</ng-template>
+                </p>
+                <p class="text-xs text-gray-500 mt-1" *ngIf="previewListo">
+                  Los que ya tienen un turno cargado ese día no se tocan.
+                </p>
+                <button type="button" *ngIf="previewListo && conflictos.length > 0"
+                  class="text-xs font-bold text-blue-600 hover:text-blue-800 mt-2 flex items-center gap-1"
+                  (click)="toggleDetalleConflictos()">
+                  <i class="fa-solid fa-chevron-right text-[10px] transition-transform" [class.rotate-90]="mostrarDetalleConflictos"></i>
+                  {{ mostrarDetalleConflictos ? 'Ocultar' : 'Ver' }} quiénes se omiten ({{ conflictos.length }})
+                </button>
+                <ul *ngIf="mostrarDetalleConflictos" class="mt-2 space-y-1 max-h-36 overflow-y-auto">
+                  <li *ngFor="let conflicto of conflictos"
+                    class="flex justify-between gap-2 text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded-lg px-2.5 py-1.5">
+                    <span class="font-semibold truncate">{{ conflicto.colaboradorNombre }}</span>
+                    <span class="flex-shrink-0">{{ diaSemanaNombre(conflicto.fecha) }} {{ formatearFechaCorta(conflicto.fecha) }} — ya tiene turno</span>
+                  </li>
+                </ul>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end">
+          <button type="button"
+            class="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-6 rounded-xl hover:from-blue-600 hover:to-blue-700 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            [disabled]="isSubmitting || !previewListo || totalACrear === 0"
+            (click)="crearTurnos()">
+            {{ totalACrear > 0 ? 'Crear ' + totalACrear + ' turno' + (totalACrear === 1 ? '' : 's') : 'Crear turnos' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

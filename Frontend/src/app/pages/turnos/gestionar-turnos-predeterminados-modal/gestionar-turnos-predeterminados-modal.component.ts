@@ -58,7 +58,7 @@ export class GestionarTurnosPredeterminadosModalComponent implements OnDestroy {
   agregarPlantilla(): void {
     this.errorMessage = null;
     if (!this.nuevaHoraEntrada || !this.nuevaHoraSalida) {
-      this.errorMessage = 'Completá hora de entrada y salida.';
+      this.errorMessage = 'Completa la hora de entrada y de salida.';
       return;
     }
     if (this.nuevaHoraEntrada >= this.nuevaHoraSalida) {
