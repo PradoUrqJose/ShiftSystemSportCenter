@@ -4,6 +4,9 @@ import com.sportcenter.shift_manager.dto.ColaboradorDTO;
 import com.sportcenter.shift_manager.model.Colaborador;
 import com.sportcenter.shift_manager.service.ColaboradorService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,8 +33,9 @@ public class ColaboradorController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ColaboradorDTO>> getAllColaboradores() {
-        return ResponseEntity.ok(colaboradorService.getAllColaboradores());
+    public ResponseEntity<Page<ColaboradorDTO>> getAllColaboradores(
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(colaboradorService.getAllColaboradores(pageable));
     }
 
     @GetMapping("/empresa/{empresaId}")

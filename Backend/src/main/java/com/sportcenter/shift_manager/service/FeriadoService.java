@@ -3,6 +3,8 @@ package com.sportcenter.shift_manager.service;
 import com.sportcenter.shift_manager.model.Feriado;
 import com.sportcenter.shift_manager.repository.FeriadoRepository;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +14,8 @@ import java.util.List;
 
 @Service
 public class FeriadoService {
+    private static final Logger log = LoggerFactory.getLogger(FeriadoService.class);
+
     private final FeriadoRepository feriadoRepository;
 
     public FeriadoService(FeriadoRepository feriadoRepository) {
@@ -41,6 +45,7 @@ public class FeriadoService {
                     new Feriado(null, LocalDate.of(2025, 12, 25), "Navidad")
             );
             feriadoRepository.saveAll(feriadosIniciales);
+            log.info("Feriados iniciales cargados: {}", feriadosIniciales.size());
         }
     }
 

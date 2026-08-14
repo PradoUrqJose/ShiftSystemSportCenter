@@ -7,6 +7,8 @@ import com.sportcenter.shift_manager.dto.UsuarioDTO;
 import com.sportcenter.shift_manager.model.Usuario;
 import com.sportcenter.shift_manager.repository.UsuarioRepository;
 import com.sportcenter.shift_manager.security.JwtService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final AuthenticationManager authenticationManager;
     private final UsuarioRepository usuarioRepository;
@@ -44,6 +47,7 @@ public class AuthService {
                 .orElseThrow(); // no debería pasar: authenticate() ya lo validó arriba
 
         String token = jwtService.generateToken(usuario);
+        log.info("Login exitoso: username={}", usuario.getUsername());
         return new LoginResponse(token, usuario.getUsername(), usuario.getRole().name());
     }
 
@@ -60,6 +64,7 @@ public class AuthService {
         usuario.setHabilitado(true);
 
         Usuario guardado = usuarioRepository.save(usuario);
+        log.info("Usuario creado: username={}, role={}", guardado.getUsername(), guardado.getRole());
         return new UsuarioDTO(guardado.getId(), guardado.getUsername(), guardado.getRole().name(), guardado.isHabilitado());
     }
 }

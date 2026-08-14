@@ -2,9 +2,12 @@ package com.sportcenter.shift_manager.controller;
 
 import com.sportcenter.shift_manager.dto.ResumenMensualDTO;
 import com.sportcenter.shift_manager.dto.TurnoDTO;
-import com.sportcenter.shift_manager.model.Turno;
+import com.sportcenter.shift_manager.dto.TurnoRequestDTO;
 import com.sportcenter.shift_manager.service.TurnoService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +25,7 @@ public class TurnoController {
     }
 
     @PostMapping
-    public ResponseEntity<TurnoDTO> saveTurno(@Valid @RequestBody Turno turno) {
+    public ResponseEntity<TurnoDTO> saveTurno(@Valid @RequestBody TurnoRequestDTO turno) {
         TurnoDTO savedTurno = turnoService.saveTurno(turno);
         return ResponseEntity.ok(savedTurno);
     }
@@ -46,14 +49,15 @@ public class TurnoController {
     }
 
     @GetMapping("/mensual")
-    public ResponseEntity<List<TurnoDTO>> getTurnosMensuales(
+    public ResponseEntity<Page<TurnoDTO>> getTurnosMensuales(
             @RequestParam("mes") int mes,
-            @RequestParam("anio") int anio) {
-        return ResponseEntity.ok(turnoService.getTurnosMensuales(mes, anio));
+            @RequestParam("anio") int anio,
+            @PageableDefault(size = 30) Pageable pageable) {
+        return ResponseEntity.ok(turnoService.getTurnosMensuales(mes, anio, pageable));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TurnoDTO> updateTurno(@PathVariable Long id, @Valid @RequestBody Turno turno) {
+    public ResponseEntity<TurnoDTO> updateTurno(@PathVariable Long id, @Valid @RequestBody TurnoRequestDTO turno) {
         TurnoDTO updatedTurno = turnoService.updateTurno(id, turno);
         return ResponseEntity.ok(updatedTurno);
     }
