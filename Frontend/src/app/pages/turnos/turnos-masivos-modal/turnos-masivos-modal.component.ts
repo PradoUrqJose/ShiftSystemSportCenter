@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { eachDayOfInterval, format } from 'date-fns';
 import { Observable, Subject, catchError, debounceTime, forkJoin, of, switchMap, takeUntil, tap } from 'rxjs';
 import Notiflix from 'notiflix';
 import { Colaborador } from '../../../services/colaborador.service';
@@ -10,7 +9,7 @@ import { TurnoPayload, TurnoService } from '../../../services/turno.service';
 import { TurnoPredeterminado, TurnoPredeterminadoService } from '../../../services/turno-predeterminado.service';
 import { TimePickerComponent } from '../../../components/time-picker/time-picker.component';
 import { TiendaSelectComponent } from '../../../components/tienda-select/tienda-select.component';
-import { DateRangePickerComponent } from '../../../components/date-range-picker/date-range-picker.component';
+import { WeekDaysPickerComponent } from '../../../components/week-days-picker/week-days-picker.component';
 import { MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
 
 interface Conflicto {
@@ -29,7 +28,7 @@ interface Conflicto {
 @Component({
   selector: 'app-turnos-masivos-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, TimePickerComponent, TiendaSelectComponent, DateRangePickerComponent],
+  imports: [CommonModule, FormsModule, TimePickerComponent, TiendaSelectComponent, WeekDaysPickerComponent],
   templateUrl: './turnos-masivos-modal.component.html',
   styleUrls: ['./turnos-masivos-modal.component.css'],
 })
@@ -42,7 +41,6 @@ export class TurnosMasivosModalComponent implements OnInit, OnDestroy {
   @Output() cerrarModalEvent = new EventEmitter<void>();
   @Output() turnosCreados = new EventEmitter<void>();
 
-  readonly diasSemanaLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   readonly diasSemanaNombres = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
   plantillas: TurnoPredeterminado[] = [];
@@ -52,9 +50,7 @@ export class TurnosMasivosModalComponent implements OnInit, OnDestroy {
   horaEntrada: string = '';
   horaSalida: string = '';
   tiendaId: number | null = null;
-  fechaInicio: string | null = null;
-  fechaFin: string | null = null;
-  diasSeleccionados = new Set<number>([1, 2, 3, 4, 5]); // Lun-Vie por defecto
+  fechasSeleccionadas = new Set<string>(); // yyyy-MM-dd
 
   previewCargando: boolean = false;
   previewListo: boolean = false;
@@ -161,26 +157,8 @@ export class TurnosMasivosModalComponent implements OnInit, OnDestroy {
     this.recalcular$.next();
   }
 
-  onRangoChange(rango: { inicio: string; fin: string }): void {
-    this.fechaInicio = rango.inicio;
-    this.fechaFin = rango.fin;
-    this.recalcular$.next();
-  }
-
-  toggleDia(dow: number): void {
-    if (this.diasSeleccionados.has(dow)) this.diasSeleccionados.delete(dow);
-    else this.diasSeleccionados.add(dow);
-    this.recalcular$.next();
-  }
-
-  diaActivo(dow: number): boolean {
-    return this.diasSeleccionados.has(dow);
-  }
-
-  aplicarPresetDias(preset: 'habiles' | 'todos'): void {
-    this.diasSeleccionados.clear();
-    const dias = preset === 'habiles' ? [1, 2, 3, 4, 5] : [1, 2, 3, 4, 5, 6, 7];
-    dias.forEach((d) => this.diasSeleccionados.add(d));
+  onFechasChange(fechas: Set<string>): void {
+    this.fechasSeleccionadas = fechas;
     this.recalcular$.next();
   }
 
@@ -189,24 +167,21 @@ export class TurnosMasivosModalComponent implements OnInit, OnDestroy {
   }
 
   get formularioCompleto(): boolean {
-    return this.seleccionados.size > 0 && !!this.horaEntrada && !!this.horaSalida && !!this.tiendaId && !!this.fechaInicio && !!this.fechaFin;
+    return this.seleccionados.size > 0 && !!this.horaEntrada && !!this.horaSalida && !!this.tiendaId && this.fechasSeleccionadas.size > 0;
   }
 
-  private diasCalificados(): Date[] {
-    if (!this.fechaInicio || !this.fechaFin) return [];
-    const inicio = new Date(`${this.fechaInicio}T00:00:00`);
-    const fin = new Date(`${this.fechaFin}T00:00:00`);
-    if (fin < inicio) return [];
-    return eachDayOfInterval({ start: inicio, end: fin }).filter((d) => {
-      const iso = d.getDay() === 0 ? 7 : d.getDay();
-      return this.diasSeleccionados.has(iso);
-    });
+  // Las fechas ya vienen como yyyy-MM-dd, así que ordenan cronológicamente
+  // con un sort de string plano — no hace falta date-fns acá.
+  private rangoConsulta(): { inicio: string; fin: string } | null {
+    if (this.fechasSeleccionadas.size === 0) return null;
+    const fechas = [...this.fechasSeleccionadas].sort();
+    return { inicio: fechas[0], fin: fechas[fechas.length - 1] };
   }
 
   private calcularPreview(): Observable<void> {
-    const dias = this.diasCalificados();
+    const rango = this.rangoConsulta();
 
-    if (!this.formularioCompleto || dias.length === 0) {
+    if (!this.formularioCompleto || !rango) {
       this.previewListo = false;
       this.previewCargando = false;
       this.conflictos = [];
@@ -215,7 +190,7 @@ export class TurnosMasivosModalComponent implements OnInit, OnDestroy {
     }
 
     this.previewCargando = true;
-    return this.turnoService.getTurnosPorRangoFecha(this.fechaInicio!, this.fechaFin!).pipe(
+    return this.turnoService.getTurnosPorRangoFecha(rango.inicio, rango.fin).pipe(
       tap((existentes) => {
         const existentesSet = new Set(existentes.map((t) => `${t.colaboradorId}_${t.fecha}`));
         const conflictos: Conflicto[] = [];
@@ -223,8 +198,7 @@ export class TurnosMasivosModalComponent implements OnInit, OnDestroy {
 
         this.seleccionados.forEach((colId) => {
           const colaborador = this.colaboradores.find((c) => c.id === colId);
-          dias.forEach((dia) => {
-            const fechaIso = format(dia, 'yyyy-MM-dd');
+          this.fechasSeleccionadas.forEach((fechaIso) => {
             total++;
             if (existentesSet.has(`${colId}_${fechaIso}`)) {
               conflictos.push({
@@ -281,13 +255,11 @@ export class TurnosMasivosModalComponent implements OnInit, OnDestroy {
 
   private ejecutarCreacion(): void {
     this.isSubmitting = true;
-    const dias = this.diasCalificados();
     const clavesOmitidas = new Set(this.conflictos.map((c) => `${c.colaboradorId}_${c.fecha}`));
     const payloads: TurnoPayload[] = [];
 
     this.seleccionados.forEach((colId) => {
-      dias.forEach((dia) => {
-        const fechaIso = format(dia, 'yyyy-MM-dd');
+      this.fechasSeleccionadas.forEach((fechaIso) => {
         if (clavesOmitidas.has(`${colId}_${fechaIso}`)) return;
         payloads.push({
           colaboradorId: colId,
@@ -340,9 +312,7 @@ export class TurnosMasivosModalComponent implements OnInit, OnDestroy {
     this.horaEntrada = '';
     this.horaSalida = '';
     this.tiendaId = null;
-    this.fechaInicio = null;
-    this.fechaFin = null;
-    this.diasSeleccionados = new Set([1, 2, 3, 4, 5]);
+    this.fechasSeleccionadas = new Set();
     this.previewListo = false;
     this.conflictos = [];
     this.totalACrear = 0;
