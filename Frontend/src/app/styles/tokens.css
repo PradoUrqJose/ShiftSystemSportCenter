@@ -39,8 +39,10 @@
      lugares sin reinventar el hex cada vez. */
   --hue-teal: #0d8f80;
   --hue-teal-soft: #e1f5f1;
+  --hue-teal-border: #0d8f8026;
   --hue-violet: #5b3df0;
   --hue-violet-soft: #ece9fd;
+  --hue-violet-border: #5b3df026;
 
   /* ---------- Color: estados de turno ---------- */
   /* Fase 2 del rediseño reconcilió el fondo de la pill (verde normal vs
@@ -66,6 +68,21 @@
   --shift-overtime-border: #d9d5ab;
   --shift-holiday-accent: #a14242;
   --shift-today-accent: #3445b3;
+
+  /* Fondos "soft" y tintas de texto derivados de los acentos de arriba —
+     Fase 5 (barrido) los saca de app-badge, que los tenía retipeados a mano
+     en vez de reusar el --shift-*-accent ya definido (mismo patrón que
+     --hue-teal-soft/--hue-violet-soft, solo que faltaba para estos dos). */
+  --shift-holiday-soft: #a1424220;
+  --shift-warning-soft: #ff5e6020;
+  --shift-overtime-ink: #6b5f1f;
+  --shift-warning-ink: #c23b3d;
+
+  /* Fondo del avatar sin foto — coincide en valor con --shift-split-1-bg
+     por casualidad (ambos nacieron del mismo azul pastel de Tailwind), pero
+     son conceptos distintos (identidad de colaborador vs. turno partido) y
+     no deben quedar acoplados a un cambio futuro del otro. */
+  --color-avatar-bg: #dbeafe;
 
   /* ---------- Radio ---------- */
   --radius-sm: 8px;

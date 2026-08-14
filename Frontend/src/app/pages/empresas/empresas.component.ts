@@ -14,11 +14,12 @@ import { Observable, Subject, takeUntil } from 'rxjs';
 import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../utils/modal-timing';
 import { TableShellComponent } from '../../components/ui/table-shell/table-shell.component';
 import { SkeletonComponent } from '../../components/ui/skeleton/skeleton.component';
+import { ButtonComponent } from '../../components/ui/button/button.component';
 
 @Component({
   selector: 'app-empresas',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, TableShellComponent, SkeletonComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, TableShellComponent, SkeletonComponent, ButtonComponent],
   templateUrl: './empresas.component.html',
   styleUrls: ['./empresas.component.css'],
 })

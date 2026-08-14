@@ -59,12 +59,12 @@
 .app-btn--icon.hue-teal {
   background-color: var(--hue-teal-soft);
   color: var(--hue-teal);
-  border-color: #0d8f8026;
+  border-color: var(--hue-teal-border);
 }
 .app-btn--icon.hue-violet {
   background-color: var(--hue-violet-soft);
   color: var(--hue-violet);
-  border-color: #5b3df026;
+  border-color: var(--hue-violet-border);
 }
 .app-btn--icon.hue-brand {
   background-color: var(--color-brand-soft);

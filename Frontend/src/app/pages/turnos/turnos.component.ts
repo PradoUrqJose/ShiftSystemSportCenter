@@ -26,7 +26,6 @@ import { BehaviorSubject, combineLatest, map, Observable, of, Subject, takeUntil
 // -------------- Angular Modules Imports --------------
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 
 // -------------- External Libraries Imports --------------
 import Notiflix from 'notiflix';
@@ -42,6 +41,7 @@ import { TurnoModalComponent } from './turno-modal/turno-modal.component'; // Nu
 import { TurnosMasivosModalComponent } from './turnos-masivos-modal/turnos-masivos-modal.component';
 import { SkeletonComponent } from '../../components/ui/skeleton/skeleton.component';
 import { WeeklyScheduleSkeletonComponent } from '../../components/ui/weekly-schedule-skeleton/weekly-schedule-skeleton.component';
+import { ButtonComponent } from '../../components/ui/button/button.component';
 import { PrimeraPalabraPipe } from '../../pipes/primera-palabra.pipe';
 
 @Component({
@@ -49,7 +49,7 @@ import { PrimeraPalabraPipe } from '../../pipes/primera-palabra.pipe';
   templateUrl: './turnos.component.html',
   standalone: true,
   styleUrls: ['./turnos.component.css'],
-  imports: [CommonModule, FormsModule, RouterLink, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent, TurnosMasivosModalComponent, SkeletonComponent, WeeklyScheduleSkeletonComponent, PrimeraPalabraPipe],
+  imports: [CommonModule, FormsModule, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent, TurnosMasivosModalComponent, SkeletonComponent, WeeklyScheduleSkeletonComponent, PrimeraPalabraPipe, ButtonComponent],
   // TurnosCalendarService: una instancia propia por página (no singleton),
   // dueña de qué semana/mes se muestra y qué turnos trae — ver el servicio.
   providers: [TurnosCalendarService],

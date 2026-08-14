@@ -7,11 +7,12 @@ import { AgregarFeriadoModalComponent } from '../agregar-feriado-modal/agregar-f
 import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
 import { TableShellComponent } from '../../../components/ui/table-shell/table-shell.component';
 import { SkeletonComponent } from '../../../components/ui/skeleton/skeleton.component';
+import { ButtonComponent } from '../../../components/ui/button/button.component';
 
 @Component({
   selector: 'app-gestionar-feriados',
   standalone: true,
-  imports: [CommonModule, AgregarFeriadoModalComponent, TableShellComponent, SkeletonComponent],
+  imports: [CommonModule, AgregarFeriadoModalComponent, TableShellComponent, SkeletonComponent, ButtonComponent],
   templateUrl: './gestionar-feriados.component.html',
   styleUrls: ['./gestionar-feriados.component.css']
 })

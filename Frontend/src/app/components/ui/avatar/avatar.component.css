@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background-color: #dbeafe;
+  background-color: var(--color-avatar-bg);
   color: var(--color-brand);
   font-weight: 800;
   flex-shrink: 0;

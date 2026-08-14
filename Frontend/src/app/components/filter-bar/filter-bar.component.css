@@ -180,7 +180,7 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background-color: #dbeafe;
+  background-color: var(--color-avatar-bg);
   color: var(--color-brand);
   display: flex;
   align-items: center;

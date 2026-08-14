@@ -7,17 +7,18 @@ import {
 } from '../../services/colaborador.service';
 import { EmpresaService, Empresa } from '../../services/empresa.service';
 import { Observable, Subject, takeUntil } from 'rxjs';
-import { Router, RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
 import { Puesto, PuestoService } from '../../services/puesto.service';
 import { ColaboradorFormComponent } from './colaborador-form/colaborador-form.component';
 import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../utils/modal-timing';
 import { TableShellComponent } from '../../components/ui/table-shell/table-shell.component';
 import { SkeletonComponent } from '../../components/ui/skeleton/skeleton.component';
+import { ButtonComponent } from '../../components/ui/button/button.component';
 
 @Component({
   selector: 'app-colaboradores',
   standalone: true,
-  imports: [CommonModule, RouterModule, ColaboradorFormComponent, TableShellComponent, SkeletonComponent],
+  imports: [CommonModule, ColaboradorFormComponent, TableShellComponent, SkeletonComponent, ButtonComponent],
   templateUrl: './colaboradores.component.html',
   styleUrls: ['./colaboradores.component.css'],
 })
@@ -143,6 +144,10 @@ export default class ColaboradoresComponent implements OnInit, OnDestroy {
   onVerPerfil(colaboradorId: number): void {
     this.router.navigate(['/reportes/colaborador-profile', colaboradorId]);
     this.closeModal();
+  }
+
+  irAPuestos(): void {
+    this.router.navigate(['/puestos']);
   }
 
   trackByColaboradorId(_index: number, colaborador: Colaborador): number | undefined {
