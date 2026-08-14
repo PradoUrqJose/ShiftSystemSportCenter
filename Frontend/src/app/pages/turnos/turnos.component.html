@@ -57,39 +57,11 @@
   <!-- Skeleton de carga: grilla-fantasma con la forma real de cada vista
        (reemplaza el spinner .sk-circle genérico) — misma condición
        calendario.isLoading$ que ya controlaba el spinner, no se toca
-       TurnosCalendarService. -->
-  <div *ngIf="!calendario.vistaMensual && (calendario.isLoading$ | async)" class="table-wrapper" aria-hidden="true">
-    <table class="w-full shadow bg-white rounded-lg">
-      <thead>
-        <tr>
-          <th class="bg-blue-50 px-2 py-4 w-[100%]">
-            <app-skeleton width="90px" height="12px"></app-skeleton>
-          </th>
-          <th *ngFor="let _ of skeletonCols" class="bg-blue-50 px-2 py-4">
-            <app-skeleton width="32px" height="32px" shape="circle"></app-skeleton>
-          </th>
-          <th class="bg-blue-50 px-2 py-4 w-[6%]"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let _ of skeletonRows">
-          <td class="py-4 px-4">
-            <div class="flex items-center gap-3">
-              <app-skeleton width="48px" height="48px" shape="circle"></app-skeleton>
-              <div class="flex flex-col gap-2 flex-1">
-                <app-skeleton width="70%" height="12px"></app-skeleton>
-                <app-skeleton width="40%" height="10px"></app-skeleton>
-              </div>
-            </div>
-          </td>
-          <td *ngFor="let _ of skeletonCols" class="text-center px-2">
-            <app-skeleton width="90%" height="46px" radius="10px"></app-skeleton>
-          </td>
-          <td></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+       TurnosCalendarService. La ghost-table semanal se extrajo a
+       app-weekly-schedule-skeleton (Fase 4) porque semana-normal.component
+       necesitaba exactamente la misma. -->
+  <app-weekly-schedule-skeleton *ngIf="!calendario.vistaMensual && (calendario.isLoading$ | async)">
+  </app-weekly-schedule-skeleton>
 
   <div *ngIf="calendario.vistaMensual && (calendario.isLoading$ | async)"
     class="flex flex-col sm:flex-row gap-3" aria-hidden="true">

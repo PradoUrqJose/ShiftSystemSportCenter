@@ -1,12 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { NgSelectModule } from '@ng-select/ng-select';
 import { ExportExcelComponent, ExportColumn } from '../../../components/export-excel/export-excel.component';
 import { ReporteService } from '../../../services/reporte.service';
 import { CalendarioService } from '../../../services/calendario.service';
 import { Turno } from '../../../services/turno.service';
 import { ReporteFiltrosService } from '../../../services/reporte-filtros.service';
+import { ReporteFiltrosToolbarComponent } from '../../../components/reporte-filtros-toolbar/reporte-filtros-toolbar.component';
+import { TableShellComponent } from '../../../components/ui/table-shell/table-shell.component';
+import { EmptyStateComponent } from '../../../components/ui/empty-state/empty-state.component';
 import { Subject, takeUntil } from 'rxjs';
 
 // TurnoDTO del backend + el apellido, agregado acá cruzando con la lista de
@@ -16,7 +17,7 @@ type ReporteTurnoFeriado = Turno & { apellido: string };
 @Component({
   selector: 'app-turnos-feriados',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgSelectModule, ExportExcelComponent],
+  imports: [CommonModule, ExportExcelComponent, ReporteFiltrosToolbarComponent, TableShellComponent, EmptyStateComponent],
   templateUrl: './turnos-feriados.component.html',
   styleUrls: ['./turnos-feriados.component.css'],
   // Instancia propia de ReporteFiltrosService para esta página (no singleton
@@ -25,6 +26,7 @@ type ReporteTurnoFeriado = Turno & { apellido: string };
 })
 export class TurnosFeriadosComponent implements OnInit, OnDestroy {
   reportes: ReporteTurnoFeriado[] = [];
+  buscando: boolean = false;
   exportColumns: ExportColumn[] = [
     { key: 'nombreColaborador', label: 'Colaborador' },
     { key: 'dniColaborador', label: 'DNI' },
@@ -59,6 +61,7 @@ export class TurnosFeriadosComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.buscando = true;
     this.reporteService
       .getTurnosFeriados(this.filtros.fechaInicio, this.filtros.fechaFin, this.filtros.colaboradoresSeleccionados)
       .pipe(takeUntil(this.destroy$))
@@ -69,10 +72,12 @@ export class TurnosFeriadosComponent implements OnInit, OnDestroy {
             return { ...reporte, apellido: colaborador ? colaborador.apellido : 'Desconocido' };
           });
           this.filtros.errorMessage = null;
+          this.buscando = false;
         },
         error: () => {
           this.filtros.errorMessage = 'Error al obtener el reporte de turnos en feriados.';
           this.reportes = [];
+          this.buscando = false;
         }
       });
   }

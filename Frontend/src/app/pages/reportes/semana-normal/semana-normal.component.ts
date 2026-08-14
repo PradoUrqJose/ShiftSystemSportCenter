@@ -14,11 +14,12 @@ import { TurnoModalComponent } from '../../turnos/turno-modal/turno-modal.compon
 import { ModalService } from '../../../services/modal.service';
 import { TiendaService } from '../../../services/tienda.service';
 import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
+import { WeeklyScheduleSkeletonComponent } from '../../../components/ui/weekly-schedule-skeleton/weekly-schedule-skeleton.component';
 
 @Component({
   selector: 'app-semana-normal',
   standalone: true,
-  imports: [WeeklyViewComponent, HeaderComponent, CommonModule, RouterModule, TurnoModalComponent], // Añadir el modal aquí
+  imports: [WeeklyViewComponent, HeaderComponent, CommonModule, RouterModule, TurnoModalComponent, WeeklyScheduleSkeletonComponent],
   templateUrl: './semana-normal.component.html',
   styleUrls: ['./semana-normal.component.css']
 })

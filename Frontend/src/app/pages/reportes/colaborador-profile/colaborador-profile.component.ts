@@ -15,13 +15,15 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { Turno, TurnoService } from '../../../services/turno.service';
 import { getEmpresaColor, getWallpStyles, lightenDarkenColor } from '../../../utils/color.util';
 import { crearOpcionesGraficoMensual, crearOpcionesGraficoTiendas, crearOpcionesGraficoSemanaActual } from '../../../utils/chart-config.util';
+import { ButtonComponent } from '../../../components/ui/button/button.component';
+import { EmptyStateComponent } from '../../../components/ui/empty-state/empty-state.component';
 
 Chart.register(...registerables, ChartDataLabels);
 
 @Component({
   selector: 'app-colaborador-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective, CountUpModule],
+  imports: [CommonModule, FormsModule, BaseChartDirective, CountUpModule, ButtonComponent, EmptyStateComponent],
   templateUrl: './colaborador-profile.component.html',
   styleUrls: ['./colaborador-profile.component.css']
 })

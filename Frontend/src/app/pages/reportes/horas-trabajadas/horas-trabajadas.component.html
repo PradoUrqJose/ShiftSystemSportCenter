@@ -1,172 +1,54 @@
-<h2 class="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+<h2 class="text-2xl font-bold mb-6 text-ink flex items-center gap-2">
   📊 Reporte de Horas Trabajadas
 </h2>
 
-<div *ngIf="filtros.errorMessage" class="bg-red-100 text-red-700 p-3 rounded-lg mb-4 border border-red-400">
-  {{ filtros.errorMessage }}
-</div>
-
-<!-- Filtros -->
-<div
-  class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 mb-8 items-end bg-gray-50 p-4 rounded-xl shadow-sm border border-gray-100"
->
-  <!-- 📅 Fecha Inicio -->
-  <div class="flex flex-col">
-    <label class="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-      <i class="fa-regular fa-calendar"></i> Fecha Inicio
-    </label>
-    <input
-      type="date"
-      [(ngModel)]="filtros.fechaInicio"
-      class="h-10 w-full border border-gray-300 rounded-lg px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-    />
-  </div>
-
-  <!-- 📅 Fecha Fin -->
-  <div class="flex flex-col">
-    <label class="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-      <i class="fa-regular fa-calendar-check"></i> Fecha Fin
-    </label>
-    <input
-      type="date"
-      [(ngModel)]="filtros.fechaFin"
-      class="h-10 w-full border border-gray-300 rounded-lg px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-    />
-  </div>
-
-  <!-- 🏢 Empresa -->
-  <div class="flex flex-col">
-    <label class="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-      <i class="fa-solid fa-building"></i> Empresa
-    </label>
-    <select
-      [(ngModel)]="filtros.empresaSeleccionada"
-      (change)="filtros.onEmpresaChange()"
-      class="h-10 w-full border border-gray-300 rounded-lg px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-    >
-      <option [ngValue]="'all'">Todas las empresas</option>
-      <option *ngFor="let e of filtros.empresas; trackBy: filtros.trackByEmpresaId" [ngValue]="e.id" [disabled]="e.id === -1">
-        {{ e.nombre }}
-      </option>
-    </select>
-  </div>
-
-  <!-- 🔘 Estado -->
-  <div class="flex flex-col">
-    <label class="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-      <i class="fa-solid fa-toggle-on"></i> Estado
-    </label>
-    <select
-      [(ngModel)]="filtros.estadoSeleccionado"
-      (change)="filtros.onEstadoChange()"
-      class="h-10 w-full border border-gray-300 rounded-lg px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-    >
-      <option [ngValue]="'all'">Todos</option>
-      <option [ngValue]="true">Habilitado</option>
-      <option [ngValue]="false">Inactivo</option>
-    </select>
-  </div>
-
-  <!-- 👤 Colaboradores -->
-  <div class="lg:col-span-2 flex flex-col">
-    <label class="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-      <i class="fa-solid fa-user"></i> Seleccionar Colaboradores
-    </label>
-    <ng-select
-      class="custom-ng-select h-10 w-full"
-      [items]="filtros.colaboradores"
-      bindLabel="nombre"
-      bindValue="id"
-      [(ngModel)]="filtros.colaboradoresSeleccionados"
-      [closeOnSelect]="false"
-      [multiple]="true"
-      [clearable]="true"
-      placeholder="Selecciona colaboradores"
-    >
-      <ng-template ng-option-tmp let-item="item">
-        <div class="flex items-center justify-between w-full">
-          <div class="flex items-center">
-            <input
-              type="checkbox"
-              [checked]="filtros.colaboradoresSeleccionados.includes(item.id)"
-              (change)="filtros.toggleSelection(item.id)"
-              class="mr-2 w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-            />
-            <div class="flex flex-col">
-              <span class="custom-option">{{ item.nombre }} {{ item.apellido }}</span>
-              <span class="text-xs text-gray-500">{{ item.empresaNombre }}</span>
-            </div>
-          </div>
-          <span
-            class="text-xs font-semibold"
-            [ngClass]="{
-              'text-green-600': item.habilitado,
-              'text-red-600': !item.habilitado
-            }"
-            >{{ item.habilitado ? 'Habilitado' : 'Inactivo' }}</span
-          >
-        </div>
-      </ng-template>
-    </ng-select>
-  </div>
-
-   <!-- 🔍 Acciones -->
-   <div class="flex justify-end items-end gap-2">
-     <button
-       (click)="obtenerHorasTrabajadas()"
-       class="w-full sm:w-auto h-10 px-6 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-transform hover:scale-105 flex items-center justify-center gap-2"
-     >
-       <i class="fa-solid fa-magnifying-glass text-sm"></i>
-       Buscar
-     </button>
-     <app-export-excel
-       [data]="reportes"
-       [columns]="exportColumns"
-       [fileName]="'horas-trabajadas'"
-       [disabled]="reportes.length === 0"
-     ></app-export-excel>
-   </div>
-</div>
-
+<app-reporte-filtros-toolbar [filtros]="filtros" [buscando]="buscando" (buscar)="obtenerHorasTrabajadas()">
+  <app-export-excel
+    toolbar-extra
+    [data]="reportes"
+    [columns]="exportColumns"
+    [fileName]="'horas-trabajadas'"
+    [disabled]="reportes.length === 0"
+  ></app-export-excel>
+</app-reporte-filtros-toolbar>
 
 <!-- Tabla de Resultados -->
-<div *ngIf="reportes.length > 0" class="overflow-x-auto">
-  <table class="w-full bg-white shadow-lg rounded-xl overflow-hidden">
-    <thead class="bg-indigo-600 text-white">
-      <tr>
-        <th class="px-4 py-3 border">Colaborador</th>
-        <th class="px-4 py-3 border">DNI</th>
-        <th class="px-4 py-3 border">Empresa</th>
-        <th class="px-4 py-3 border">Tienda</th>
-        <th class="px-4 py-3 border">Fecha</th>
-        <th class="px-4 py-3 border">Ingreso</th>
-        <th class="px-4 py-3 border">Salida</th>
-        <th class="px-4 py-3 border">SubTotal</th>
+<app-table-shell *ngIf="reportes.length > 0">
+  <table class="w-full">
+    <thead>
+      <tr class="bg-paper text-ink">
+        <th class="p-4 text-left font-bold">Colaborador</th>
+        <th class="p-4 text-left font-bold">DNI</th>
+        <th class="p-4 text-left font-bold">Empresa</th>
+        <th class="p-4 text-left font-bold">Tienda</th>
+        <th class="p-4 text-left font-bold">Fecha</th>
+        <th class="p-4 text-left font-bold">Ingreso</th>
+        <th class="p-4 text-left font-bold">Salida</th>
+        <th class="p-4 text-left font-bold">SubTotal</th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let reporte of reportes; trackBy: trackByReporte" class="text-gray-700 even:bg-gray-50">
-        <td class="px-4 py-3 border">{{ reporte.nombreColaborador }} {{ reporte.apellido }}</td>
-        <td class="px-4 py-3 border">{{ reporte.dniColaborador }}</td>
-        <td class="px-4 py-3 border">{{ reporte.nombreEmpresa }}</td>
-        <td class="px-4 py-3 border font-bold">{{ obtenerNumerosDeTienda(reporte.nombreTienda) }}</td>
-        <td class="px-4 py-3 border">{{ reporte.fecha }}</td>
-        <td class="px-4 py-3 border">{{ formatearHora(reporte.horaEntrada) }}</td>
-        <td class="px-4 py-3 border">{{ formatearHora(reporte.horaSalida) }}</td>
-        <td class="px-4 py-3 border font-bold text-indigo-600">{{ formatearHorasTrabajadas(reporte.horasTrabajadas) }}</td>
+      <tr *ngFor="let reporte of reportes; trackBy: trackByReporte" class="border-t border-line-soft hover:bg-paper transition">
+        <td class="p-4">{{ reporte.nombreColaborador }} {{ reporte.apellido }}</td>
+        <td class="p-4">{{ reporte.dniColaborador }}</td>
+        <td class="p-4">{{ reporte.nombreEmpresa }}</td>
+        <td class="p-4 font-bold">{{ obtenerNumerosDeTienda(reporte.nombreTienda) }}</td>
+        <td class="p-4">{{ reporte.fecha }}</td>
+        <td class="p-4">{{ formatearHora(reporte.horaEntrada) }}</td>
+        <td class="p-4">{{ formatearHora(reporte.horaSalida) }}</td>
+        <td class="p-4 font-bold text-brand">{{ formatearHorasTrabajadas(reporte.horasTrabajadas) }}</td>
       </tr>
     </tbody>
-
-    <!-- 🔽 Pie de Tabla: Total de Horas -->
-    <tfoot>
-      <tr class="bg-gray-100 font-bold">
-        <td colspan="7" class="px-4 py-3 border text-right">Total Horas Trabajadas:</td>
-        <td class="px-4 py-3 border text-indigo-600">{{ calcularTotalHoras() }}</td>
-      </tr>
-    </tfoot>
   </table>
-</div>
+  <div table-footer class="font-bold text-ink">
+    Total Horas Trabajadas: <span class="text-brand">{{ calcularTotalHoras() }}</span>
+  </div>
+</app-table-shell>
 
 <!-- Mensaje si no hay resultados -->
-<p *ngIf="reportes.length === 0" class="text-gray-500 mt-6 text-center h-1/2 flex items-center justify-center">⚠️ No hay datos disponibles para este rango de
-  fechas.</p>
+<app-empty-state
+  *ngIf="reportes.length === 0"
+  icon="📭"
+  title="No hay datos disponibles"
+  description="Ajustá el rango de fechas o los colaboradores seleccionados y volvé a buscar."
+></app-empty-state>

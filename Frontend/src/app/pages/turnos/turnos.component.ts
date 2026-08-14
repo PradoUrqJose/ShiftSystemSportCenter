@@ -41,6 +41,7 @@ import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../utils/modal-tim
 import { TurnoModalComponent } from './turno-modal/turno-modal.component'; // Nuevo componente
 import { TurnosMasivosModalComponent } from './turnos-masivos-modal/turnos-masivos-modal.component';
 import { SkeletonComponent } from '../../components/ui/skeleton/skeleton.component';
+import { WeeklyScheduleSkeletonComponent } from '../../components/ui/weekly-schedule-skeleton/weekly-schedule-skeleton.component';
 import { PrimeraPalabraPipe } from '../../pipes/primera-palabra.pipe';
 
 @Component({
@@ -48,7 +49,7 @@ import { PrimeraPalabraPipe } from '../../pipes/primera-palabra.pipe';
   templateUrl: './turnos.component.html',
   standalone: true,
   styleUrls: ['./turnos.component.css'],
-  imports: [CommonModule, FormsModule, RouterLink, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent, TurnosMasivosModalComponent, SkeletonComponent, PrimeraPalabraPipe],
+  imports: [CommonModule, FormsModule, RouterLink, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent, TurnosMasivosModalComponent, SkeletonComponent, WeeklyScheduleSkeletonComponent, PrimeraPalabraPipe],
   // TurnosCalendarService: una instancia propia por página (no singleton),
   // dueña de qué semana/mes se muestra y qué turnos trae — ver el servicio.
   providers: [TurnosCalendarService],
@@ -86,7 +87,6 @@ export default class TurnosComponent implements OnInit, OnDestroy {
   // aproximación razonable de colaboradores visibles sin scroll; 7 columnas
   // calza exacto con los días de la semana.
   readonly skeletonRows = Array.from({ length: 6 });
-  readonly skeletonCols = Array.from({ length: 7 });
   // Grilla mensual: 5 semanas × 7 días es lo más común (algunos meses
   // muestran 6, pero el skeleton no necesita calzar exacto, solo sugerir la
   // forma de day-cards antes de que lleguen los datos reales).

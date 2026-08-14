@@ -1,15 +1,14 @@
 <div class="min-h-screen w-full mx-auto gradient-empresa px-8 py-4"
   [style.--empresa-color]="getEmpresaColor(colaborador?.empresaNombre)">
   <div class="flex items-center justify-between mb-8 gap-4">
-    <button (click)="goBack()"
-      class="buttonStyle gray-button font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">
-      <i class="fa-solid fa-arrow-left mr-2"></i> Volver
-    </button>
+    <app-button variant="secondary" (click)="goBack()">
+      <i class="fa-solid fa-arrow-left"></i> Volver
+    </app-button>
     <div class="relative flex items-center gap-2 gradient-to-diag shadow-md rounded-lg p-2 border border-gray-200">
       <div class="relative">
         <input #fechaInicioInput type="date" [(ngModel)]="fechaInicio" (click)="abrirCalendario('inicio')"
           (change)="loadStatistics(colaborador!.id!)"
-          class="appearance-none w-32 p-2 pl-8 border-none rounded-md bg-transparent text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+          class="appearance-none w-32 p-2 pl-8 border-none rounded-md bg-transparent text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand transition duration-200">
         <span class="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -21,7 +20,7 @@
       <div class="relative">
         <input #fechaFinInput type="date" [(ngModel)]="fechaFin" (click)="abrirCalendario(' fin')"
           (change)="loadStatistics(colaborador!.id!)"
-          class="appearance-none w-32 p-2 pl-8 border-none rounded-md bg-transparent text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+          class="appearance-none w-32 p-2 pl-8 border-none rounded-md bg-transparent text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand transition duration-200">
         <span class="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -137,6 +136,6 @@
 
   </div>
   <ng-template #loading>
-    <div class="text-center text-gray-600">Cargando perfil...</div>
+    <app-empty-state icon="⏳" title="Cargando perfil..."></app-empty-state>
   </ng-template>
 </div>

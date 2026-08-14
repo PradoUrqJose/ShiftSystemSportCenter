@@ -1,12 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ReporteService } from '../../../services/reporte.service';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { CalendarioService } from '../../../services/calendario.service';
 import { Turno } from '../../../services/turno.service';
-import { NgSelectModule } from '@ng-select/ng-select';
 import { ExportExcelComponent, ExportColumn } from '../../../components/export-excel/export-excel.component';
 import { ReporteFiltrosService } from '../../../services/reporte-filtros.service';
+import { ReporteFiltrosToolbarComponent } from '../../../components/reporte-filtros-toolbar/reporte-filtros-toolbar.component';
+import { TableShellComponent } from '../../../components/ui/table-shell/table-shell.component';
+import { EmptyStateComponent } from '../../../components/ui/empty-state/empty-state.component';
 import { Subject, takeUntil } from 'rxjs';
 
 // TurnoDTO del backend + el apellido, que se agrega acá mismo cruzando con
@@ -16,7 +17,7 @@ type ReporteHoras = Turno & { apellido: string };
 @Component({
   selector: 'app-horas-trabajadas',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgSelectModule, ExportExcelComponent],
+  imports: [CommonModule, ExportExcelComponent, ReporteFiltrosToolbarComponent, TableShellComponent, EmptyStateComponent],
   templateUrl: './horas-trabajadas.component.html',
   styleUrl: './horas-trabajadas.component.css',
   // Instancia propia de ReporteFiltrosService para esta página (no singleton
@@ -25,6 +26,7 @@ type ReporteHoras = Turno & { apellido: string };
 })
 export class HorasTrabajadasComponent implements OnInit, OnDestroy {
   reportes: ReporteHoras[] = [];
+  buscando: boolean = false;
   exportColumns: ExportColumn[] = [
     { key: 'nombreColaborador', label: 'Colaborador' },
     { key: 'dniColaborador', label: 'DNI' },
@@ -56,6 +58,7 @@ export class HorasTrabajadasComponent implements OnInit, OnDestroy {
   obtenerHorasTrabajadas(): void {
     if (!this.filtros.fechaInicio || !this.filtros.fechaFin) return;
 
+    this.buscando = true;
     this.reporteService
       .getHorasTrabajadas(this.filtros.fechaInicio, this.filtros.fechaFin, this.filtros.colaboradoresSeleccionados)
       .pipe(takeUntil(this.destroy$))
@@ -65,7 +68,11 @@ export class HorasTrabajadasComponent implements OnInit, OnDestroy {
             const colaborador = this.filtros.colaboradores.find((c) => c.id === reporte.colaboradorId);
             return { ...reporte, apellido: colaborador ? colaborador.apellido : 'Desconocido' };
           });
-        }
+          this.buscando = false;
+        },
+        error: () => {
+          this.buscando = false;
+        },
       });
   }
 
