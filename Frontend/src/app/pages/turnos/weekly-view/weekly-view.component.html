@@ -6,11 +6,11 @@
           <span>Colaborador</span>
         </div>
       </th>
-      <th *ngFor="let dia of completarSemana(diasSemana)"
+      <th *ngFor="let dia of diasSemanaCompleta; trackBy: trackByFecha"
         class="bg-blue-50 text-center px-2 py-4 capitalize font-normal semana-column w-[20%] sm:w-[10.57%]">
         <span class="text-lg font-bold py-2 px-4 rounded-full" [ngClass]="{
-            'dia-actual-encabezado': esDiaActual(dia.fecha),
-            'feriado-semanal-encabezado': esFeriado(dia.fecha)
+            'dia-actual-encabezado': dia.esDiaActual,
+            'feriado-semanal-encabezado': dia.esFeriado
           }">
           {{ dia.dayNumber ? dia.dayNumber : '-' }}
           <span class="dayNumber font-normal">{{ dia.nombre }}</span>
@@ -22,7 +22,7 @@
 
   <tbody>
     <ng-container *ngIf="filteredColaboradores as colaboradores">
-      <tr *ngFor="let colaborador of colaboradores" class="hover:bg-gray-50 transition">
+      <tr *ngFor="let colaborador of colaboradores; trackBy: trackByColaboradorId" class="hover:bg-gray-50 transition">
         <!-- Columna de colaborador -->
         <td class="py-4 px-4 flex justify-start items-center gap-3 w-full">
           <div (click)="viewProfile(colaborador.id)"
@@ -40,20 +40,20 @@
         </td>
 
         <!-- Celdas de los días de la semana -->
-        <td *ngFor="let dia of completarSemana(diasSemana)" class="text-center semana-column" [ngClass]="{
-            'dia-actual': esDiaActual(dia.fecha) || dia.fecha === 'empty',
-            'feriado-semanal': esFeriado(dia.fecha)
+        <td *ngFor="let dia of diasSemanaCompleta; trackBy: trackByFecha" class="text-center semana-column" [ngClass]="{
+            'dia-actual': dia.esDiaActual || dia.fecha === 'empty',
+            'feriado-semanal': dia.esFeriado
           }">
           <ng-container *ngIf="dia.fecha !== 'empty'; else emptyCell">
             <ng-container *ngIf="turnos as turnos">
               <ng-container *ngIf="obtenerTurnos(turnos, colaborador.id, dia.fecha) as turnosDelDia">
                 <!-- Múltiples turnos del día -->
                 <div *ngIf="turnosDelDia.length > 0; else agregarBoton" class="space-y-1">
-                  <div *ngFor="let turno of turnosDelDia; let i = index"
+                  <div *ngFor="let turno of turnosDelDia; let i = index; trackBy: trackByTurnoId"
                     class="container-green cursor-pointer transition border-green-100 p-1 rounded-lg text-xs"
                     [ngClass]="{
                       'almuerzo-tomado': turno.tomoAlmuerzo,
-                      'border-2 border-red-500': esFeriado(dia.fecha),
+                      'border-2 border-red-500': dia.esFeriado,
                       'midHours': (turno.horasTrabajadas ?? 0) > 8,
                       'bg-blue-100 border-blue-300': turnosDelDia.length > 1 && i === 0,
                       'bg-orange-100 border-orange-300': turnosDelDia.length > 1 && i === 1

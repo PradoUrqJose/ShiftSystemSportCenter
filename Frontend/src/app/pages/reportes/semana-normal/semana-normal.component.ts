@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { BehaviorSubject, Observable, map } from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { BehaviorSubject, Observable, Subject, map, takeUntil } from 'rxjs';
 import { WeeklyViewComponent } from '../../turnos/weekly-view/weekly-view.component';
 import { CalendarioService, DiaSemana } from '../../../services/calendario.service';
 import { Colaborador, ColaboradorService } from '../../../services/colaborador.service';
@@ -22,7 +22,7 @@ import { TiendaService } from '../../../services/tienda.service';
   templateUrl: './semana-normal.component.html',
   styleUrls: ['./semana-normal.component.css']
 })
-export class SemanaNormalComponent implements OnInit {
+export class SemanaNormalComponent implements OnInit, OnDestroy {
   isLoading$!: Observable<boolean>;
   nombreMesActual: string = '';
 
@@ -36,6 +36,7 @@ export class SemanaNormalComponent implements OnInit {
   turnoActual: Turno = this.resetTurno();
   turnoOriginal: Turno | null = null;
   tiendas$!: Observable<any[]>;
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private calendarioService: CalendarioService,
@@ -57,19 +58,23 @@ export class SemanaNormalComponent implements OnInit {
     this.tiendas$ = this.tiendaService.getTiendas(); // Inicializar tiendas$
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   // Método para cargar datos iniciales
   cargarDatos(): void {
     this.turnoStateService.setLoading(true);
     const semanaActual = this.turnoStateService.getSemanaActual();
     this.cargarSemanaNormal(semanaActual);
 
-    this.colaboradorService.getColaboradoresPorHabilitacion(true).subscribe({
+    this.colaboradorService.getColaboradoresPorHabilitacion(true).pipe(takeUntil(this.destroy$)).subscribe({
       next: (colaboradores) => {
         this.colaboradores = colaboradores;
         this.turnoStateService.setLoading(false);
       },
-      error: (error) => {
-        console.error('Error al cargar colaboradores:', error);
+      error: () => {
         this.turnoStateService.setLoading(false);
       }
     });
@@ -81,13 +86,12 @@ export class SemanaNormalComponent implements OnInit {
     this.diasSemana$.next(diasSemana);
 
     this.turnos$ = this.turnoService.getTurnosPorSemana(fecha);
-    this.turnos$.subscribe({
-      next: (turnos) => {
+    this.turnos$.pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
         setTimeout(() => this.inicializarTooltips(), 500);
         this.turnoStateService.setLoading(false);
       },
-      error: (error) => {
-        console.error('Error al cargar turnos:', error);
+      error: () => {
         this.turnoStateService.setLoading(false);
       }
     });
@@ -128,7 +132,6 @@ export class SemanaNormalComponent implements OnInit {
   }
 
   inicializarTooltips(): void {
-    console.log('Tooltips inicializados');
     // Implementar lógica de tooltips si es necesario
   }
 
@@ -137,7 +140,8 @@ export class SemanaNormalComponent implements OnInit {
     this.resetearEstadoModal();
     this.colaboradorService.getColaboradoresPorHabilitacion(true)
       .pipe(
-        map((colaboradores) => colaboradores.find((c) => c.id === event.colaboradorId))
+        map((colaboradores) => colaboradores.find((c) => c.id === event.colaboradorId)),
+        takeUntil(this.destroy$)
       )
       .subscribe((col) => {
         if (col) {

@@ -1,5 +1,5 @@
 import { ModalService } from './../../services/modal.service';
-import { Component, NgModule, OnInit } from '@angular/core';
+import { Component, NgModule, OnDestroy, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -10,7 +10,7 @@ import {
 import { EmpresaService, Empresa } from '../../services/empresa.service';
 import { CommonModule } from '@angular/common';
 import Notiflix from 'notiflix';
-import { Observable } from 'rxjs';
+import { Observable, Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-empresas',
@@ -19,7 +19,7 @@ import { Observable } from 'rxjs';
   templateUrl: './empresas.component.html',
   styleUrls: ['./empresas.component.css'],
 })
-export default class EmpresasComponent implements OnInit {
+export default class EmpresasComponent implements OnInit, OnDestroy {
   empresas: Empresa[] = [];
   empresaForm!: FormGroup;
   isEditing: boolean = false;
@@ -37,6 +37,7 @@ export default class EmpresasComponent implements OnInit {
   // Propiedades para controlar el ordenamiento
   sortColumn: string = 'id';  // Columna por la que se ordenará
   sortDirection: 'asc' | 'desc' = 'asc';  // Dirección de orden (ascendente o descendente)
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private fb: FormBuilder,
@@ -56,6 +57,11 @@ export default class EmpresasComponent implements OnInit {
     this.isModalVisible$ = this.modalService.isModalVisible$;
 
     this.getEmpresas(); // Esto cargará y ordenará las empresas
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   // Método para ordenar las empresas
@@ -105,7 +111,7 @@ export default class EmpresasComponent implements OnInit {
 
   // Obtener empresas
   getEmpresas(): void {
-    this.empresaService.getEmpresas().subscribe((data) => {
+    this.empresaService.getEmpresas().pipe(takeUntil(this.destroy$)).subscribe((data) => {
       this.empresas = data;
       this.empresasHabilitadas = this.empresas.filter((e) => e.habilitada);
       this.empresasDeshabilitadas = this.empresas.filter((e) => !e.habilitada);
@@ -121,13 +127,13 @@ export default class EmpresasComponent implements OnInit {
   addEmpresa(): void {
     if (this.empresaForm.valid) {
       const empresaData = this.empresaForm.value;
-      this.empresaService.addEmpresa(empresaData).subscribe({
+      this.empresaService.addEmpresa(empresaData).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.getEmpresas();
           this.closeModal();
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || 'Error al agregar la empresa.';
+          this.errorMessage = err.message || 'Error al agregar la empresa.';
         }
       });
     } else {
@@ -153,14 +159,14 @@ export default class EmpresasComponent implements OnInit {
   updateEmpresa(): void {
     if (this.empresaForm.valid && this.selectedEmpresaId) {
       const empresaData = this.empresaForm.value;
-      this.empresaService.updateEmpresa(this.selectedEmpresaId, empresaData).subscribe({
+      this.empresaService.updateEmpresa(this.selectedEmpresaId, empresaData).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.getEmpresas();
           this.closeModal();
           Notiflix.Notify.success('Empresa actualizada con éxito', { position: 'right-bottom', cssAnimationStyle: 'from-right' });
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || 'Error al actualizar la empresa.';
+          this.errorMessage = err.message || 'Error al actualizar la empresa.';
         }
       });
     } else {
@@ -183,7 +189,7 @@ export default class EmpresasComponent implements OnInit {
 
   // Eliminar empresa
   deleteEmpresa(id: number): void {
-    this.empresaService.deleteEmpresa(id).subscribe(() => {
+    this.empresaService.deleteEmpresa(id).pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.getEmpresas();
     });
   }
@@ -215,5 +221,9 @@ export default class EmpresasComponent implements OnInit {
     this.isEditing = false; // Desactiva el modo edición
     this.selectedEmpresaId = null; // Restablece el ID seleccionado
     this.empresaForm.reset(); // Limpia el formulario
+  }
+
+  trackByEmpresaId(_index: number, empresa: Empresa): number {
+    return empresa.id;
   }
 }

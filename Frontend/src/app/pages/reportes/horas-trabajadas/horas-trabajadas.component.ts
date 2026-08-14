@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ReporteService } from '../../../services/reporte.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,7 @@ import { CalendarioService } from '../../../services/calendario.service';
 import { Colaborador, ColaboradorService } from '../../../services/colaborador.service';
 import { NgLabelTemplateDirective, NgOptionTemplateDirective, NgSelectComponent, NgSelectModule } from '@ng-select/ng-select';
 import { ExportExcelComponent, ExportColumn } from '../../../components/export-excel/export-excel.component';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-horas-trabajadas',
@@ -14,7 +15,7 @@ import { ExportExcelComponent, ExportColumn } from '../../../components/export-e
   templateUrl: './horas-trabajadas.component.html',
   styleUrl: './horas-trabajadas.component.css'
 })
-export class HorasTrabajadasComponent implements OnInit {
+export class HorasTrabajadasComponent implements OnInit, OnDestroy {
   reportes: any[] = [];
   fechaInicio: string = '';
   fechaFin: string = '';
@@ -36,6 +37,8 @@ export class HorasTrabajadasComponent implements OnInit {
   empresaSeleccionada: number | 'all' = 'all';
   estadoSeleccionado: 'all' | true | false = 'all';
 
+  private readonly destroy$ = new Subject<void>();
+
   constructor(
     private reporteService: ReporteService,
     private calendarioService: CalendarioService,
@@ -45,6 +48,11 @@ export class HorasTrabajadasComponent implements OnInit {
   ngOnInit(): void {
     this.setFechasMesActual();
     this.getColaboradores();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private setFechasMesActual(): void {
@@ -63,7 +71,7 @@ export class HorasTrabajadasComponent implements OnInit {
   }
 
   getColaboradores(): void {
-    this.colaboradorService.getColaboradores().subscribe({
+    this.colaboradorService.getColaboradores().pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.colaboradores = data;
         const mapa = new Map<number, string>();
@@ -114,6 +122,7 @@ export class HorasTrabajadasComponent implements OnInit {
     const colaboradoresIds = this.colaboradoresSeleccionados;
 
     this.reporteService.getHorasTrabajadas(this.fechaInicio, this.fechaFin, colaboradoresIds)
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
           // 🔥 Fusionar datos del reporte con los colaboradores para agregar apellidos
@@ -124,8 +133,7 @@ export class HorasTrabajadasComponent implements OnInit {
               apellido: colaborador ? colaborador.apellido : "Desconocido" // 🛠 Agrega el apellido si existe
             };
           });
-        },
-        error: (error) => console.error("❌ Error al obtener reportes:", error)
+        }
       });
   }
 
@@ -147,6 +155,14 @@ export class HorasTrabajadasComponent implements OnInit {
 
   obtenerNumerosDeTienda(nombreTienda: string): string {
     return nombreTienda.replace(/[^0-9]/g, '');
+  }
+
+  trackByEmpresaId(_index: number, empresa: { id: number }): number {
+    return empresa.id;
+  }
+
+  trackByReporte(_index: number, reporte: any): string {
+    return `${reporte.colaboradorId}-${reporte.fecha}-${reporte.horaEntrada}`;
   }
 
 }

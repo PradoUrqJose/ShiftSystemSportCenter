@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import Notiflix from 'notiflix';
+import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -12,18 +13,24 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
 })
-export default class LoginComponent {
+export default class LoginComponent implements OnDestroy {
   username = '';
   password = '';
   isSubmitting = false;
+  private readonly destroy$ = new Subject<void>();
 
   constructor(private authService: AuthService, private router: Router) {}
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   login(): void {
     if (!this.username || !this.password || this.isSubmitting) return;
 
     this.isSubmitting = true;
-    this.authService.login(this.username, this.password).subscribe({
+    this.authService.login(this.username, this.password).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.router.navigate(['/turnos']);

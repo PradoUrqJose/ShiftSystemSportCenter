@@ -118,7 +118,7 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
-                  <tr *ngFor="let turno of turnosRecientes" class="trHead bg-neutral-100 even:bg-gray-50 transition">
+                  <tr *ngFor="let turno of turnosRecientes; trackBy: trackByTurnoId" class="trHead bg-neutral-100 even:bg-gray-50 transition">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{{ turno.fecha }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ turno.nombreTienda }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ formatearHora(turno.horaEntrada) }}

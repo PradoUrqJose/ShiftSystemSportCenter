@@ -144,7 +144,7 @@
           class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
           required #tiendaSelect="ngModel">
           <option [ngValue]="null" disabled>Seleccione una Tienda</option>
-          <option *ngFor="let tienda of tiendas$ | async" [value]="tienda.id">{{ tienda.nombre }}</option>
+          <option *ngFor="let tienda of tiendas$ | async; trackBy: trackByTiendaId" [value]="tienda.id">{{ tienda.nombre }}</option>
         </select>
         <div *ngIf="tiendaSelect.invalid && (tiendaSelect.dirty || tiendaSelect.touched)"
           class="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded-lg">

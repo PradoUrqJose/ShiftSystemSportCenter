@@ -20,7 +20,7 @@
       <div *ngIf="errorMessage" class="text-red-500 text-center">{{ errorMessage }}</div>
       <div class="h-full flex flex-col overflow-y-auto" *ngIf="!isLoading">
         <ul class="space-y-4 pr-2 max-h-[40vh]">
-          <li *ngFor="let tienda of tiendas$ | async" class="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+          <li *ngFor="let tienda of tiendas$ | async; trackBy: trackByTiendaId" class="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
             <div>
               <span class="font-semibold text-gray-800">{{ tienda.nombre }}</span>
               <p class="text-sm text-gray-500">{{ tienda.direccion || 'Sin dirección' }}</p>

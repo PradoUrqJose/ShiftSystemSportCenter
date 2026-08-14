@@ -41,7 +41,7 @@
       class="h-10 w-full border border-gray-300 rounded-lg px-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
     >
       <option [ngValue]="'all'">Todas las empresas</option>
-      <option *ngFor="let e of empresas" [ngValue]="e.id" [disabled]="e.id === -1">
+      <option *ngFor="let e of empresas; trackBy: trackByEmpresaId" [ngValue]="e.id" [disabled]="e.id === -1">
         {{ e.nombre }}
       </option>
     </select>
@@ -141,7 +141,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let reporte of reportes" class="text-gray-700 even:bg-gray-50">
+      <tr *ngFor="let reporte of reportes; trackBy: trackByReporte" class="text-gray-700 even:bg-gray-50">
         <td class="px-4 py-3 border">{{ reporte.nombreColaborador }} {{ reporte.apellido }}</td>
         <td class="px-4 py-3 border">{{ reporte.dniColaborador }}</td>
         <td class="px-4 py-3 border">{{ reporte.nombreEmpresa }}</td>

@@ -110,6 +110,14 @@ export class FilterBarComponent {
     this.showCompanyDropdown = false;
     this.showCollaboratorDropdown = false;
   }
+
+  trackByCompany(_index: number, company: string): string {
+    return company;
+  }
+
+  trackByColaboradorId(_index: number, colaborador: Colaborador): number {
+    return colaborador.id;
+  }
 }
 
 

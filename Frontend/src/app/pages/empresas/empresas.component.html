@@ -35,7 +35,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let empresa of empresasHabilitadas" class="border-t hover:bg-gray-50 transition">
+        <tr *ngFor="let empresa of empresasHabilitadas; trackBy: trackByEmpresaId" class="border-t hover:bg-gray-50 transition">
           <td class="p-4">{{ empresa.id }}</td>
           <td class="p-4">{{ empresa.nombre }}</td>
           <td class="p-4">{{ empresa.ruc }}</td>
@@ -59,7 +59,7 @@
         </tr>
         <!-- Empresas deshabilitadas (mostradas si mostrarDeshabilitadas = true) -->
         <ng-container *ngIf="mostrarDeshabilitadas">
-          <tr *ngFor="let empresa of empresasDeshabilitadas" class="border-t bg-gray-50 hover:bg-gray-100 transition">
+          <tr *ngFor="let empresa of empresasDeshabilitadas; trackBy: trackByEmpresaId" class="border-t bg-gray-50 hover:bg-gray-100 transition">
             <td class="p-4">{{ empresa.id }}</td>
             <td class="p-4">{{ empresa.nombre }}</td>
             <td class="p-4">{{ empresa.ruc }}</td>

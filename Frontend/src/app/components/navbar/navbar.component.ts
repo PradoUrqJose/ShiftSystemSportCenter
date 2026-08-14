@@ -33,4 +33,8 @@ export default class NavbarComponent {
   isReportesActive(): boolean {
     return this.reportes.some(reporte => this.router.url.includes(reporte.link));
   }
+
+  trackByLink(_index: number, reporte: { link: string }): string {
+    return reporte.link;
+  }
 }

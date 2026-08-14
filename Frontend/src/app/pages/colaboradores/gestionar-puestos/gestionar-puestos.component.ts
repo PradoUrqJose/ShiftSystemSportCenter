@@ -1,9 +1,10 @@
 import { Puesto, PuestoService } from './../../../services/puesto.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ColaboradorService } from '../../../services/colaborador.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AgregarPuestoModalComponent } from '../agregar-puesto-modal/agregar-puesto-modal.component';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-gestionar-puestos',
@@ -12,13 +13,14 @@ import { AgregarPuestoModalComponent } from '../agregar-puesto-modal/agregar-pue
   templateUrl: './gestionar-puestos.component.html',
   styleUrls: ['./gestionar-puestos.component.css']
 })
-export default class GestionarPuestosComponent implements OnInit {
+export default class GestionarPuestosComponent implements OnInit, OnDestroy {
   puestos: Puesto[] = [];
   mostrarModalAgregarPuesto: boolean = false;
   puestoActual: Puesto = { nombre: '', descripcion: '' };
   conteoColaboradoresPorPuesto: { [key: number]: number } = {};
   errorMessage: string | null = null; // Añadir para mostrar errores
   isLoading: boolean = false; // Añadir para indicar carga
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private puestoService: PuestoService,
@@ -31,9 +33,14 @@ export default class GestionarPuestosComponent implements OnInit {
     this.cargarConteoColaboradores();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   cargarPuestos(): void {
     this.isLoading = true;
-    this.puestoService.getPuestos().subscribe({
+    this.puestoService.getPuestos().pipe(takeUntil(this.destroy$)).subscribe({
       next: (puestos) => {
         this.puestos = puestos;
         this.isLoading = false;
@@ -46,7 +53,7 @@ export default class GestionarPuestosComponent implements OnInit {
   }
 
   cargarConteoColaboradores(): void {
-    this.colaboradorService.getColaboradores().subscribe({
+    this.colaboradorService.getColaboradores().pipe(takeUntil(this.destroy$)).subscribe({
       next: (colaboradores) => {
         this.conteoColaboradoresPorPuesto = colaboradores.reduce((acc, colab) => {
           if (colab.puestoId) {
@@ -85,7 +92,7 @@ export default class GestionarPuestosComponent implements OnInit {
 
   eliminarPuesto(id: number | undefined): void {
     if (!id) return;
-    this.puestoService.deletePuesto(id).subscribe({
+    this.puestoService.deletePuesto(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.puestos = this.puestos.filter(p => p.id !== id);
         this.cargarConteoColaboradores();
@@ -104,5 +111,9 @@ export default class GestionarPuestosComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/colaboradores']);
+  }
+
+  trackByPuestoId(_index: number, puesto: Puesto): number | undefined {
+    return puesto.id;
   }
 }

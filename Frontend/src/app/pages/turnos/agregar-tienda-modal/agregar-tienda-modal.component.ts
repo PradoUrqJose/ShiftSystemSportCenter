@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TiendaService, Tienda } from '../../../services/tienda.service';
 import Notiflix from 'notiflix';
+import { Subject, takeUntil } from 'rxjs';
 
   @Component({
     selector: 'app-agregar-tienda-modal',
@@ -11,7 +12,7 @@ import Notiflix from 'notiflix';
     templateUrl: './agregar-tienda-modal.component.html',
     styleUrls: ['./agregar-tienda-modal.component.css']
   })
-  export class AgregarTiendaModalComponent {
+  export class AgregarTiendaModalComponent implements OnDestroy {
     @Input() mostrarModal: boolean = false;
     @Input() isModalVisible: boolean = false;
     @Input() tiendaActual: Tienda = this.resetTienda();
@@ -21,8 +22,14 @@ import Notiflix from 'notiflix';
 
     isSubmitting: boolean = false;
     errorMessage: string | null = null; // Añadir para mostrar errores localmente
+    private readonly destroy$ = new Subject<void>();
 
     constructor(private tiendaService: TiendaService) {}
+
+    ngOnDestroy(): void {
+      this.destroy$.next();
+      this.destroy$.complete();
+    }
 
     resetTienda(): Tienda {
       return { id: undefined, nombre: '', direccion: '' }; // Ajusté id a opcional
@@ -48,7 +55,7 @@ import Notiflix from 'notiflix';
       this.errorMessage = null;
 
       if (this.tiendaActual.id) {
-        this.tiendaService.updateTienda(this.tiendaActual.id, this.tiendaActual).subscribe({
+        this.tiendaService.updateTienda(this.tiendaActual.id, this.tiendaActual).pipe(takeUntil(this.destroy$)).subscribe({
           next: () => {
             this.tiendaGuardada.emit();
             this.cerrarModal();
@@ -67,7 +74,7 @@ import Notiflix from 'notiflix';
           }
         });
       } else {
-        this.tiendaService.addTienda(this.tiendaActual).subscribe({
+        this.tiendaService.addTienda(this.tiendaActual).pipe(takeUntil(this.destroy$)).subscribe({
           next: () => {
             this.tiendaGuardada.emit();
             this.cerrarModal();

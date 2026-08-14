@@ -2,14 +2,14 @@
   <table class="w-full bg-transparent rounded-lg overflow-hidden">
     <thead>
       <tr class="text-gray-500">
-        <th class="text-right p-2 capitalize nunito font-extralight" *ngFor="let dia of diasSemana">
+        <th class="text-right p-2 capitalize nunito font-extralight" *ngFor="let dia of diasSemana; trackBy: trackByFecha">
           <span class="text-lg font-bold">{{ dia.nombre }}</span>
         </th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let semana of semanasDelMes">
-        <td *ngFor="let dia of semana" class="text-center w-[8rem] h-[8rem] bg-transparent 2xl:w-[10rem] 2xl:h-[10rem]"
+      <tr *ngFor="let semana of semanasDelMes; trackBy: trackBySemanaIndex">
+        <td *ngFor="let dia of semana; trackBy: trackByFecha" class="text-center w-[8rem] h-[8rem] bg-transparent 2xl:w-[10rem] 2xl:h-[10rem]"
           [ngClass]="{ 'dia-sobrante': dia.esSobrante}">
           <ng-container *ngIf="obtenerTurnos(turnos, colaboradorSeleccionado, dia.fecha) as turnosDelDia">
             <div
@@ -30,7 +30,7 @@
             <ng-container *ngIf="obtenerTurnos(turnos, colaboradorSeleccionado, dia.fecha) as turnosDelDia">
               <!-- Múltiples turnos del día -->
               <div *ngIf="turnosDelDia.length > 0; else agregarBoton" class="w-full space-y-1">
-                <div *ngFor="let turno of turnosDelDia; let i = index"
+                <div *ngFor="let turno of turnosDelDia; let i = index; trackBy: trackByTurnoId"
                   class="container-green minum border-2 border-solid border-[#abd9c1] rounded cursor-pointer transition hover:shadow text-xs"
                   [ngClass]="{
                     'almuerzo-tomado': turno.tomoAlmuerzo,

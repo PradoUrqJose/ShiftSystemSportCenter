@@ -1,5 +1,5 @@
 import { ModalService } from './../../services/modal.service';
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -14,7 +14,7 @@ import {
 import { EmpresaService, Empresa } from '../../services/empresa.service';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject, takeUntil } from 'rxjs';
 import { Router, RouterLink, RouterModule } from '@angular/router';
 import { Puesto, PuestoService } from '../../services/puesto.service';
 import { AgregarPuestoModalComponent } from './agregar-puesto-modal/agregar-puesto-modal.component';
@@ -26,7 +26,7 @@ import { AgregarPuestoModalComponent } from './agregar-puesto-modal/agregar-pues
   templateUrl: './colaboradores.component.html',
   styleUrls: ['./colaboradores.component.css'],
 })
-export default class ColaboradoresComponent implements OnInit {
+export default class ColaboradoresComponent implements OnInit, OnDestroy {
   isTableLoading: boolean = true;  // Controla el estado de carga de la tabla
 
   colaboradores: Colaborador[] = [];
@@ -57,6 +57,8 @@ export default class ColaboradoresComponent implements OnInit {
   mostrarModalAgregarPuesto: boolean = false;
   mostrarModalGestionarPuestos: boolean = false;
   puestoActual: Puesto = { nombre: '', descripcion: '' };
+
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private fb: FormBuilder,
@@ -90,7 +92,12 @@ export default class ColaboradoresComponent implements OnInit {
     this.mostrarModal$ = this.modalService.mostrarModal$;
     this.isModalVisible$ = this.modalService.isModalVisible$;
     this.getEmpresasAndColaboradores();
-    this.puestoService.getPuestos().subscribe(puestos => this.puestos = puestos); // Cargar puestos al inicio
+    this.puestoService.getPuestos().pipe(takeUntil(this.destroy$)).subscribe(puestos => this.puestos = puestos); // Cargar puestos al inicio
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   validateForm(): void {
@@ -172,7 +179,7 @@ export default class ColaboradoresComponent implements OnInit {
   }
 
   getEmpresasAndColaboradores(): void {
-    this.empresaService.getEmpresasPorHabilitacion(true).subscribe({
+    this.empresaService.getEmpresasPorHabilitacion(true).pipe(takeUntil(this.destroy$)).subscribe({
       next: (empresas) => {
         this.empresas = empresas;
         // Cargar colaboradores después de cargar las empresas
@@ -186,7 +193,7 @@ export default class ColaboradoresComponent implements OnInit {
 
   getColaboradores(): void {
     this.isTableLoading = true;  // Activar loading
-    this.colaboradorService.getColaboradores().subscribe({
+    this.colaboradorService.getColaboradores().pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.colaboradores = data.map((colaborador) => {
           if (colaborador.fotoUrl) {
@@ -217,7 +224,7 @@ export default class ColaboradoresComponent implements OnInit {
   }
 
   getColaboradoresByEmpresa(empresaId: number): void {
-    this.colaboradorService.getColaboradoresByEmpresa(empresaId).subscribe({
+    this.colaboradorService.getColaboradoresByEmpresa(empresaId).pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => (this.colaboradores = data),
       error: () =>
         (this.errorMessage = 'Error al obtener colaboradores por empresa.'),
@@ -225,7 +232,7 @@ export default class ColaboradoresComponent implements OnInit {
   }
 
   getEmpresas(): void {
-    this.empresaService.getEmpresas().subscribe({
+    this.empresaService.getEmpresas().pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => (this.empresas = data),
       error: () => (this.errorMessage = 'Error al obtener las empresas.'),
     });
@@ -243,7 +250,7 @@ addColaborador(): void {
 
     const file = this.colaboradorForm.get('foto')?.value;
 
-    this.colaboradorService.addColaborador(colaborador, file).subscribe({
+    this.colaboradorService.addColaborador(colaborador, file).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.getColaboradores();
         this.colaboradorForm.reset();
@@ -253,11 +260,9 @@ addColaborador(): void {
         this.closeModal();
       },
       error: (err) => {
-        // Extrae el mensaje del cuerpo de la respuesta (err.error)
-        const errorMessage = typeof err.error === 'string' ? err.error : 'Error al agregar colaborador.';
-        this.errorMessage = errorMessage;
+        // errorInterceptor ya normaliza err.message a un texto mostrable
+        this.errorMessage = err.message || 'Error al agregar colaborador.';
         this.isLoading = false;
-        console.error('Error recibido:', err); // Para depuración
       },
     });
   } else {
@@ -298,7 +303,7 @@ addColaborador(): void {
 
       const file = this.colaboradorForm.get('foto')?.value;
 
-      this.colaboradorService.updateColaborador(this.selectedColaboradorId, colaborador, file).subscribe({
+      this.colaboradorService.updateColaborador(this.selectedColaboradorId, colaborador, file).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.getColaboradores();
           this.colaboradorForm.reset();
@@ -309,7 +314,7 @@ addColaborador(): void {
           this.clearImageCache();
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || 'Error al actualizar colaborador.';
+          this.errorMessage = err.message || 'Error al actualizar colaborador.';
           this.isLoading = false;
         }
       });
@@ -329,7 +334,7 @@ addColaborador(): void {
   }
 
   deleteColaborador(id: number): void {
-    this.colaboradorService.deleteColaborador(id).subscribe({
+    this.colaboradorService.deleteColaborador(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => this.getColaboradores(),
       error: () => (this.errorMessage = 'Error al eliminar colaborador.'),
     });
@@ -372,5 +377,17 @@ addColaborador(): void {
       this.router.navigate(['/reportes/colaborador-profile', colaboradorId]);
       this.closeModal(); // Cierra el modal después de redirigir
     }
+  }
+
+  trackByColaboradorId(_index: number, colaborador: Colaborador): number | undefined {
+    return colaborador.id;
+  }
+
+  trackByPuestoId(_index: number, puesto: Puesto): number | undefined {
+    return puesto.id;
+  }
+
+  trackByEmpresaId(_index: number, empresa: Empresa): number {
+    return empresa.id;
   }
 }

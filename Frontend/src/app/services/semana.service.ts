@@ -3,7 +3,7 @@ import { TurnoService } from './turno.service';
 import { TurnoStateService } from './turno-state.service';
 import { DiaSemana } from './calendario.service';
 import { Observable, of } from 'rxjs';
-import { map, catchError, switchMap } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { format, subMonths, addMonths } from 'date-fns';
 
 @Injectable({
@@ -39,9 +39,6 @@ export class SemanaService {
           }
 
           return of(this.actualizarSemana(semanas[indiceSemanaActual]));
-        }),
-        catchError((error) => {
-          throw error;
         })
       );
   }
@@ -79,18 +76,8 @@ export class SemanaService {
                 : semanas[0];
             return of(this.actualizarSemana(semanaSeleccionada));
           } else {
-            console.warn(
-              `⚠️ No se encontraron semanas en el mes ${direccion === 'anterior' ? 'anterior' : 'siguiente'}.`
-            );
             throw new Error('No se encontraron semanas');
           }
-        }),
-        catchError((error) => {
-          console.error(
-            `❌ Error al cargar semanas del mes ${direccion === 'anterior' ? 'anterior' : 'siguiente'}:`,
-            error
-          );
-          throw error;
         })
       );
   }

@@ -1,10 +1,10 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TurnoService, Turno, TurnoPayload, TurnoPartidoPayload } from '../../../services/turno.service';
 import { TiendaService, Tienda } from '../../../services/tienda.service';
 import { ModalService } from '../../../services/modal.service';
-import { Observable, map } from 'rxjs';
+import { Observable, Subject, map, takeUntil } from 'rxjs';
 import Notiflix from 'notiflix';
 import { AgregarTiendaModalComponent } from '../agregar-tienda-modal/agregar-tienda-modal.component';
 import { GestionarTiendasModalComponent } from '../gestionar-tiendas-modal/gestionar-tiendas-modal.component';
@@ -16,7 +16,7 @@ import { GestionarTiendasModalComponent } from '../gestionar-tiendas-modal/gesti
   templateUrl: './turno-modal.component.html',
   styleUrls: ['./turno-modal.component.css']
 })
-export class TurnoModalComponent {
+export class TurnoModalComponent implements OnDestroy {
   @Input() mostrarModal: boolean = false;
   @Input() isModalVisible: boolean = false;
   @Input() turnoActual: Turno = this.resetTurno();
@@ -52,6 +52,7 @@ export class TurnoModalComponent {
   isModalGestionarTiendasVisible: boolean = false;
   tiendaActual: Tienda = { id: undefined, nombre: '', direccion: '' };
 
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private turnoService: TurnoService,
@@ -62,6 +63,11 @@ export class TurnoModalComponent {
     this.tiendas$ = this.tiendasInput$.pipe(
       map((tiendas) => tiendas.sort((a, b) => this.customSort(a, b)))
     );
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   resetTurno(): Turno {
@@ -158,7 +164,7 @@ export class TurnoModalComponent {
       ? this.turnoService.updateTurno(this.turnoActual.id, turnoParaGuardar)
       : this.turnoService.addTurno(turnoParaGuardar);
 
-    operacion.subscribe({
+    operacion.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.turnoGuardado.emit();
         this.cerrarModal();
@@ -201,7 +207,7 @@ export class TurnoModalComponent {
       }
     };
 
-    this.turnoService.addTurnoPartido(turnoPartido).subscribe({
+    this.turnoService.addTurnoPartido(turnoPartido).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.turnoGuardado.emit();
         this.cerrarModal();
@@ -229,7 +235,7 @@ export class TurnoModalComponent {
       'Eliminar',
       'Cancelar',
       () => {
-        this.turnoService.deleteTurno(this.turnoActual.id!).subscribe({
+        this.turnoService.deleteTurno(this.turnoActual.id!).pipe(takeUntil(this.destroy$)).subscribe({
           next: () => {
             this.turnoEliminado.emit();
             this.cerrarModal();
@@ -238,7 +244,7 @@ export class TurnoModalComponent {
               cssAnimationStyle: 'from-right',
             });
           },
-          error: (error) => {
+          error: () => {
             Notiflix.Notify.failure('Error al eliminar el turno', {
               position: 'right-bottom',
               cssAnimationStyle: 'from-right',
@@ -246,7 +252,7 @@ export class TurnoModalComponent {
           }
         });
       },
-      () => console.log('Eliminación cancelada')
+      () => {}
     );
   }
 
@@ -440,6 +446,10 @@ export class TurnoModalComponent {
   manejarEditarTienda(tienda: Tienda): void {
     this.tiendaActual = { ...tienda };
     this.abrirModalAgregarTienda();
+  }
+
+  trackByTiendaId(_index: number, tienda: Tienda): number | undefined {
+    return tienda.id;
   }
 
   private customSort(a: Tienda, b: Tienda): number {

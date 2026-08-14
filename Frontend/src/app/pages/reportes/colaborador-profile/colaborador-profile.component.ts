@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -10,7 +10,7 @@ import { ReporteService } from '../../../services/reporte.service';
 import { CalendarioService } from '../../../services/calendario.service';
 import { eachDayOfInterval, endOfWeek, format, isToday, parseISO, startOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale'; // Importar localización en español
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subject, takeUntil } from 'rxjs';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { Turno, TurnoService } from '../../../services/turno.service';
 
@@ -23,7 +23,7 @@ Chart.register(...registerables, ChartDataLabels);
   templateUrl: './colaborador-profile.component.html',
   styleUrls: ['./colaborador-profile.component.css']
 })
-export class ColaboradorProfileComponent implements OnInit {
+export class ColaboradorProfileComponent implements OnInit, OnDestroy {
   colaborador: Colaborador | null = null;
   fechaInicio: string = this.getDefaultFechaInicio();
   fechaFin: string = this.getDefaultFechaFin();
@@ -200,12 +200,19 @@ export class ColaboradorProfileComponent implements OnInit {
     private turnoService: TurnoService
   ) { }
 
+  private readonly destroy$ = new Subject<void>();
+
   ngOnInit(): void {
     const colaboradorId = this.route.snapshot.paramMap.get('id');
     if (colaboradorId) {
       this.loadProfile(+colaboradorId);
       this.loadStatistics(+colaboradorId);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
   getDefaultFechaInicio(): string {
     const date = new Date();
@@ -222,9 +229,8 @@ export class ColaboradorProfileComponent implements OnInit {
   }
 
   loadProfile(colaboradorId: number): void {
-    this.colaboradorService.getColaboradorById(colaboradorId).subscribe({
-      next: (data: Colaborador) => this.colaborador = data,
-      error: () => console.error('Error al cargar perfil del colaborador')
+    this.colaboradorService.getColaboradorById(colaboradorId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (data: Colaborador) => this.colaborador = data
     });
   }
 
@@ -238,7 +244,7 @@ export class ColaboradorProfileComponent implements OnInit {
       turnos: this.turnoService.getTurnosByColaboradorId(colaboradorId),
       horasTrabajadas: this.reporteService.getHorasTrabajadas(this.fechaInicio, this.fechaFin, colaboradores),
       turnosFeriados: this.reporteService.getTurnosFeriados(this.fechaInicio, this.fechaFin, colaboradores)
-    }).subscribe({
+    }).pipe(takeUntil(this.destroy$)).subscribe({
       next: ({ turnos, horasTrabajadas, turnosFeriados }) => {
         const turnosOrdenados = this.ordenarTurnosPorFecha(turnos);
         this.turnosRecientes = turnosOrdenados.slice(0, 5);
@@ -266,8 +272,7 @@ export class ColaboradorProfileComponent implements OnInit {
         this.totalTurnosFeriados = turnosFeriados.length;
         this.loadTiendasTrabajadas(horasTrabajadas);
         this.loadSemanaActual(horasTrabajadas);
-      },
-      error: (err) => console.error('Error al cargar estadísticas:', err)
+      }
     });
   }
 
@@ -435,5 +440,9 @@ export class ColaboradorProfileComponent implements OnInit {
 
   abrirCalendario(state: string): void {
     state === 'inicio' ? this.fechaInicioInput.nativeElement.showPicker() : this.fechaFinInput.nativeElement.showPicker();
+  }
+
+  trackByTurnoId(_index: number, turno: Turno): number {
+    return turno.id;
   }
 }

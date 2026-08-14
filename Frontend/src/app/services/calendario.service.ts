@@ -86,6 +86,18 @@ export class CalendarioService {
     return direccion === 'anterior' ? subMonths(fecha, 1) : addMonths(fecha, 1);
   }
 
+  // ✅ Determina si una fecha (yyyy-MM-dd) es el día de hoy.
+  // Antes esta misma lógica estaba copiada tal cual en turnos.component.ts,
+  // weekly-view.component.ts y monthly-view.component.ts.
+  esDiaActual(fecha: string): boolean {
+    const hoy = new Date();
+    const [year, month, day] = fecha.split('-').map(Number);
+    const fechaComparar = new Date(year, month - 1, day); // Meses son 0-indexados en JavaScript
+    hoy.setHours(0, 0, 0, 0);
+    fechaComparar.setHours(0, 0, 0, 0);
+    return hoy.getTime() === fechaComparar.getTime();
+  }
+
   // ✅ Formatea un número decimal de horas a formato HH:MM
   formatearHoras(horasTotales: number, type?: boolean): string {
     if (!horasTotales || horasTotales < 0) return '00:00';

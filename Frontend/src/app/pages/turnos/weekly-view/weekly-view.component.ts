@@ -2,9 +2,10 @@ import { CommonModule } from '@angular/common';
 import { CalendarioService, DiaSemana } from './../../../services/calendario.service';
 import { Colaborador } from './../../../services/colaborador.service';
 import { Turno, TurnoService } from './../../../services/turno.service';
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
 import { Router } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-weekly-view',
@@ -13,7 +14,18 @@ import { Router } from '@angular/router';
   templateUrl: './weekly-view.component.html',
   styleUrls: ['./weekly-view.component.css', '../turnos.component.css']
 })
-export class WeeklyViewComponent implements OnInit {
+export class WeeklyViewComponent implements OnInit, OnChanges, OnDestroy {
+
+  private readonly destroy$ = new Subject<void>();
+
+  // Días de la semana ya completados (7 días) y con esFeriado/esDiaActual
+  // precalculados una sola vez. Antes el template llamaba
+  // completarSemana(diasSemana), esDiaActual(dia.fecha) y esFeriado(dia.fecha)
+  // en cada *ngFor anidado (una vez por cada colaborador × 7 días, en cada
+  // ciclo de detección de cambios) — esDiaActual además instanciaba
+  // `new Date()` en cada llamada. Calcularlo una vez acá evita ese trabajo
+  // repetido.
+  diasSemanaCompleta: (DiaSemana & { esDiaActual: boolean })[] = [];
 
   constructor(
     private turnoService: TurnoService,
@@ -25,7 +37,7 @@ export class WeeklyViewComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarFeriados();
-    this.diasSemana = this.completarSemana(this.diasSemana);
+    this.recalcularDiasSemana();
     if (this.turnos && this.colaboradores) {
       this.calcularHorasTotales();
     }
@@ -35,6 +47,9 @@ export class WeeklyViewComponent implements OnInit {
 
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['diasSemana']) {
+      this.recalcularDiasSemana();
+    }
     if (changes['colaboradores'] && changes['colaboradores'].currentValue) {
       this.filteredColaboradores = [...this.colaboradores];
       if (this.turnos) {
@@ -48,6 +63,26 @@ export class WeeklyViewComponent implements OnInit {
       }
       this.cdr.detectChanges();
     }
+  }
+
+  private recalcularDiasSemana(): void {
+    this.diasSemanaCompleta = this.completarSemana(this.diasSemana).map((dia) => ({
+      ...dia,
+      esFeriado: this.esFeriado(dia.fecha),
+      esDiaActual: this.esDiaActual(dia.fecha),
+    }));
+  }
+
+  trackByFecha(_index: number, dia: DiaSemana): string {
+    return dia.fecha;
+  }
+
+  trackByColaboradorId(_index: number, colaborador: Colaborador): number {
+    return colaborador.id;
+  }
+
+  trackByTurnoId(_index: number, turno: Turno): number {
+    return turno.id;
   }
 
   calcularHorasTotales() {
@@ -144,14 +179,7 @@ export class WeeklyViewComponent implements OnInit {
 
 
   esDiaActual(fecha: string): boolean {
-    const hoy = new Date();
-    const [year, month, day] = fecha.split('-').map(Number); // Dividir y convertir a números
-    const fechaComparar = new Date(year, month - 1, day); // Meses son 0-indexados en JavaScript
-    // Normalizar ambas fechas a medianoche
-    hoy.setHours(0, 0, 0, 0);
-    fechaComparar.setHours(0, 0, 0, 0);
-
-    return hoy.getTime() === fechaComparar.getTime();
+    return this.calendarioService.esDiaActual(fecha);
   }
 
   //! Métodos de utilidad
@@ -185,13 +213,16 @@ export class WeeklyViewComponent implements OnInit {
     );
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   cargarFeriados(): void {
-    this.feriadoService.getFeriados().subscribe({
+    this.feriadoService.getFeriados().pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.feriados = data; // Guardar los feriados
-      },
-      error: (error) => {
-        console.error('Error al cargar los feriados:', error);
+        this.recalcularDiasSemana(); // esFeriado por día depende de this.feriados
       },
     });
   }

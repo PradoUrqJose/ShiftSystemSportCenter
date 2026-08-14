@@ -29,7 +29,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let puesto of puestos" class="border-t hover:bg-gray-50 transition">
+        <tr *ngFor="let puesto of puestos; trackBy: trackByPuestoId" class="border-t hover:bg-gray-50 transition">
           <td class="p-4">{{ puesto.nombre }}</td>
           <td class="p-4">{{ puesto.descripcion || 'Sin descripción' }}</td>
           <td class="p-4">{{ conteoColaboradoresPorPuesto[puesto.id || 0] || 0 }}</td>

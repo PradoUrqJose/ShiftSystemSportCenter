@@ -3,6 +3,7 @@ import { DiaSemana } from './../../services/calendario.service';
 import {
   Component,
   OnInit,
+  OnDestroy,
   ChangeDetectorRef,
   Output,
   EventEmitter,
@@ -29,14 +30,14 @@ import {
 import { es } from 'date-fns/locale'; // Importación de la localización para español
 
 // -------------- RxJS Imports --------------
-import { BehaviorSubject, combineLatest, map, Observable, of, Subscription, tap} from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable, of, Subject, Subscription, takeUntil, tap} from 'rxjs';
 
 // -------------- Angular Modules Imports --------------
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // -------------- External Libraries Imports --------------
-import tippy from 'tippy.js'; // Herramienta para tooltips interactivos
+import tippy, { Instance as TippyInstance } from 'tippy.js'; // Herramienta para tooltips interactivos
 import 'tippy.js/dist/tippy.css'; // Estilos de Tippy.js
 import 'tippy.js/animations/shift-away-extreme.css'; // Animación de Tippy.js
 import 'tippy.js/themes/light.css'; // Tema claro de Tippy.js
@@ -58,7 +59,7 @@ import { TurnoModalComponent } from './turno-modal/turno-modal.component'; // Nu
   styleUrls: ['./turnos.component.css'],
   imports: [CommonModule, FormsModule, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent],
 })
-export default class TurnosComponent implements OnInit, AfterViewChecked {
+export default class TurnosComponent implements OnInit, AfterViewChecked, OnDestroy {
   //! Variables de estado
   feriados: Feriado[] = []; // Lista de feriados
   isLoading$!: Observable<boolean>;
@@ -116,6 +117,8 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
   private turnosSubscription?: Subscription;
   private turnosMensualesSubscription?: Subscription;
   private needsTooltipInit: boolean = false; // Bandera para inicializar tooltips
+  private tooltipInstances: TippyInstance[] = []; // Tooltips activos, para destruirlos antes de recrearlos
+  private readonly destroy$ = new Subject<void>(); // Emite al destruir el componente, corta todas las suscripciones abiertas
 
   constructor(
     private turnoService: TurnoService,
@@ -158,7 +161,7 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
   ngOnInit(): void {
     // ✅ Asignamos las variables después de la inicialización
     this.isLoading$ = this.turnoStateService.isLoading$;
-    this.turnoStateService.vistaMensual$.subscribe(value => {
+    this.turnoStateService.vistaMensual$.pipe(takeUntil(this.destroy$)).subscribe(value => {
       this.vistaMensual = value;
     });
     this.mostrarModal$ = this.modalService.mostrarModal$;
@@ -176,6 +179,12 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
       this.needsTooltipInit = false; // Evitar inicializaciones repetidas
       this.cdr.detectChanges();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.destruirTooltips();
   }
 
   // Método para actualizar mes y año desde semanaActual
@@ -217,7 +226,7 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
   cargarMes(): void {
     this.turnoStateService.setLoading(true);
     const semanaActual = this.turnoStateService.getSemanaActual();
-    this.calendarioService.obtenerSemanasDelMesConCompletado(semanaActual).subscribe({
+    this.calendarioService.obtenerSemanasDelMesConCompletado(semanaActual).pipe(takeUntil(this.destroy$)).subscribe({
       next: (semanas) => {
         this.semanasDelMes = semanas;
         this.diasMes = this.semanasDelMes.flat();
@@ -225,8 +234,7 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
         this.mostrarTurnosMensuales(this.colaboradorSeleccionado);
         this.needsTooltipInit = true; // Marcar para inicializar tooltips
       },
-      error: (error) => {
-        console.error('Error al cargar las semanas del mes:', error);
+      error: () => {
         this.semanasDelMes = [];
         this.diasMes = [];
         this.turnoStateService.setLoading(false);
@@ -279,7 +287,7 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
     const mes = semanaActual.getMonth() + 1;
     const anio = semanaActual.getFullYear();
 
-    this.calendarioService.obtenerSemanasDelMes(semanaActual).subscribe({
+    this.calendarioService.obtenerSemanasDelMes(semanaActual).pipe(takeUntil(this.destroy$)).subscribe({
       next: (semanas) => {
         const semanaSeleccionada = semanas.find(semana =>
           semana.some(dia => dia.fecha === format(semanaActual, 'yyyy-MM-dd'))
@@ -295,8 +303,7 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
         );
         this.turnoStateService.setLoading(false);
       },
-      error: (error) => {
-        console.error('Error al obtener semanas del mes:', error);
+      error: () => {
         this.turnos$ = of([]);
         this.diasSemana$.next([]);
         this.turnoStateService.setLoading(false);
@@ -316,14 +323,7 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
   }
 
   esDiaActual(fecha: string): boolean {
-    const hoy = new Date();
-    const [year, month, day] = fecha.split('-').map(Number); // Dividir y convertir a números
-    const fechaComparar = new Date(year, month - 1, day); // Meses son 0-indexados en JavaScript
-    // Normalizar ambas fechas a medianoche
-    hoy.setHours(0, 0, 0, 0);
-    fechaComparar.setHours(0, 0, 0, 0);
-
-    return hoy.getTime() === fechaComparar.getTime();
+    return this.calendarioService.esDiaActual(fecha);
   }
 
   actualizarResumenMensual(): void {
@@ -367,14 +367,14 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
 
   cambiarSemana(direccion: 'anterior' | 'siguiente'): void {
     this.turnoStateService.setLoading(true);
-    this.semanaService.cambiarSemana(direccion).subscribe({
+    this.semanaService.cambiarSemana(direccion).pipe(takeUntil(this.destroy$)).subscribe({
       next: ({ nuevaSemana, turnos }) => {
         this.diasSemana$.next(nuevaSemana);
         const semanaActual = this.turnoStateService.getSemanaActual();
         const mes = semanaActual.getMonth() + 1;
         const anio = semanaActual.getFullYear();
 
-        this.turnoService.getSemanasDelMes(mes, anio).subscribe({
+        this.turnoService.getSemanasDelMes(mes, anio).pipe(takeUntil(this.destroy$)).subscribe({
           next: (semanas) => {
             const numeroSemana = this.calcularNumeroSemana(semanaActual, semanas);
             this.turnos$ = this.turnoService.getTurnosPorSemanaEstricta(mes, anio, numeroSemana).pipe(
@@ -385,16 +385,14 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
             this.actualizarNombreMes();
             this.turnoStateService.setLoading(false);
           },
-          error: (error) => {
-            console.error('Error al obtener semanas del mes:', error);
+          error: () => {
             this.turnoStateService.setLoading(false);
           }
         });
         this.actualizarMesAnio();
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Error al cambiar la semana:', error);
+      error: () => {
         this.turnoStateService.setLoading(false);
       },
     });
@@ -432,7 +430,8 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
       .pipe(
         map((colaboradores) =>
           colaboradores.find((c) => c.id === colaboradorId)
-        )
+        ),
+        takeUntil(this.destroy$)
       )
       .subscribe((col) => {
         if (col) {
@@ -486,7 +485,7 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
       const mes = semanaActual.getMonth() + 1;
       const anio = semanaActual.getFullYear();
 
-      this.calendarioService.obtenerSemanasDelMes(semanaActual).subscribe({
+      this.calendarioService.obtenerSemanasDelMes(semanaActual).pipe(takeUntil(this.destroy$)).subscribe({
         next: (semanas) => {
           const numeroSemana = this.calcularNumeroSemana(semanaActual, semanas);
           this.turnos$ = this.turnoService.getTurnosPorSemanaEstricta(mes, anio, numeroSemana).pipe(
@@ -532,28 +531,41 @@ export default class TurnosComponent implements OnInit, AfterViewChecked {
   }
 
   inicializarTooltips(): void {
+    // Antes de crear tooltips nuevos, destruir los de la pasada anterior:
+    // si no, cada re-render (cambio de semana/mes) apila instancias de Tippy
+    // sobre elementos DOM que ya no existen y nunca se liberan.
+    this.destruirTooltips();
+
     const elementosTurnos = document.querySelectorAll('.container-green');
-    if (elementosTurnos.length > 0) {
-      elementosTurnos.forEach((elemento) => {
-        const horasTrabajadas = elemento.getAttribute('data-horas-trabajadas');
-        const tiendaNombre = elemento.getAttribute('data-tienda');
-        tippy(elemento, {
-          content: `
-            <div class="p-2 flex justify-center flex-col text-center">
-              <div class="font-bold mb-2 text-gray-800">Información del Turno</div>
-              <div class="mb-1 text-gray-700 text-sm"><strong>Total horas:</strong> ${horasTrabajadas}</div>
-              <div class="text-gray-700 font-bold">${tiendaNombre}</div>
-            </div>
-          `,
-          placement: 'top',
-          arrow: true,
-          theme: 'custom',
-          animation: 'shift-away-extreme',
-          delay: [50, 200],
-          allowHTML: true,
-        });
+    elementosTurnos.forEach((elemento) => {
+      const horasTrabajadas = elemento.getAttribute('data-horas-trabajadas');
+      const tiendaNombre = elemento.getAttribute('data-tienda');
+      const instancia = tippy(elemento, {
+        content: `
+          <div class="p-2 flex justify-center flex-col text-center">
+            <div class="font-bold mb-2 text-gray-800">Información del Turno</div>
+            <div class="mb-1 text-gray-700 text-sm"><strong>Total horas:</strong> ${horasTrabajadas}</div>
+            <div class="text-gray-700 font-bold">${tiendaNombre}</div>
+          </div>
+        `,
+        placement: 'top',
+        arrow: true,
+        theme: 'custom',
+        animation: 'shift-away-extreme',
+        delay: [50, 200],
+        allowHTML: true,
       });
-    }
+      this.tooltipInstances.push(instancia);
+    });
+  }
+
+  private destruirTooltips(): void {
+    this.tooltipInstances.forEach((instancia) => instancia.destroy());
+    this.tooltipInstances = [];
+  }
+
+  trackByColaboradorId(_index: number, colaborador: Colaborador): number {
+    return colaborador.id;
   }
 
   //! Métodos de obtención de datos

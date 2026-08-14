@@ -3,10 +3,11 @@ import { DiaSemana } from './calendario.service';
 // turno.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { catchError, map, Observable, tap, throwError, forkJoin } from 'rxjs';
+import { map, Observable, forkJoin } from 'rxjs';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { environment } from '../../environments/environment';
+import { PageResponse, PAGE_SIZE_ALL } from '../models/page-response.model';
 
 
 export interface Turno {
@@ -68,15 +69,13 @@ export class TurnoService {
 
   constructor(private http: HttpClient) { }
 
+  // Los errores HTTP ya llegan normalizados con un mensaje amigable desde
+  // errorInterceptor (ver interceptors/error.interceptor.ts) — no hace
+  // falta un catchError propio por método acá.
+
   getTurnosPorSemana(fecha: Date): Observable<Turno[]> {
     const formattedDate = format(fecha, 'yyyy-MM-dd');
-    return this.http.get<Turno[]>(`${this.apiUrl}?fecha=${formattedDate}`).pipe(
-      tap((turnos) => console.log('🔄 Turnos recibidos del backend por Semana:', turnos)), // Debugging
-      catchError((error) => {
-        console.error('❌ Error al obtener turnos:', error);
-        return throwError(() => new Error('No se pudieron cargar los turnos. Intente más tarde.'));
-      })
-    );
+    return this.http.get<Turno[]>(`${this.apiUrl}?fecha=${formattedDate}`);
   }
 
   /**
@@ -101,17 +100,7 @@ export class TurnoService {
             ...turno,
             horasTrabajadas: turno.horasTrabajadas ?? 0,
           }))
-        ),
-        catchError((error) => {
-          console.error(
-            'Error al obtener turnos mensuales por colaborador:',
-            error
-          );
-          return throwError(
-            () =>
-              new Error('No se pudieron cargar los turnos. Intente más tarde.')
-          );
-        })
+        )
       );
   }
 
@@ -121,46 +110,31 @@ export class TurnoService {
    * @param anio Año (ejemplo: 2025).
    * @returns Observable con la lista de turnos.
    */
+  // GET /api/turnos/mensual devuelve paginado (Page<TurnoDTO>) desde la
+  // Etapa 2 del backend. Pedimos una página grande para no truncar la lista
+  // mientras no haya paginación real en la UI (ver PAGE_SIZE_ALL).
   getTurnosMensuales(mes: number, anio: number): Observable<Turno[]> {
     return this.http
-      .get<Turno[]>(`${this.apiUrl}/mensual?mes=${mes}&anio=${anio}`)
+      .get<PageResponse<Turno>>(
+        `${this.apiUrl}/mensual?mes=${mes}&anio=${anio}`,
+        { params: { size: PAGE_SIZE_ALL } }
+      )
       .pipe(
-        map((turnos) =>
-          turnos.map((turno) => ({
+        map((page) =>
+          page.content.map((turno) => ({
             ...turno,
             horasTrabajadas: turno.horasTrabajadas ?? 0,
           }))
-        ),
-        catchError((error) => {
-          console.error('Error al obtener turnos mensuales:', error);
-          return throwError(
-            () =>
-              new Error('No se pudieron cargar los turnos. Intente más tarde.')
-          );
-        })
+        )
       );
   }
 
   updateTurno(id: number, turno: TurnoPayload): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${id}`, turno).pipe(
-      catchError((error) => {
-        // Reenviar el error para que el componente lo gestione
-        return throwError(
-          () => new Error(error.error.message || 'Error desconocido')
-        );
-      })
-    );
+    return this.http.put(`${this.apiUrl}/${id}`, turno);
   }
 
   addTurno(turno: TurnoPayload): Observable<any> {
-    return this.http.post(this.apiUrl, turno).pipe(
-      catchError((error) => {
-        // Reenviar el error para que el componente lo gestione
-        return throwError(
-          () => new Error(error.error.message || 'Error desconocido')
-        );
-      })
-    );
+    return this.http.post(this.apiUrl, turno);
   }
 
   addTurnoPartido(turnoPartido: TurnoPartidoPayload): Observable<any> {
@@ -187,11 +161,7 @@ export class TurnoService {
     return forkJoin({
       turnoManana: this.addTurno(turnoManana),
       turnoTarde: this.addTurno(turnoTarde)
-    }).pipe(
-      catchError((error) => {
-        return throwError(() => new Error('Error al crear turno partido: ' + error.message));
-      })
-    );
+    });
   }
 
   deleteTurno(id: number): Observable<void> {
@@ -203,7 +173,6 @@ export class TurnoService {
     return this.http
       .get<string[][]>(`${this.apiUrl}/semanas-del-mes?mes=${mes}&anio=${anio}`)
       .pipe(
-        tap((semanas) => console.log('Semanas obtenidas:', semanas)),
         map((semanas) =>
           semanas.map((semana) =>
             semana.map((fechaStr) => {
@@ -218,23 +187,13 @@ export class TurnoService {
               return diaSemana;
             })
           )
-        ),
-        catchError((error) => {
-          console.error('Error al obtener semanas del mes:', error);
-          return throwError(() => new Error('Error al obtener las semanas.'));
-        })
+        )
       );
   }
 
   // ✅ Método para obtener turnos semanales según las semanas del mes
   getTurnosPorSemanaEstricta(mes: number, anio: number, semana: number): Observable<Turno[]> {
-    return this.http.get<Turno[]>(`${this.apiUrl}/semanal-estricto?mes=${mes}&anio=${anio}&semana=${semana}`).pipe(
-      tap((turnos) => console.log('🔄 Turnos recibidos del backend por Semana Estricta:', turnos)), // Debugging
-      catchError((error) => {
-        console.error('❌ Error al obtener turnos por semana estricta:', error);
-        return throwError(() => new Error('No se pudieron cargar los turnos. Intente más tarde.'));
-      })
-    );
+    return this.http.get<Turno[]>(`${this.apiUrl}/semanal-estricto?mes=${mes}&anio=${anio}&semana=${semana}`);
   }
 
   /**
@@ -276,13 +235,7 @@ export class TurnoService {
       url += `&colaboradores=${colaboradoresParam}`;
     }
 
-    return this.http.get<ResumenMensual[]>(url).pipe(
-      tap((resumenes) => console.log('📊 Resumen mensual recibido:', resumenes)),
-      catchError((error) => {
-        console.error('❌ Error al obtener el resumen mensual:', error);
-        return throwError(() => new Error('No se pudo cargar el resumen mensual. Intente más tarde.'));
-      })
-    );
+    return this.http.get<ResumenMensual[]>(url);
   }
 
     // Método existente que ya tienes

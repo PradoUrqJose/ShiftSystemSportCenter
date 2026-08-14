@@ -46,7 +46,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let colaborador of colaboradoresHabilitados" class="border-t hover:bg-gray-50 transition">
+        <tr *ngFor="let colaborador of colaboradoresHabilitados; trackBy: trackByColaboradorId" class="border-t hover:bg-gray-50 transition">
           <!-- Foto -->
           <td class="p-4">
             <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
@@ -87,7 +87,7 @@
           </td>
         </tr>
         <ng-container *ngIf="mostrarDeshabilitados">
-          <tr *ngFor="let colaborador of colaboradoresDeshabilitados"
+          <tr *ngFor="let colaborador of colaboradoresDeshabilitados; trackBy: trackByColaboradorId"
             class="border-t bg-gray-50 hover:bg-gray-100 transition">
             <td class="p-4">
               <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
@@ -203,7 +203,7 @@
             <select formControlName="puestoId"
               class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 h-full">
               <option [ngValue]="null" selected>Sin Puesto</option>
-              <option *ngFor="let puesto of puestos" [value]="puesto.id">{{ puesto.nombre }}</option>
+              <option *ngFor="let puesto of puestos; trackBy: trackByPuestoId" [value]="puesto.id">{{ puesto.nombre }}</option>
             </select>
           </div>
           <div>
@@ -215,7 +215,7 @@
               <select (change)="onEmpresaSelected($event)" formControlName="empresaId"
                 class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 h-full">
                 <option [ngValue]="null" disabled selected>Seleccione una Empresa</option>
-                <option *ngFor="let empresa of empresas" [value]="empresa.id">
+                <option *ngFor="let empresa of empresas; trackBy: trackByEmpresaId" [value]="empresa.id">
                   {{ empresa.nombre }}
                 </option>
               </select>

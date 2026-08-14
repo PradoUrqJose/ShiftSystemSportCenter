@@ -21,7 +21,7 @@
         (click)="$event.stopPropagation()">
         <div class="p-2">
           <div class="px-3 py-2 text-sm text-gray-500 border-b">Seleccionar Empresa</div>
-          <button *ngFor="let empresa of companies" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
+          <button *ngFor="let empresa of companies; trackBy: trackByCompany" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             [class.bg-blue-100]="(!selectedCompany || selectedCompany === 'all') && empresa === 'all' || selectedCompany === empresa"
             (click)="selectCompany(empresa)">{{ empresa === 'all' ? 'Todas las empresas' : empresa }}</button>
         </div>
@@ -53,7 +53,7 @@
               Todos los colaboradores
             </button>
 
-            <div *ngFor="let c of filteredCollaborators" class="px-3 py-2 hover:bg-gray-100 rounded flex items-center gap-2 cursor-pointer"
+            <div *ngFor="let c of filteredCollaborators; trackBy: trackByColaboradorId" class="px-3 py-2 hover:bg-gray-100 rounded flex items-center gap-2 cursor-pointer"
               (click)="toggleCollaborator(c.id)">
               <div class="flex-1 min-w-0">
                 <div class="text-sm font-medium text-gray-900 truncate">{{ c.nombre }} {{ c.apellido }}</div>

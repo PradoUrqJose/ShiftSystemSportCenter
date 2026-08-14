@@ -3,7 +3,7 @@ import { CalendarioService, DiaSemana } from './../../../services/calendario.ser
 import { ResumenMensual, Turno, TurnoService } from './../../../services/turno.service';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription, takeUntil } from 'rxjs';
 import { shareReplay } from 'rxjs/operators';
 
 @Component({
@@ -29,6 +29,7 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
   feriados: Feriado[] = [];
   resumenMensual: ResumenMensual | undefined;
   private turnosSubscription?: Subscription;
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private turnoService: TurnoService,
@@ -50,6 +51,8 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.turnosSubscription?.unsubscribe();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private subscribeToTurnos(): void {
@@ -61,7 +64,7 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
   }
 
   private cargarFeriados(): void {
-    this.feriadoService.getFeriados().subscribe(data => {
+    this.feriadoService.getFeriados().pipe(takeUntil(this.destroy$)).subscribe(data => {
       this.feriados = data;
     });
   }
@@ -69,6 +72,7 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
   private cargarResumenMensual(): void {
     if (this.colaboradorSeleccionado) {
       this.turnoService.getResumenMensual(this.mes, this.anio, [this.colaboradorSeleccionado])
+        .pipe(takeUntil(this.destroy$))
         .subscribe(resumenes => {
           this.resumenMensual = resumenes[0];
           this.cdr.detectChanges();
@@ -106,15 +110,22 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
   }
 
   esDiaActual(fecha: string): boolean {
-    const hoy = new Date();
-    const [year, month, day] = fecha.split('-').map(Number);
-    const fechaComparar = new Date(year, month - 1, day);
-    hoy.setHours(0, 0, 0, 0);
-    fechaComparar.setHours(0, 0, 0, 0);
-    return hoy.getTime() === fechaComparar.getTime();
+    return this.calendarioService.esDiaActual(fecha);
   }
 
   esFeriado(fecha: string): boolean {
     return this.turnoService.esFeriado(fecha, this.feriados);
+  }
+
+  trackByFecha(_index: number, dia: DiaSemana): string {
+    return dia.fecha;
+  }
+
+  trackBySemanaIndex(index: number): number {
+    return index;
+  }
+
+  trackByTurnoId(_index: number, turno: Turno): number {
+    return turno.id;
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -6,6 +6,7 @@ import { ExportExcelComponent, ExportColumn } from '../../../components/export-e
 import { ReporteService } from '../../../services/reporte.service';
 import { CalendarioService } from '../../../services/calendario.service';
 import { ColaboradorService, Colaborador } from '../../../services/colaborador.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-turnos-feriados',
@@ -14,7 +15,7 @@ import { ColaboradorService, Colaborador } from '../../../services/colaborador.s
   templateUrl: './turnos-feriados.component.html',
   styleUrls: ['./turnos-feriados.component.css']
 })
-export class TurnosFeriadosComponent implements OnInit {
+export class TurnosFeriadosComponent implements OnInit, OnDestroy {
   reportes: any[] = [];
   fechaInicio: string = '';
   fechaFin: string = '';
@@ -35,6 +36,8 @@ export class TurnosFeriadosComponent implements OnInit {
   empresaSeleccionada: number | 'all' = 'all';
   estadoSeleccionado: 'all' | true | false = 'all';
 
+  private readonly destroy$ = new Subject<void>();
+
   constructor(
     private reporteService: ReporteService,
     private calendarioService: CalendarioService,
@@ -44,6 +47,11 @@ export class TurnosFeriadosComponent implements OnInit {
   ngOnInit(): void {
     this.setFechasMesActual();
     this.getColaboradores();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private setFechasMesActual(): void {
@@ -62,7 +70,7 @@ export class TurnosFeriadosComponent implements OnInit {
   }
 
   getColaboradores(): void {
-    this.colaboradorService.getColaboradores().subscribe({
+    this.colaboradorService.getColaboradores().pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.colaboradores = data;
         const mapa = new Map<number, string>();
@@ -117,6 +125,7 @@ export class TurnosFeriadosComponent implements OnInit {
     const colaboradoresIds = this.colaboradoresSeleccionados;
 
     this.reporteService.getTurnosFeriados(this.fechaInicio, this.fechaFin, colaboradoresIds)
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
           // Fusionar datos con apellidos de colaboradores
@@ -129,8 +138,7 @@ export class TurnosFeriadosComponent implements OnInit {
           });
           this.errorMessage = null;
         },
-        error: (error) => {
-          console.error("❌ Error al obtener reportes de turnos en feriados:", error);
+        error: () => {
           this.errorMessage = 'Error al obtener el reporte de turnos en feriados.';
           this.reportes = [];
         }
@@ -155,5 +163,13 @@ export class TurnosFeriadosComponent implements OnInit {
 
   obtenerNumerosDeTienda(nombreTienda: string): string {
     return nombreTienda.replace(/[^0-9]/g, '');
+  }
+
+  trackByEmpresaId(_index: number, empresa: { id: number }): number {
+    return empresa.id;
+  }
+
+  trackByReporte(_index: number, reporte: any): string {
+    return `${reporte.colaboradorId}-${reporte.fecha}-${reporte.horaEntrada}`;
   }
 }
