@@ -43,20 +43,27 @@ export function crearTurnoVacio(): Turno {
   };
 }
 
+// Forma plana: coincide con TurnoRequestDTO del backend (colaboradorId/
+// tiendaId, sin empresaId — el backend resuelve la empresa a partir del
+// colaborador, ver TurnoService.aplicarDatosTurno). Antes este payload
+// mandaba objetos anidados {colaborador: {id}, tienda: {id}, empresa: {id}}
+// — esa forma quedó desincronizada del backend en el refactor de la Etapa 2
+// (TurnoRequestDTO se aplanó, el frontend nunca se actualizó) y rompía en
+// silencio cualquier alta/edición de turno con "Los datos enviados no son
+// válidos" (colaboradorId/tiendaId llegaban null). Encontrado probando
+// Turnos Masivos de punta a punta, no es específico de esa función.
 export interface TurnoPayload {
-  colaborador: { id: number | undefined };
+  colaboradorId: number;
   fecha: string;
   horaEntrada: string;
   horaSalida: string;
-  empresa: { id: number };
-  tienda: { id: number };
+  tiendaId: number;
 }
 
 export interface TurnoPartidoPayload {
-  colaborador: { id: number | undefined };
+  colaboradorId: number;
   fecha: string;
-  empresa: { id: number };
-  tienda: { id: number };
+  tiendaId: number;
   turnoManana: {
     horaEntrada: string;
     horaSalida: string;
@@ -155,21 +162,19 @@ export class TurnoService {
   addTurnoPartido(turnoPartido: TurnoPartidoPayload): Observable<any> {
     // Crear dos turnos separados para el turno partido
     const turnoManana: TurnoPayload = {
-      colaborador: turnoPartido.colaborador,
+      colaboradorId: turnoPartido.colaboradorId,
       fecha: turnoPartido.fecha,
       horaEntrada: turnoPartido.turnoManana.horaEntrada,
       horaSalida: turnoPartido.turnoManana.horaSalida,
-      empresa: turnoPartido.empresa,
-      tienda: turnoPartido.tienda
+      tiendaId: turnoPartido.tiendaId,
     };
 
     const turnoTarde: TurnoPayload = {
-      colaborador: turnoPartido.colaborador,
+      colaboradorId: turnoPartido.colaboradorId,
       fecha: turnoPartido.fecha,
       horaEntrada: turnoPartido.turnoTarde.horaEntrada,
       horaSalida: turnoPartido.turnoTarde.horaSalida,
-      empresa: turnoPartido.empresa,
-      tienda: turnoPartido.tienda
+      tiendaId: turnoPartido.tiendaId,
     };
 
     // Crear ambos turnos en paralelo usando forkJoin

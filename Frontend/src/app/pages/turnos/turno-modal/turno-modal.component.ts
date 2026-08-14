@@ -9,12 +9,22 @@ import Notiflix from 'notiflix';
 import { AgregarTiendaModalComponent } from '../agregar-tienda-modal/agregar-tienda-modal.component';
 import { GestionarTiendasModalComponent } from '../gestionar-tiendas-modal/gestionar-tiendas-modal.component';
 import { GestionarTurnosPredeterminadosModalComponent } from '../gestionar-turnos-predeterminados-modal/gestionar-turnos-predeterminados-modal.component';
+import { TimePickerComponent } from '../../../components/time-picker/time-picker.component';
+import { TiendaSelectComponent } from '../../../components/tienda-select/tienda-select.component';
 import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
 
 @Component({
   selector: 'app-turno-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, AgregarTiendaModalComponent, GestionarTiendasModalComponent, GestionarTurnosPredeterminadosModalComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    AgregarTiendaModalComponent,
+    GestionarTiendasModalComponent,
+    GestionarTurnosPredeterminadosModalComponent,
+    TimePickerComponent,
+    TiendaSelectComponent,
+  ],
   templateUrl: './turno-modal.component.html',
   styleUrls: ['./turno-modal.component.css']
 })
@@ -33,6 +43,7 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
   isSubmitting: boolean = false;
   errorHoraEntrada: string | null = null;
   errorHoraSalida: string | null = null;
+  errorTienda: string | null = null;
 
   // Variables para turnos partidos
   esTurnoPartido: boolean = false;
@@ -114,9 +125,11 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
     this.errorHoraSalidaManana = null;
     this.errorHoraEntradaTarde = null;
     this.errorHoraSalidaTarde = null;
+    this.errorTienda = null;
 
     if (!this.turnoActual.tiendaId) {
       this.isSubmitting = false;
+      this.errorTienda = 'La selección de tienda es obligatoria';
       Notiflix.Notify.failure('Debes seleccionar una tienda', {
         position: 'right-bottom',
         cssAnimationStyle: 'from-right',
@@ -150,12 +163,11 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
     }
 
     const turnoParaGuardar: TurnoPayload = {
-      colaborador: { id: this.turnoActual.colaboradorId },
+      colaboradorId: this.turnoActual.colaboradorId!,
       fecha: this.turnoActual.fecha,
       horaEntrada: this.turnoActual.horaEntrada,
       horaSalida: this.turnoActual.horaSalida,
-      empresa: { id: this.turnoActual.empresaId! },
-      tienda: { id: Number(this.turnoActual.tiendaId) },
+      tiendaId: Number(this.turnoActual.tiendaId),
     };
 
     const operacion = this.turnoActual.id
@@ -191,10 +203,9 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
     }
 
     const turnoPartido: TurnoPartidoPayload = {
-      colaborador: { id: this.turnoActual.colaboradorId },
+      colaboradorId: this.turnoActual.colaboradorId!,
       fecha: this.turnoActual.fecha,
-      empresa: { id: this.turnoActual.empresaId! },
-      tienda: { id: Number(this.turnoActual.tiendaId) },
+      tiendaId: Number(this.turnoActual.tiendaId),
       turnoManana: {
         horaEntrada: this.turnoManana.horaEntrada,
         horaSalida: this.turnoManana.horaSalida
@@ -276,6 +287,44 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
       return mensajeRango;
     }
     return null;
+  }
+
+  // Handlers de los TimePicker/TiendaSelect: el (valueChange) de esos
+  // componentes reemplaza al [(ngModel)] + (change) que tenían los inputs
+  // nativos — misma validación de siempre, solo cambia quién dispara el evento.
+  onHoraEntradaChange(valor: string): void {
+    this.turnoActual.horaEntrada = valor;
+    this.validarHorarioEntrada();
+  }
+
+  onHoraSalidaChange(valor: string): void {
+    this.turnoActual.horaSalida = valor;
+    this.validarHorarioSalida();
+  }
+
+  onHoraEntradaMananaChange(valor: string): void {
+    this.turnoManana.horaEntrada = valor;
+    this.validarHorarioEntradaManana();
+  }
+
+  onHoraSalidaMananaChange(valor: string): void {
+    this.turnoManana.horaSalida = valor;
+    this.validarHorarioSalidaManana();
+  }
+
+  onHoraEntradaTardeChange(valor: string): void {
+    this.turnoTarde.horaEntrada = valor;
+    this.validarHorarioEntradaTarde();
+  }
+
+  onHoraSalidaTardeChange(valor: string): void {
+    this.turnoTarde.horaSalida = valor;
+    this.validarHorarioSalidaTarde();
+  }
+
+  onTiendaChange(id: number): void {
+    this.turnoActual.tiendaId = id;
+    this.errorTienda = null;
   }
 
   validarHorarioEntrada(): void {

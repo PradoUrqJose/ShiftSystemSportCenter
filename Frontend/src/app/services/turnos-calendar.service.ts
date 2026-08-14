@@ -208,7 +208,7 @@ export class TurnosCalendarService implements OnDestroy {
 
         for (const turno of anterior) {
           const fechaDestino = fechasAnteriorAActual.get(turno.fecha);
-          if (!fechaDestino || !turno.colaboradorId || !turno.empresaId || !turno.tiendaId) continue;
+          if (!fechaDestino || !turno.colaboradorId || !turno.tiendaId) continue;
 
           const clave = `${turno.colaboradorId}_${fechaDestino}`;
           if (existentes.has(clave)) {
@@ -220,12 +220,11 @@ export class TurnosCalendarService implements OnDestroy {
           }
 
           porCrear.push({
-            colaborador: { id: turno.colaboradorId },
+            colaboradorId: turno.colaboradorId,
             fecha: fechaDestino,
             horaEntrada: turno.horaEntrada,
             horaSalida: turno.horaSalida,
-            empresa: { id: turno.empresaId },
-            tienda: { id: turno.tiendaId },
+            tiendaId: turno.tiendaId,
           });
         }
 
