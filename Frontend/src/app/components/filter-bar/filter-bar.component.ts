@@ -64,7 +64,11 @@ export class FilterBarComponent {
       const c = this.collaborators.find(x => x.id === this.selectedCollaboratorIds[0]);
       return c ? `${c.nombre} ${c.apellido}` : '1 seleccionado';
     }
-    return `${this.selectedCollaboratorIds.length} seleccionados`;
+    return `${this.selectedCollaboratorIds.length} colaboradores`;
+  }
+
+  iniciales(colaborador: Colaborador): string {
+    return `${colaborador.nombre?.[0] || ''}${colaborador.apellido?.[0] || ''}`.toUpperCase();
   }
 
   onToggleSort(): void {

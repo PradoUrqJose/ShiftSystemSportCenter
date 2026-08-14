@@ -195,3 +195,95 @@ thead {
   overflow-x: hidden;
   /* No establecemos max-height para que la tabla crezca según los colaboradores */
 }
+
+/* Acciones de turnos (copiar semana anterior / turnos masivos): separador
+   visual de la navegación de semana/mes, y botones solo-ícono con un color
+   propio por familia de acción en vez del gris genérico de .gray-button —
+   ver mock "Toolbar de Turnos". Solo-ícono es a propósito (no solo en
+   pantallas chicas): son acciones secundarias de uso frecuente, y así la
+   fila entera entra en una laptop de 14" sin que nada salte de línea. */
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background-color: #e1e5ee;
+  flex-shrink: 0;
+}
+
+.icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.icon-action:hover:not(:disabled) {
+  transform: scale(1.08);
+}
+
+.icon-action.hue-teal {
+  background-color: #e1f5f1;
+  color: #0d8f80;
+  border-color: #0d8f8026;
+}
+
+.icon-action.hue-violet {
+  background-color: #ece9fd;
+  color: #5b3df0;
+  border-color: #5b3df026;
+}
+
+/* Tooltip propio (CSS puro, sin JS/Tippy) para los botones solo-ícono: el
+   `title` nativo del navegador tarda ~1s en aparecer y no tiene estilo. El
+   texto vive en `data-tooltip` para no duplicarlo en el DOM. */
+.icon-action[data-tooltip] {
+  position: relative;
+}
+.icon-action[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  transform: translate(-50%, 4px);
+  background-color: #1b2436;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 6px 10px;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 30;
+}
+.icon-action[data-tooltip]::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1b2436;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+.icon-action[data-tooltip]:hover::after,
+.icon-action[data-tooltip]:hover::before,
+.icon-action[data-tooltip]:focus-visible::after,
+.icon-action[data-tooltip]:focus-visible::before {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .icon-action[data-tooltip]::after,
+  .icon-action[data-tooltip]::before {
+    transition: none;
+  }
+}
