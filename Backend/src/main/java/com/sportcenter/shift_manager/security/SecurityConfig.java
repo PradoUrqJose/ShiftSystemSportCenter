@@ -72,7 +72,7 @@ public class SecurityConfig {
                         // usuario autenticado, incluido un futuro colaborador viendo
                         // su propio calendario (necesita saber nombres de tienda,
                         // puesto y qué días son feriado).
-                        .requestMatchers(HttpMethod.GET, "/api/tiendas/**", "/api/puestos/**", "/api/feriados/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/tiendas/**", "/api/puestos/**", "/api/feriados/**", "/api/turnos-predeterminados/**").authenticated()
                         // Todo lo demás (alta/edición/borrado de cualquier recurso,
                         // y toda lectura que exponga datos de otros colaboradores o
                         // reportes) queda para ADMIN. Ver el porqué en el javadoc de

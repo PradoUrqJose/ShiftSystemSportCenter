@@ -1,22 +1,24 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TurnoService, Turno, TurnoPayload, TurnoPartidoPayload, crearTurnoVacio } from '../../../services/turno.service';
 import { TiendaService, Tienda } from '../../../services/tienda.service';
+import { TurnoPredeterminado, TurnoPredeterminadoService } from '../../../services/turno-predeterminado.service';
 import { Observable, Subject, map, takeUntil } from 'rxjs';
 import Notiflix from 'notiflix';
 import { AgregarTiendaModalComponent } from '../agregar-tienda-modal/agregar-tienda-modal.component';
 import { GestionarTiendasModalComponent } from '../gestionar-tiendas-modal/gestionar-tiendas-modal.component';
+import { GestionarTurnosPredeterminadosModalComponent } from '../gestionar-turnos-predeterminados-modal/gestionar-turnos-predeterminados-modal.component';
 import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
 
 @Component({
   selector: 'app-turno-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, AgregarTiendaModalComponent, GestionarTiendasModalComponent],
+  imports: [CommonModule, FormsModule, AgregarTiendaModalComponent, GestionarTiendasModalComponent, GestionarTurnosPredeterminadosModalComponent],
   templateUrl: './turno-modal.component.html',
   styleUrls: ['./turno-modal.component.css']
 })
-export class TurnoModalComponent implements OnDestroy {
+export class TurnoModalComponent implements OnInit, OnDestroy {
   @Input() mostrarModal: boolean = false;
   @Input() isModalVisible: boolean = false;
   @Input() turnoActual: Turno = crearTurnoVacio();
@@ -52,16 +54,27 @@ export class TurnoModalComponent implements OnDestroy {
   isModalGestionarTiendasVisible: boolean = false;
   tiendaActual: Tienda = { id: undefined, nombre: '', direccion: '' };
 
+  // Plantillas rápidas (ver TurnoPredeterminadoService) — sin relación con
+  // tienda ni con el turno creado, son solo un atajo de UI.
+  plantillas: TurnoPredeterminado[] = [];
+  mostrarModalGestionarPlantillas: boolean = false;
+  isModalGestionarPlantillasVisible: boolean = false;
+
   private readonly destroy$ = new Subject<void>();
 
   constructor(
     private turnoService: TurnoService,
-    private tiendaService: TiendaService
+    private tiendaService: TiendaService,
+    private turnoPredeterminadoService: TurnoPredeterminadoService
   ) {
     // Aplicar el ordenamiento a tiendas$ internamente
     this.tiendas$ = this.tiendasInput$.pipe(
       map((tiendas) => tiendas.sort((a, b) => this.customSort(a, b)))
     );
+  }
+
+  ngOnInit(): void {
+    this.cargarPlantillas();
   }
 
   ngOnDestroy(): void {
@@ -416,6 +429,53 @@ export class TurnoModalComponent implements OnDestroy {
 
   trackByTiendaId(_index: number, tienda: Tienda): number | undefined {
     return tienda.id;
+  }
+
+  // Plantillas rápidas
+  cargarPlantillas(): void {
+    this.turnoPredeterminadoService.getTurnosPredeterminados().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (data) => (this.plantillas = data),
+      error: () => (this.plantillas = []),
+    });
+  }
+
+  seleccionarPlantilla(plantilla: TurnoPredeterminado): void {
+    this.turnoActual.horaEntrada = plantilla.horaEntrada;
+    this.turnoActual.horaSalida = plantilla.horaSalida;
+    this.validarHorarioEntrada();
+    this.validarHorarioSalida();
+  }
+
+  // El chip se ve "seleccionado" si sus horarios coinciden con lo cargado
+  // en el form — no hace falta trackear un estado de selección aparte: si
+  // el operador edita el input a mano, deja de matchear solo.
+  esPlantillaSeleccionada(plantilla: TurnoPredeterminado): boolean {
+    return (
+      this.formatearHora(this.turnoActual.horaEntrada) === this.formatearHora(plantilla.horaEntrada) &&
+      this.formatearHora(this.turnoActual.horaSalida) === this.formatearHora(plantilla.horaSalida)
+    );
+  }
+
+  trackByPlantillaId(_index: number, plantilla: TurnoPredeterminado): number | undefined {
+    return plantilla.id;
+  }
+
+  abrirModalGestionarPlantillas(): void {
+    this.mostrarModalGestionarPlantillas = true;
+    setTimeout(() => (this.isModalGestionarPlantillasVisible = true), MODAL_OPEN_DELAY_MS);
+  }
+
+  cerrarModalGestionarPlantillas(): void {
+    this.isModalGestionarPlantillasVisible = false;
+    setTimeout(() => (this.mostrarModalGestionarPlantillas = false), MODAL_CLOSE_DELAY_MS);
+  }
+
+  manejarPlantillaGuardada(): void {
+    this.cargarPlantillas();
+  }
+
+  manejarPlantillaEliminada(): void {
+    this.cargarPlantillas();
   }
 
   private customSort(a: Tienda, b: Tienda): number {
