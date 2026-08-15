@@ -7,9 +7,11 @@
       <app-button (click)="abrirModalAgregar()">Agregar</app-button>
     </div>
   </div>
-  <div *ngIf="errorMessage" class="bg-red-100 text-red-700 p-3 rounded-lg mb-4 border border-red-400">
-    {{ errorMessage }}
-  </div>
+  @if (errorMessage) {
+    <div class="bg-red-100 text-red-700 p-3 rounded-lg mb-4 border border-red-400">
+      {{ errorMessage }}
+    </div>
+  }
   <!-- Tabla -->
   <div class="mt-6">
     <app-table-shell>
@@ -39,84 +41,95 @@
           </tr>
         </thead>
         <tbody>
-          <ng-container *ngIf="!isTableLoading; else colaboradoresSkeleton">
-            <tr *ngFor="let colaborador of colaboradoresHabilitados; let i = index; trackBy: trackByColaboradorId" [style.--row-i]="i">
-              <!-- Foto -->
-              <td class="p-4">
-                <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
-                  alt="Foto de {{ colaborador.nombre }}"
-                  class="w-12 h-12 object-cover rounded-full border border-gray-300" />
-              </td>
-              <!-- Nombre -->
-              <td class="p-4">{{ colaborador.nombre }}</td>
-              <!-- Apellido -->
-              <td class="p-4">{{ colaborador.apellido }}</td>
-              <!-- DNI -->
-              <!-- <td class="p-4">{{ colaborador.dni }}</td> -->
-              <!-- Email -->
-              <td class="p-4">{{ colaborador.email }}</td>
-              <!-- Teléfono -->
-              <td class="p-4">{{ colaborador.telefono }}</td>
-              <!-- Empresa -->
-              <td class="p-4">{{ colaborador.empresaNombre || 'N/A' }}</td>
-              <!-- Acciones -->
-              <td class="p-4 flex justify-center items-center space-x-2">
-                <button (click)="editColaborador(colaborador)" class="text-blue-600 hover:text-blue-800 transition">
-                  <i class="fa-solid fa-pen-to-square"></i> <!-- Editar -->
-                </button>
-              </td>
-            </tr>
-            <tr *ngIf="colaboradoresHabilitados.length === 0">
-              <td colspan="7" class="p-4 text-center text-ink-faint">No hay colaboradores habilitados.</td>
-            </tr>
-            <!-- Separador para colaboradores deshabilitados -->
-            <tr *ngIf="mostrarDeshabilitados && colaboradoresDeshabilitados.length" class="bg-paper">
-              <td colspan="7" class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-ink-faint">
-                Deshabilitados
-              </td>
-            </tr>
-            <ng-container *ngIf="mostrarDeshabilitados">
-              <tr *ngFor="let colaborador of colaboradoresDeshabilitados; let i = index; trackBy: trackByColaboradorId"
-                class="bg-paper" [style.--row-i]="i">
+          @if (!isTableLoading) {
+            @for (colaborador of colaboradoresHabilitados; track trackByColaboradorId(i, colaborador); let i = $index) {
+              <tr [style.--row-i]="i">
+                <!-- Foto -->
                 <td class="p-4">
                   <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
                     alt="Foto de {{ colaborador.nombre }}"
                     class="w-12 h-12 object-cover rounded-full border border-gray-300" />
                 </td>
+                <!-- Nombre -->
                 <td class="p-4">{{ colaborador.nombre }}</td>
+                <!-- Apellido -->
                 <td class="p-4">{{ colaborador.apellido }}</td>
+                <!-- DNI -->
+                <!-- <td class="p-4">{{ colaborador.dni }}</td> -->
+                <!-- Email -->
                 <td class="p-4">{{ colaborador.email }}</td>
+                <!-- Teléfono -->
                 <td class="p-4">{{ colaborador.telefono }}</td>
+                <!-- Empresa -->
                 <td class="p-4">{{ colaborador.empresaNombre || 'N/A' }}</td>
+                <!-- Acciones -->
                 <td class="p-4 flex justify-center items-center space-x-2">
                   <button (click)="editColaborador(colaborador)" class="text-blue-600 hover:text-blue-800 transition">
-                    <i class="fa-solid fa-pen-to-square"></i>
+                    <i class="fa-solid fa-pen-to-square"></i> <!-- Editar -->
                   </button>
                 </td>
               </tr>
-            </ng-container>
-          </ng-container>
-          <ng-template #colaboradoresSkeleton>
-            <tr *ngFor="let _ of skeletonRows">
-              <td class="p-4"><app-skeleton width="48px" height="48px" shape="circle"></app-skeleton></td>
-              <td class="p-4"><app-skeleton width="70%"></app-skeleton></td>
-              <td class="p-4"><app-skeleton width="70%"></app-skeleton></td>
-              <td class="p-4"><app-skeleton width="80%"></app-skeleton></td>
-              <td class="p-4"><app-skeleton width="60%"></app-skeleton></td>
-              <td class="p-4"><app-skeleton width="60%"></app-skeleton></td>
-              <td class="p-4 flex justify-center"><app-skeleton width="24px" height="24px" shape="circle"></app-skeleton></td>
-            </tr>
-          </ng-template>
+            }
+            @if (colaboradoresHabilitados.length === 0) {
+              <tr>
+                <td colspan="7" class="p-4 text-center text-ink-faint">No hay colaboradores habilitados.</td>
+              </tr>
+            }
+            <!-- Separador para colaboradores deshabilitados -->
+            @if (mostrarDeshabilitados && colaboradoresDeshabilitados.length) {
+              <tr class="bg-paper">
+                <td colspan="7" class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-ink-faint">
+                  Deshabilitados
+                </td>
+              </tr>
+            }
+            @if (mostrarDeshabilitados) {
+              @for (colaborador of colaboradoresDeshabilitados; track trackByColaboradorId(i, colaborador); let i = $index) {
+                <tr
+                  class="bg-paper" [style.--row-i]="i">
+                  <td class="p-4">
+                    <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
+                      alt="Foto de {{ colaborador.nombre }}"
+                      class="w-12 h-12 object-cover rounded-full border border-gray-300" />
+                  </td>
+                  <td class="p-4">{{ colaborador.nombre }}</td>
+                  <td class="p-4">{{ colaborador.apellido }}</td>
+                  <td class="p-4">{{ colaborador.email }}</td>
+                  <td class="p-4">{{ colaborador.telefono }}</td>
+                  <td class="p-4">{{ colaborador.empresaNombre || 'N/A' }}</td>
+                  <td class="p-4 flex justify-center items-center space-x-2">
+                    <button (click)="editColaborador(colaborador)" class="text-blue-600 hover:text-blue-800 transition">
+                      <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            }
+          } @else {
+            @for (_ of skeletonRows; track $index) {
+              <tr>
+                <td class="p-4"><app-skeleton width="48px" height="48px" shape="circle"></app-skeleton></td>
+                <td class="p-4"><app-skeleton width="70%"></app-skeleton></td>
+                <td class="p-4"><app-skeleton width="70%"></app-skeleton></td>
+                <td class="p-4"><app-skeleton width="80%"></app-skeleton></td>
+                <td class="p-4"><app-skeleton width="60%"></app-skeleton></td>
+                <td class="p-4"><app-skeleton width="60%"></app-skeleton></td>
+                <td class="p-4 flex justify-center"><app-skeleton width="24px" height="24px" shape="circle"></app-skeleton></td>
+              </tr>
+            }
+          }
         </tbody>
       </table>
-      <div table-footer *ngIf="!isTableLoading && colaboradoresDeshabilitados.length">
-        <button class="text-sm font-semibold text-ink-soft hover:text-ink transition flex items-center gap-2"
-          (click)="toggleDeshabilitados()">
-          <i class="fa-solid transition"
+      @if (!isTableLoading && colaboradoresDeshabilitados.length) {
+        <div table-footer>
+          <button class="text-sm font-semibold text-ink-soft hover:text-ink transition flex items-center gap-2"
+            (click)="toggleDeshabilitados()">
+            <i class="fa-solid transition"
             [ngClass]="{'fa-caret-down': mostrarDeshabilitados, 'fa-caret-right': !mostrarDeshabilitados}"></i>
-          {{ mostrarDeshabilitados ? 'Ocultar' : 'Mostrar' }} deshabilitados ({{ colaboradoresDeshabilitados.length }})
-        </button>
-      </div>
+            {{ mostrarDeshabilitados ? 'Ocultar' : 'Mostrar' }} deshabilitados ({{ colaboradoresDeshabilitados.length }})
+          </button>
+        </div>
+      }
     </app-table-shell>
   </div>
 

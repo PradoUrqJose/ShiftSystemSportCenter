@@ -1,25 +1,23 @@
 # Shift System Sport Center
 
-Sistema de gestión de turnos para un centro deportivo. **Backend** en Spring Boot 3 (Java 17) y **Frontend** en Angular 18. Esta guía deja el proyecto corriendo en tu máquina (Mac o Windows) contra una base de datos local en Docker, con la opción de traer datos reales de producción para probar con casos reales.
+Sistema de gestión de turnos para un centro deportivo. **Backend** en Spring Boot 3 (Java 17) y **Frontend** en Angular 22. Esta guía deja el proyecto corriendo en tu máquina (Mac o Windows) contra una base de datos local en Docker, con la opción de traer datos reales de producción para probar con casos reales.
 
 ## Requisitos previos
 
-Necesitás 4 cosas instaladas, iguales en Mac y Windows salvo el instalador:
+Necesitás 3 cosas instaladas, iguales en Mac y Windows salvo el instalador:
 
 | Herramienta | Para qué | macOS | Windows |
 |---|---|---|---|
 | **Docker Desktop** | Base de datos local en un contenedor | `brew install --cask docker` o [docker.com](https://www.docker.com/products/docker-desktop/) | [docker.com](https://www.docker.com/products/docker-desktop/) (requiere WSL2, el instalador lo guía) |
 | **JDK 17** (Temurin) | Compilar y correr el backend | `brew install openjdk@17` | `winget install EclipseAdoptium.Temurin.17.JDK` o [adoptium.net](https://adoptium.net/) |
-| **Node.js 18+** | Frontend | `brew install node` o [nodejs.org](https://nodejs.org/) | `winget install OpenJS.NodeJS.LTS` o [nodejs.org](https://nodejs.org/) |
-| **Angular CLI 18.2.9** | Servir el frontend | `npm install -g @angular/cli@18.2.9` | igual (mismo comando, en PowerShell) |
+| **Node.js 24.15+** | Frontend | `brew install node@24` o [nodejs.org](https://nodejs.org/) | [nodejs.org](https://nodejs.org/) (línea 24 LTS) |
 
 No hace falta instalar Maven ni Postgres por separado: el backend trae su propio **Maven Wrapper** (`mvnw`/`mvnw.cmd`) y la base de datos corre en Docker.
 
 Verificá que todo esté instalado:
 ```bash
 docker --version
-node -v          # v18 o superior
-ng version        # Angular CLI: 18.2.9
+node -v          # v24.15 o superior dentro de la línea 24
 ```
 
 ## 1. Clonar el proyecto
@@ -83,7 +81,7 @@ Debería responder `[]` (base nueva y vacía) o `200 OK`.
 En otra terminal:
 ```bash
 cd Frontend
-npm install
+npm ci
 npm start
 ```
 (`npm start` es `ng serve`; sumale `-- -o` si querés que abra el navegador solo: `npm start -- -o`.)
@@ -141,7 +139,7 @@ cd Frontend && npm start                                          # frontend
 
 ## Estructura del proyecto
 - **Backend/**: API REST en Spring Boot (Java 17, Maven).
-- **Frontend/**: interfaz en Angular 18.
+- **Frontend/**: interfaz en Angular 22.
 - **docker-compose.yml**: Postgres local para desarrollo.
 
 ## Contribuciones

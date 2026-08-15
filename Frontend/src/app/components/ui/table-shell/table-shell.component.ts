@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 // Envoltorio visual de composición para las tablas CRUD (Fase 3) y de
@@ -9,11 +9,10 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 // vía content projection; el hover de fila y el resto de la semántica de
 // datos quedan del lado del consumidor (evita ::ng-deep entre componentes).
 @Component({
-  selector: 'app-table-shell',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './table-shell.component.html',
-  styleUrls: ['./table-shell.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-table-shell',
+    imports: [],
+    templateUrl: './table-shell.component.html',
+    styleUrls: ['./table-shell.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TableShellComponent {}

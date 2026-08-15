@@ -14,26 +14,33 @@
         <span>Empresa histórica</span>
         <select name="empresaId" [(ngModel)]="empresaId">
           <option [ngValue]="null">Todas las empresas</option>
-          <option *ngFor="let empresa of empresas" [ngValue]="empresa.id">{{ empresa.nombre }}</option>
+          @for (empresa of empresas; track empresa) {
+            <option [ngValue]="empresa.id">{{ empresa.nombre }}</option>
+          }
         </select>
       </label>
       <app-button type="submit" variant="primary" [isLoading]="cargando">Actualizar</app-button>
     </form>
   </header>
 
-  <p class="reports-home__error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  @if (errorMessage) {
+    <p class="reports-home__error">{{ errorMessage }}</p>
+  }
 
-  <div class="reports-home__skeleton" *ngIf="cargando">
-    <app-skeleton *ngFor="let _ of skeletonRows" height="94px" radius="12px"></app-skeleton>
-  </div>
+  @if (cargando) {
+    <div class="reports-home__skeleton">
+      @for (_ of skeletonRows; track $index) {
+        <app-skeleton height="94px" radius="12px"></app-skeleton>
+      }
+    </div>
+  }
 
-  <ng-container *ngIf="!cargando && reporte">
+  @if (!cargando && reporte) {
     <div class="reports-home__context">
       <span>{{ nombreEmpresa }}</span>
       <span>{{ reporte.colaboradoresProgramados }} colaboradores con turnos</span>
       <span>Datos de programación, no asistencia real</span>
     </div>
-
     <section class="reports-home-summary" aria-label="Indicadores del mes">
       <a [routerLink]="['/reportes/preliquidacion']" [queryParams]="{ mes: numeroMesSeleccionado, anio: anioSeleccionado, empresaId: empresaId }">
         <span>Horas programadas</span>
@@ -56,7 +63,6 @@
         <small>errores detectados <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></small>
       </a>
     </section>
-
     <div class="reports-home-grid">
       <section class="reports-home-panel reports-home-panel--trend">
         <div class="reports-home-panel__heading">
@@ -70,17 +76,18 @@
           </div>
         </div>
         <div class="reports-home-chart" [attr.aria-label]="'Tendencia semanal de ' + mes">
-          <div class="reports-home-chart__week" *ngFor="let semana of reporte.semanas">
-            <div class="reports-home-chart__value">{{ formatearHoras(semana.horasRegulares + semana.horasEnFeriado) }}</div>
-            <div class="reports-home-chart__track">
-              <span class="reports-home-chart__holiday" [style.height.%]="alturaFeriado(semana)"></span>
-              <span class="reports-home-chart__regular" [style.height.%]="alturaRegular(semana)"></span>
+          @for (semana of reporte.semanas; track semana) {
+            <div class="reports-home-chart__week">
+              <div class="reports-home-chart__value">{{ formatearHoras(semana.horasRegulares + semana.horasEnFeriado) }}</div>
+              <div class="reports-home-chart__track">
+                <span class="reports-home-chart__holiday" [style.height.%]="alturaFeriado(semana)"></span>
+                <span class="reports-home-chart__regular" [style.height.%]="alturaRegular(semana)"></span>
+              </div>
+              <small>{{ formatearRango(semana) }}</small>
             </div>
-            <small>{{ formatearRango(semana) }}</small>
-          </div>
+          }
         </div>
       </section>
-
       <section class="reports-home-panel reports-home-panel--stores">
         <div class="reports-home-panel__heading">
           <div>
@@ -88,16 +95,20 @@
             <p>Participación sobre el total programado.</p>
           </div>
         </div>
-        <div class="reports-home-stores" *ngIf="tiendasPrincipales.length; else sinTiendas">
-          <div class="reports-home-store" *ngFor="let tienda of tiendasPrincipales">
-            <div><span>{{ tienda.nombreTienda }}</span><strong>{{ formatearHoras(tienda.horas) }}</strong></div>
-            <div class="reports-home-store__track"><span [style.width.%]="tienda.porcentaje"></span></div>
-            <small>{{ tienda.porcentaje | number:'1.0-0' }}%</small>
+        @if (tiendasPrincipales.length) {
+          <div class="reports-home-stores">
+            @for (tienda of tiendasPrincipales; track tienda) {
+              <div class="reports-home-store">
+                <div><span>{{ tienda.nombreTienda }}</span><strong>{{ formatearHoras(tienda.horas) }}</strong></div>
+                <div class="reports-home-store__track"><span [style.width.%]="tienda.porcentaje"></span></div>
+                <small>{{ tienda.porcentaje | number:'1.0-0' }}%</small>
+              </div>
+            }
           </div>
-        </div>
-        <ng-template #sinTiendas><p class="reports-home-empty">Sin horas programadas para este mes.</p></ng-template>
+        } @else {
+          <p class="reports-home-empty">Sin horas programadas para este mes.</p>
+        }
       </section>
-
       <section class="reports-home-panel reports-home-panel--attention">
         <div class="reports-home-panel__heading">
           <div>
@@ -108,24 +119,29 @@
             Ver todos <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
           </a>
         </div>
-        <div class="reports-home-attention" *ngIf="reporte.requiereAtencion.length; else sinAtencion">
-          <article *ngFor="let excepcion of reporte.requiereAtencion; trackBy: trackByAtencion" [attr.data-severity]="excepcion.severidad">
-            <span class="reports-home-attention__severity"><i></i>{{ etiquetaSeveridad(excepcion) }}</span>
-            <div>
-              <strong>{{ excepcion.titulo }}</strong>
-              <span>{{ excepcion.nombreColaborador }} · {{ excepcion.nombreEmpresa }}</span>
-            </div>
-            <span>{{ excepcion.fechaInicio || 'Sin fecha' }}</span>
-            <a *ngIf="excepcion.colaboradorId" [routerLink]="['/reportes/colaborador-profile', excepcion.colaboradorId]"
-              [queryParams]="{ desde: excepcion.fechaInicio || reporte.desde, hasta: excepcion.fechaFin || reporte.hasta, empresaId: excepcion.empresaId, umbralHorasDiarias: reporte.umbralHorasDiarias }">
-              Revisar ficha
-            </a>
-          </article>
-        </div>
-        <ng-template #sinAtencion>
+        @if (reporte.requiereAtencion.length) {
+          <div class="reports-home-attention">
+            @for (excepcion of reporte.requiereAtencion; track trackByAtencion($index, excepcion)) {
+              <article [attr.data-severity]="excepcion.severidad">
+                <span class="reports-home-attention__severity"><i></i>{{ etiquetaSeveridad(excepcion) }}</span>
+                <div>
+                  <strong>{{ excepcion.titulo }}</strong>
+                  <span>{{ excepcion.nombreColaborador }} · {{ excepcion.nombreEmpresa }}</span>
+                </div>
+                <span>{{ excepcion.fechaInicio || 'Sin fecha' }}</span>
+                @if (excepcion.colaboradorId) {
+                  <a [routerLink]="['/reportes/colaborador-profile', excepcion.colaboradorId]"
+                    [queryParams]="{ desde: excepcion.fechaInicio || reporte.desde, hasta: excepcion.fechaFin || reporte.hasta, empresaId: excepcion.empresaId, umbralHorasDiarias: reporte.umbralHorasDiarias }">
+                    Revisar ficha
+                  </a>
+                }
+              </article>
+            }
+          </div>
+        } @else {
           <app-empty-state icon="✓" title="Sin pendientes prioritarios" description="No se detectaron errores, riesgos ni advertencias en este período."></app-empty-state>
-        </ng-template>
+        }
       </section>
     </div>
-  </ng-container>
+  }
 </section>

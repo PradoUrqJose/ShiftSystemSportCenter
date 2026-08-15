@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TiendaService, Tienda } from '../../../services/tienda.service';
 import Notiflix from 'notiflix';
@@ -6,11 +6,11 @@ import { Observable, Subject, takeUntil } from 'rxjs';
 import { MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
 
 @Component({
-  selector: 'app-gestionar-tiendas-modal',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './gestionar-tiendas-modal.component.html',
-  styleUrls: ['./gestionar-tiendas-modal.component.css']
+    selector: 'app-gestionar-tiendas-modal',
+    imports: [CommonModule],
+    templateUrl: './gestionar-tiendas-modal.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./gestionar-tiendas-modal.component.css']
 })
 export class GestionarTiendasModalComponent implements OnDestroy {
   @Input() mostrarModal: boolean = false;

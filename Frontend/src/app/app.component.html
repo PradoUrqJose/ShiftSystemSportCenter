@@ -1,4 +1,6 @@
-<app-navbar *ngIf="!isLoginPage()" class="z-50"></app-navbar>
+@if (!isLoginPage()) {
+  <app-navbar class="z-50"></app-navbar>
+}
 <div [ngClass]="isLoginPage() ? '' : 'ml-60'" class="bg-paper z-10">
   <router-outlet></router-outlet>
 </div>

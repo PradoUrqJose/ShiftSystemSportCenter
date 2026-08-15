@@ -1,7 +1,11 @@
 <div class="app-empty-state">
-  <div class="app-empty-state__icon" *ngIf="icon" aria-hidden="true">{{ icon }}</div>
+  @if (icon) {
+    <div class="app-empty-state__icon" aria-hidden="true">{{ icon }}</div>
+  }
   <p class="app-empty-state__title">{{ title }}</p>
-  <p class="app-empty-state__desc" *ngIf="description">{{ description }}</p>
+  @if (description) {
+    <p class="app-empty-state__desc">{{ description }}</p>
+  }
   <div class="app-empty-state__action">
     <ng-content></ng-content>
   </div>

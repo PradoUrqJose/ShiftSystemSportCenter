@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Notiflix from 'notiflix';
@@ -12,11 +12,11 @@ import { MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
 // cambiar un horario se borra y se agrega de nuevo, ver decisión en el mock
 // validado con Jose.
 @Component({
-  selector: 'app-gestionar-turnos-predeterminados-modal',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './gestionar-turnos-predeterminados-modal.component.html',
-  styleUrls: ['./gestionar-turnos-predeterminados-modal.component.css'],
+    selector: 'app-gestionar-turnos-predeterminados-modal',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './gestionar-turnos-predeterminados-modal.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./gestionar-turnos-predeterminados-modal.component.css']
 })
 export class GestionarTurnosPredeterminadosModalComponent implements OnDestroy {
   @Input() mostrarModal: boolean = false;

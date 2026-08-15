@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, map, takeUntil } from 'rxjs';
 import { WeeklyViewComponent } from '../../turnos/weekly-view/weekly-view.component';
 import { DiaSemana } from '../../../services/calendario.service';
@@ -17,11 +17,11 @@ import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-
 import { WeeklyScheduleSkeletonComponent } from '../../../components/ui/weekly-schedule-skeleton/weekly-schedule-skeleton.component';
 
 @Component({
-  selector: 'app-semana-normal',
-  standalone: true,
-  imports: [WeeklyViewComponent, HeaderComponent, CommonModule, RouterModule, TurnoModalComponent, WeeklyScheduleSkeletonComponent],
-  templateUrl: './semana-normal.component.html',
-  styleUrls: ['./semana-normal.component.css']
+    selector: 'app-semana-normal',
+    imports: [WeeklyViewComponent, HeaderComponent, CommonModule, RouterModule, TurnoModalComponent, WeeklyScheduleSkeletonComponent],
+    templateUrl: './semana-normal.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./semana-normal.component.css']
 })
 export class SemanaNormalComponent implements OnInit, OnDestroy {
   isLoading$!: Observable<boolean>;

@@ -11,7 +11,9 @@
     <label class="preliq-filtros__field">
       <span>Mes</span>
       <select name="mes" [(ngModel)]="mes">
-        <option *ngFor="let m of meses" [value]="m.valor">{{ m.nombre }}</option>
+        @for (m of meses; track m) {
+          <option [value]="m.valor">{{ m.nombre }}</option>
+        }
       </select>
     </label>
 
@@ -24,7 +26,9 @@
       <span>Empresa</span>
       <select name="empresaId" [(ngModel)]="empresaId">
         <option [ngValue]="null">Todas las empresas</option>
-        <option *ngFor="let empresa of empresas" [ngValue]="empresa.id">{{ empresa.nombre }}</option>
+        @for (empresa of empresas; track empresa) {
+          <option [ngValue]="empresa.id">{{ empresa.nombre }}</option>
+        }
       </select>
     </label>
 
@@ -37,13 +41,19 @@
     ></app-export-excel>
   </form>
 
-  <p class="preliq-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  @if (errorMessage) {
+    <p class="preliq-error">{{ errorMessage }}</p>
+  }
 
-  <div class="preliq-skeleton" *ngIf="buscando">
-    <app-skeleton *ngFor="let _ of skeletonRows" height="52px" radius="12px"></app-skeleton>
-  </div>
+  @if (buscando) {
+    <div class="preliq-skeleton">
+      @for (_ of skeletonRows; track $index) {
+        <app-skeleton height="52px" radius="12px"></app-skeleton>
+      }
+    </div>
+  }
 
-  <ng-container *ngIf="!buscando && yaBuscado && filas.length > 0">
+  @if (!buscando && yaBuscado && filas.length > 0) {
     <div class="preliq-stats">
       <div class="preliq-stat">
         <span class="preliq-stat__valor">{{ filas.length }}</span>
@@ -62,7 +72,6 @@
         <span class="preliq-stat__label">Horas extra candidatas</span>
       </div>
     </div>
-
     <div class="preliq-list" role="table" aria-label="Preliquidación por colaborador">
       <div class="preliq-list__header" role="row">
         <button type="button" role="columnheader" (click)="ordenarPor('apellido')">
@@ -86,44 +95,48 @@
         </button>
         <span role="columnheader">Tienda(s)</span>
       </div>
-
-      <a
-        *ngFor="let fila of filas; trackBy: trackByFila"
-        class="preliq-row"
-        [class.preliq-row--alerta]="fila.turnosPartidos > 0"
-        [routerLink]="['/reportes/colaborador-profile', fila.colaboradorId]"
+      @for (fila of filas; track trackByFila($index, fila)) {
+        <a
+          class="preliq-row"
+          [class.preliq-row--alerta]="fila.turnosPartidos > 0"
+          [routerLink]="['/reportes/colaborador-profile', fila.colaboradorId]"
         [queryParams]="{
           desde: fechaInicioPeriodo,
           hasta: fechaFinPeriodo,
           empresaId: fila.empresaId,
           umbralHorasDiarias: fila.umbralHorasDiariasUsado
         }"
-        [title]="'Ver ficha analítica de ' + fila.nombre + ' ' + fila.apellido"
-        role="row"
-      >
-        <span class="preliq-row__colaborador" role="cell">
-          <strong>{{ fila.nombre }} {{ fila.apellido }}</strong>
-          <small>{{ fila.dni }}</small>
-        </span>
-        <span role="cell">{{ fila.nombreEmpresa }}</span>
-        <span role="cell">{{ fila.nombrePuesto }}</span>
-        <span role="cell">{{ fila.diasProgramados }}</span>
-        <span role="cell">{{ formatearHoras(fila.totalHorasMes) }}</span>
-        <span role="cell">{{ fila.horasEnFeriados > 0 ? formatearHoras(fila.horasEnFeriados) : '—' }}</span>
-        <span role="cell">
-          <app-badge *ngIf="fila.horasExtraCandidatas > 0; else sinExtra" tone="overtime">
-            {{ formatearHoras(fila.horasExtraCandidatas) }}
-          </app-badge>
-          <ng-template #sinExtra>—</ng-template>
-        </span>
-        <span role="cell" class="preliq-row__tiendas">
-          <span>{{ formatearDistribucion(fila.distribucionPorTienda) }}</span>
-          <app-badge *ngIf="fila.turnosPartidos > 0" tone="warning">
-            {{ fila.turnosPartidos }} partido{{ fila.turnosPartidos > 1 ? 's' : '' }}
-          </app-badge>
-        </span>
-      </a>
-
+          [title]="'Ver ficha analítica de ' + fila.nombre + ' ' + fila.apellido"
+          role="row"
+          >
+          <span class="preliq-row__colaborador" role="cell">
+            <strong>{{ fila.nombre }} {{ fila.apellido }}</strong>
+            <small>{{ fila.dni }}</small>
+          </span>
+          <span role="cell">{{ fila.nombreEmpresa }}</span>
+          <span role="cell">{{ fila.nombrePuesto }}</span>
+          <span role="cell">{{ fila.diasProgramados }}</span>
+          <span role="cell">{{ formatearHoras(fila.totalHorasMes) }}</span>
+          <span role="cell">{{ fila.horasEnFeriados > 0 ? formatearHoras(fila.horasEnFeriados) : '—' }}</span>
+          <span role="cell">
+            @if (fila.horasExtraCandidatas > 0) {
+              <app-badge tone="overtime">
+                {{ formatearHoras(fila.horasExtraCandidatas) }}
+              </app-badge>
+            } @else {
+              —
+            }
+          </span>
+          <span role="cell" class="preliq-row__tiendas">
+            <span>{{ formatearDistribucion(fila.distribucionPorTienda) }}</span>
+            @if (fila.turnosPartidos > 0) {
+              <app-badge tone="warning">
+                {{ fila.turnosPartidos }} partido{{ fila.turnosPartidos > 1 ? 's' : '' }}
+              </app-badge>
+            }
+          </span>
+        </a>
+      }
       <div class="preliq-list__footer" role="row">
         <span role="cell">Total</span>
         <span role="cell"></span>
@@ -135,12 +148,13 @@
         <span role="cell"></span>
       </div>
     </div>
-  </ng-container>
+  }
 
-  <app-empty-state
-    *ngIf="!buscando && yaBuscado && filas.length === 0"
-    icon="🗂️"
-    title="Sin turnos para este período"
-    description="No hay turnos programados para el mes, año y empresa seleccionados."
-  ></app-empty-state>
+  @if (!buscando && yaBuscado && filas.length === 0) {
+    <app-empty-state
+      icon="🗂️"
+      title="Sin turnos para este período"
+      description="No hay turnos programados para el mes, año y empresa seleccionados."
+    ></app-empty-state>
+  }
 </section>

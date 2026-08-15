@@ -1,5 +1,5 @@
 import { ModalService } from './../../services/modal.service';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -27,11 +27,11 @@ const EMPRESA_SORT_SELECTORS: Record<EmpresaSortField, (e: Empresa) => unknown> 
 };
 
 @Component({
-  selector: 'app-empresas',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, TableShellComponent, SkeletonComponent, ButtonComponent, SortHeaderComponent],
-  templateUrl: './empresas.component.html',
-  styleUrls: ['./empresas.component.css'],
+    selector: 'app-empresas',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, TableShellComponent, SkeletonComponent, ButtonComponent, SortHeaderComponent],
+    templateUrl: './empresas.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./empresas.component.css']
 })
 export default class EmpresasComponent implements OnInit, OnDestroy {
   empresas: Empresa[] = [];

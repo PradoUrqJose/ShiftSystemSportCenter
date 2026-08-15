@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable, Subject, catchError, debounceTime, forkJoin, of, switchMap, takeUntil, tap } from 'rxjs';
@@ -26,11 +26,11 @@ interface Conflicto {
 // TurnoPredeterminadoService. Una sola tienda para todo el lote a propósito
 // — si hace falta repartir en varias, se corre el modal más de una vez.
 @Component({
-  selector: 'app-turnos-masivos-modal',
-  standalone: true,
-  imports: [CommonModule, FormsModule, TimePickerComponent, TiendaSelectComponent, WeekDaysPickerComponent],
-  templateUrl: './turnos-masivos-modal.component.html',
-  styleUrls: ['./turnos-masivos-modal.component.css'],
+    selector: 'app-turnos-masivos-modal',
+    imports: [CommonModule, FormsModule, TimePickerComponent, TiendaSelectComponent, WeekDaysPickerComponent],
+    templateUrl: './turnos-masivos-modal.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./turnos-masivos-modal.component.css']
 })
 export class TurnosMasivosModalComponent implements OnInit, OnDestroy {
   @Input() mostrarModal: boolean = false;

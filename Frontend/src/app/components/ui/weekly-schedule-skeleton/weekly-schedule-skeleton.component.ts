@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
 
@@ -9,12 +9,11 @@ import { SkeletonComponent } from '../skeleton/skeleton.component';
 // otro origen de datos y necesitaba el mismo loading state; vivía repetido
 // a mano en las 2 páginas.
 @Component({
-  selector: 'app-weekly-schedule-skeleton',
-  standalone: true,
-  imports: [CommonModule, SkeletonComponent],
-  templateUrl: './weekly-schedule-skeleton.component.html',
-  styleUrls: ['./weekly-schedule-skeleton.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-weekly-schedule-skeleton',
+    imports: [SkeletonComponent],
+    templateUrl: './weekly-schedule-skeleton.component.html',
+    styleUrls: ['./weekly-schedule-skeleton.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WeeklyScheduleSkeletonComponent {
   @Input() rows: number = 6;

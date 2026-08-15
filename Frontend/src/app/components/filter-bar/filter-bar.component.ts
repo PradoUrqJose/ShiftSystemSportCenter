@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Colaborador } from '../../services/colaborador.service';
@@ -8,12 +8,11 @@ import { Colaborador } from '../../services/colaborador.service';
 // padre — candidato seguro para OnPush, primer paso de activarlo en el
 // resto del árbol de turnos/colaboradores.
 @Component({
-  selector: 'app-filter-bar',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './filter-bar.component.html',
-  styleUrls: ['./filter-bar.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-filter-bar',
+    imports: [FormsModule],
+    templateUrl: './filter-bar.component.html',
+    styleUrls: ['./filter-bar.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FilterBarComponent {
   @Input() companies: string[] = [];

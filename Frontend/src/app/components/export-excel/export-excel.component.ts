@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 // Import de solo-tipos: no agrega exceljs/file-saver al bundle inicial.
 // El código real se carga recién al exportar (ver exportExcel()).
 import type ExcelJS from 'exceljs';
@@ -20,21 +20,23 @@ export interface ExportSheet {
 }
 
 @Component({
-  selector: 'app-export-excel',
-  standalone: true,
-  imports: [CommonModule],
-  template: `
+    selector: 'app-export-excel',
+    imports: [CommonModule],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
     <button
       class="h-10 px-4 text-white font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
       [ngClass]="label ? 'bg-brand hover:bg-brand-hover' : 'bg-green-600 hover:bg-green-700'"
       [disabled]="disabled || !hayDatosParaExportar()"
       (click)="exportExcel()"
       title="Exportar a Excel"
-    >
+      >
       <i class="fa-solid fa-file-excel"></i>
-      <span *ngIf="label">{{ label }}</span>
+      @if (label) {
+        <span>{{ label }}</span>
+      }
     </button>
-  `,
+    `
 })
 export class ExportExcelComponent {
   @Input() data: Array<Record<string, any>> = [];

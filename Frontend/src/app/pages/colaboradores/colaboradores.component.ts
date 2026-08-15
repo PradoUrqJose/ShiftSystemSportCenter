@@ -1,5 +1,5 @@
 import { ModalService } from './../../services/modal.service';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ColaboradorService,
@@ -28,11 +28,11 @@ const COLABORADOR_SORT_SELECTORS: Record<ColaboradorSortField, (c: Colaborador) 
 };
 
 @Component({
-  selector: 'app-colaboradores',
-  standalone: true,
-  imports: [CommonModule, ColaboradorFormComponent, TableShellComponent, SkeletonComponent, ButtonComponent, SortHeaderComponent],
-  templateUrl: './colaboradores.component.html',
-  styleUrls: ['./colaboradores.component.css'],
+    selector: 'app-colaboradores',
+    imports: [CommonModule, ColaboradorFormComponent, TableShellComponent, SkeletonComponent, ButtonComponent, SortHeaderComponent],
+    templateUrl: './colaboradores.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./colaboradores.component.css']
 })
 export default class ColaboradoresComponent implements OnInit, OnDestroy {
   isTableLoading: boolean = true;  // Controla el estado de carga de la tabla

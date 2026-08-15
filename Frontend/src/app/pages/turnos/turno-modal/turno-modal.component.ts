@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TurnoService, Turno, TurnoPayload, TurnoPartidoPayload, crearTurnoVacio } from '../../../services/turno.service';
@@ -15,20 +15,20 @@ import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-
 import { ButtonComponent } from '../../../components/ui/button/button.component';
 
 @Component({
-  selector: 'app-turno-modal',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    AgregarTiendaModalComponent,
-    GestionarTiendasModalComponent,
-    GestionarTurnosPredeterminadosModalComponent,
-    TimePickerComponent,
-    TiendaSelectComponent,
-    ButtonComponent,
-  ],
-  templateUrl: './turno-modal.component.html',
-  styleUrls: ['./turno-modal.component.css']
+    selector: 'app-turno-modal',
+    imports: [
+        CommonModule,
+        FormsModule,
+        AgregarTiendaModalComponent,
+        GestionarTiendasModalComponent,
+        GestionarTurnosPredeterminadosModalComponent,
+        TimePickerComponent,
+        TiendaSelectComponent,
+        ButtonComponent,
+    ],
+    templateUrl: './turno-modal.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./turno-modal.component.css']
 })
 export class TurnoModalComponent implements OnInit, OnDestroy {
   @Input() mostrarModal: boolean = false;

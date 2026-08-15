@@ -5,37 +5,47 @@
 
   <nav class="flex-grow overflow-y-auto scrollbar-hidden px-3 py-4">
     <ul class="relative flex flex-col gap-1">
-      <li *ngFor="let item of navItems; let i = index" class="nav-item" [style.--i]="i">
-        <a
-          [routerLink]="item.link"
-          routerLinkActive="active"
-          class="nav-link relative z-10 flex items-center gap-3 h-11 px-2.5 rounded-md text-ink-soft hover:text-ink transition-colors duration-fast ease-standard focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
-        >
-          <span class="nav-icon">
-            <svg *ngIf="item.icon === 'empresas'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M6 7H7M6 10H7M11 10H12M11 13H12M6 13H7M11 7H12M7 21V18C7 16.8954 7.89543 16 9 16C10.1046 16 11 16.8954 11 18V21H7ZM7 21H3V4.6C3 4.03995 3 3.75992 3.10899 3.54601C3.20487 3.35785 3.35785 3.20487 3.54601 3.10899C3.75992 3 4.03995 3 4.6 3H13.4C13.9601 3 14.2401 3 14.454 3.10899C14.6422 3.20487 14.7951 3.35785 14.891 3.54601C15 3.75992 15 4.03995 15 4.6V9M19.7 13.5C19.7 14.3284 19.0284 15 18.2 15C17.3716 15 16.7 14.3284 16.7 13.5C16.7 12.6716 17.3716 12 18.2 12C19.0284 12 19.7 12.6716 19.7 13.5ZM21.5 21V20.5C21.5 19.1193 20.3807 18 19 18H17.5C16.1193 18 15 19.1193 15 20.5V21H21.5Z"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            <svg *ngIf="item.icon === 'colaboradores'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
-              </path>
-            </svg>
-            <svg *ngIf="item.icon === 'turnos'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M3 9H21M9 15L11 17L15 13M7 3V5M17 3V5M6.2 21H17.8C18.9201 21 19.4802 21 19.908 20.782C20.2843 20.5903 20.5903 20.2843 20.782 19.908C21 19.4802 21 18.9201 21 17.8V8.2C21 7.07989 21 6.51984 20.782 6.09202C20.5903 5.71569 20.2843 5.40973 19.908 5.21799C19.4802 5 18.9201 5 17.8 5H6.2C5.0799 5 4.51984 5 4.09202 5.21799C3.71569 5.40973 3.40973 5.71569 3.21799 6.09202C3 6.51984 3 7.07989 3 8.2V17.8C3 18.9201 3 19.4802 3.21799 19.908C3.40973 20.2843 3.71569 20.5903 4.09202 20.782C4.51984 21 5.07989 21 6.2 21Z"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            <svg *ngIf="item.icon === 'feriados'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M8 7V3M16 7V3M7 11H17M5 21H19C20.1046 21 21 20.1046 21 19V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V19C3 20.1046 3.89543 21 5 21Z">
-              </path>
-            </svg>
-          </span>
-          <span class="text-sm tracking-wide truncate">{{ item.label }}</span>
-        </a>
-      </li>
+      @for (item of navItems; track item; let i = $index) {
+        <li class="nav-item" [style.--i]="i">
+          <a
+            [routerLink]="item.link"
+            routerLinkActive="active"
+            class="nav-link relative z-10 flex items-center gap-3 h-11 px-2.5 rounded-md text-ink-soft hover:text-ink transition-colors duration-fast ease-standard focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+            >
+            <span class="nav-icon">
+              @if (item.icon === 'empresas') {
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M6 7H7M6 10H7M11 10H12M11 13H12M6 13H7M11 7H12M7 21V18C7 16.8954 7.89543 16 9 16C10.1046 16 11 16.8954 11 18V21H7ZM7 21H3V4.6C3 4.03995 3 3.75992 3.10899 3.54601C3.20487 3.35785 3.35785 3.20487 3.54601 3.10899C3.75992 3 4.03995 3 4.6 3H13.4C13.9601 3 14.2401 3 14.454 3.10899C14.6422 3.20487 14.7951 3.35785 14.891 3.54601C15 3.75992 15 4.03995 15 4.6V9M19.7 13.5C19.7 14.3284 19.0284 15 18.2 15C17.3716 15 16.7 14.3284 16.7 13.5C16.7 12.6716 17.3716 12 18.2 12C19.0284 12 19.7 12.6716 19.7 13.5ZM21.5 21V20.5C21.5 19.1193 20.3807 18 19 18H17.5C16.1193 18 15 19.1193 15 20.5V21H21.5Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              }
+              @if (item.icon === 'colaboradores') {
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                  </path>
+                </svg>
+              }
+              @if (item.icon === 'turnos') {
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M3 9H21M9 15L11 17L15 13M7 3V5M17 3V5M6.2 21H17.8C18.9201 21 19.4802 21 19.908 20.782C20.2843 20.5903 20.5903 20.2843 20.782 19.908C21 19.4802 21 18.9201 21 17.8V8.2C21 7.07989 21 6.51984 20.782 6.09202C20.5903 5.71569 20.2843 5.40973 19.908 5.21799C19.4802 5 18.9201 5 17.8 5H6.2C5.0799 5 4.51984 5 4.09202 5.21799C3.71569 5.40973 3.40973 5.71569 3.21799 6.09202C3 6.51984 3 7.07989 3 8.2V17.8C3 18.9201 3 19.4802 3.21799 19.908C3.40973 20.2843 3.71569 20.5903 4.09202 20.782C4.51984 21 5.07989 21 6.2 21Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              }
+              @if (item.icon === 'feriados') {
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 7V3M16 7V3M7 11H17M5 21H19C20.1046 21 21 20.1046 21 19V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V19C3 20.1046 3.89543 21 5 21Z">
+                  </path>
+                </svg>
+              }
+            </span>
+            <span class="text-sm tracking-wide truncate">{{ item.label }}</span>
+          </a>
+        </li>
+      }
 
       <!-- Reportes: no es una ruta propia, es un toggle + submenú -->
       <li class="nav-item" [style.--i]="navItems.length">
@@ -45,7 +55,7 @@
           [class.active]="isReportesActive()"
           [attr.aria-expanded]="isReportesOpen"
           class="nav-link relative z-10 w-full flex items-center gap-3 h-11 px-2.5 rounded-md text-ink-soft hover:text-ink transition-colors duration-fast ease-standard focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
-        >
+          >
           <span class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 11L15 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -53,7 +63,7 @@
               <path d="M9 14L9 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
               <path
                 d="M17.8284 6.82843C18.4065 7.40649 18.6955 7.69552 18.8478 8.06306C19 8.4306 19 8.83935 19 9.65685L19 17C19 18.8856 19 19.8284 18.4142 20.4142C17.8284 21 16.8856 21 15 21H9C7.11438 21 6.17157 21 5.58579 20.4142C5 19.8284 5 18.8856 5 17L5 7C5 5.11438 5 4.17157 5.58579 3.58579C6.17157 3 7.11438 3 9 3H12.3431C13.1606 3 13.5694 3 13.9369 3.15224C14.3045 3.30448 14.5935 3.59351 15.1716 4.17157L17.8284 6.82843Z"
-                stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
+              stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
             </svg>
           </span>
           <span class="text-sm tracking-wide truncate flex-grow text-left">Reportes</span>
@@ -65,23 +75,25 @@
         </button>
 
         <!-- Grid-rows 0fr→1fr en vez de *ngIf: anima el cierre además de la
-             apertura (un *ngIf desmonta de golpe, sin transición posible).
-             [attr.inert] saca los links del tab order / árbol de
-             accesibilidad mientras está colapsado — el contenido sigue en
-             el DOM (por la animación) pero no debe ser alcanzable. -->
+        apertura (un *ngIf desmonta de golpe, sin transición posible).
+        [attr.inert] saca los links del tab order / árbol de
+        accesibilidad mientras está colapsado — el contenido sigue en
+        el DOM (por la animación) pero no debe ser alcanzable. -->
         <div class="nav-submenu" [class.nav-submenu--open]="isReportesOpen" [attr.inert]="isReportesOpen ? null : ''">
           <ul class="nav-submenu__inner">
-            <li *ngFor="let reporte of reportes; trackBy: trackByLink" class="nav-subitem">
-              <a
-                [routerLink]="reporte.link"
-                routerLinkActive="active"
-                [routerLinkActiveOptions]="{ exact: false }"
-                class="flex items-center gap-2.5 py-2 pl-2.5 pr-2.5 text-sm text-ink-soft hover:text-ink hover:bg-surface rounded-md transition-colors duration-fast ease-standard"
-              >
-                <span class="nav-subitem__dot"></span>
-                {{ reporte.nombre }}
-              </a>
-            </li>
+            @for (reporte of reportes; track trackByLink($index, reporte)) {
+              <li class="nav-subitem">
+                <a
+                  [routerLink]="reporte.link"
+                  routerLinkActive="active"
+                  [routerLinkActiveOptions]="{ exact: false }"
+                  class="flex items-center gap-2.5 py-2 pl-2.5 pr-2.5 text-sm text-ink-soft hover:text-ink hover:bg-surface rounded-md transition-colors duration-fast ease-standard"
+                  >
+                  <span class="nav-subitem__dot"></span>
+                  {{ reporte.nombre }}
+                </a>
+              </li>
+            }
           </ul>
         </div>
       </li>

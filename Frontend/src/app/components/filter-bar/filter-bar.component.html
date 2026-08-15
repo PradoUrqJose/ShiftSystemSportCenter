@@ -1,10 +1,12 @@
 <div class="filter-container">
   <div class="flex flex-wrap gap-2.5 items-center">
-    <button *ngIf="showSortControl" (click)="onToggleSort()"
-      class="pill" [class.is-active]="sortActive">
-      <i class="fa-solid fa-sort text-xs pill-icon"></i>
-      <span class="hidden sm:inline">Ordenar</span>
-    </button>
+    @if (showSortControl) {
+      <button (click)="onToggleSort()"
+        class="pill" [class.is-active]="sortActive">
+        <i class="fa-solid fa-sort text-xs pill-icon"></i>
+        <span class="hidden sm:inline">Ordenar</span>
+      </button>
+    }
 
     <!-- Filtro por Empresa -->
     <div class="relative">
@@ -15,17 +17,21 @@
         <i class="fa-solid fa-chevron-down pill-chevron" [class.rotate-180]="showCompanyDropdown"></i>
       </button>
 
-      <div *ngIf="showCompanyDropdown" class="panel w-64 dropdown-anim" (click)="$event.stopPropagation()">
-        <p class="panel-title">Empresa</p>
-        <div class="panel-body">
-          <button *ngFor="let empresa of companies; trackBy: trackByCompany" class="option-row"
-            [class.selected]="(!selectedCompany || selectedCompany === 'all') && empresa === 'all' || selectedCompany === empresa"
-            (click)="selectCompany(empresa)">
-            <span class="option-label">{{ empresa === 'all' ? 'Todas las empresas' : empresa }}</span>
-            <i class="fa-solid fa-check option-check"></i>
-          </button>
+      @if (showCompanyDropdown) {
+        <div class="panel w-64 dropdown-anim" (click)="$event.stopPropagation()">
+          <p class="panel-title">Empresa</p>
+          <div class="panel-body">
+            @for (empresa of companies; track trackByCompany($index, empresa)) {
+              <button class="option-row"
+                [class.selected]="(!selectedCompany || selectedCompany === 'all') && empresa === 'all' || selectedCompany === empresa"
+                (click)="selectCompany(empresa)">
+                <span class="option-label">{{ empresa === 'all' ? 'Todas las empresas' : empresa }}</span>
+                <i class="fa-solid fa-check option-check"></i>
+              </button>
+            }
+          </div>
         </div>
-      </div>
+      }
     </div>
 
     <!-- Filtro por Colaboradores -->
@@ -37,41 +43,46 @@
         <i class="fa-solid fa-chevron-down pill-chevron" [class.rotate-180]="showCollaboratorDropdown"></i>
       </button>
 
-      <div *ngIf="showCollaboratorDropdown" class="panel panel-right w-80 dropdown-anim" (click)="$event.stopPropagation()">
-        <div class="panel-search">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" [(ngModel)]="collaboratorSearch" placeholder="Buscar colaboradores…">
-        </div>
-        <div class="panel-body panel-body-scroll">
-          <button class="option-row" [class.selected]="!selectedCollaboratorIds || selectedCollaboratorIds.length === 0"
-            (click)="selectAllCollaborators()">
-            <span class="option-label">Todos los colaboradores</span>
-            <i class="fa-solid fa-check option-check"></i>
-          </button>
-
-          <div class="panel-divider"></div>
-
-          <button *ngFor="let c of filteredCollaborators; trackBy: trackByColaboradorId" class="option-row option-row-person"
-            [class.selected]="(selectedCollaboratorIds || []).includes(c.id)"
-            (click)="toggleCollaborator(c.id)">
-            <span class="option-avatar">{{ iniciales(c) }}</span>
-            <span class="option-label option-label-person">
-              <span class="option-name">{{ c.nombre }} {{ c.apellido }}</span>
-              <span class="option-sub">{{ c.empresaNombre }}</span>
-            </span>
-            <i class="fa-solid fa-check option-check"></i>
-          </button>
-
-          <div *ngIf="filteredCollaborators.length === 0" class="panel-empty">
-            No se encontraron colaboradores
+      @if (showCollaboratorDropdown) {
+        <div class="panel panel-right w-80 dropdown-anim" (click)="$event.stopPropagation()">
+          <div class="panel-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" [(ngModel)]="collaboratorSearch" placeholder="Buscar colaboradores…">
+          </div>
+          <div class="panel-body panel-body-scroll">
+            <button class="option-row" [class.selected]="!selectedCollaboratorIds || selectedCollaboratorIds.length === 0"
+              (click)="selectAllCollaborators()">
+              <span class="option-label">Todos los colaboradores</span>
+              <i class="fa-solid fa-check option-check"></i>
+            </button>
+            <div class="panel-divider"></div>
+            @for (c of filteredCollaborators; track trackByColaboradorId($index, c)) {
+              <button class="option-row option-row-person"
+                [class.selected]="(selectedCollaboratorIds || []).includes(c.id)"
+                (click)="toggleCollaborator(c.id)">
+                <span class="option-avatar">{{ iniciales(c) }}</span>
+                <span class="option-label option-label-person">
+                  <span class="option-name">{{ c.nombre }} {{ c.apellido }}</span>
+                  <span class="option-sub">{{ c.empresaNombre }}</span>
+                </span>
+                <i class="fa-solid fa-check option-check"></i>
+              </button>
+            }
+            @if (filteredCollaborators.length === 0) {
+              <div class="panel-empty">
+                No se encontraron colaboradores
+              </div>
+            }
           </div>
         </div>
-      </div>
+      }
     </div>
 
     <!-- Limpiar: solo aparece si hay algo que limpiar -->
-    <button *ngIf="hasActiveFilters" type="button" class="link-clear" (click)="clearAll()">
-      Limpiar filtros
-    </button>
+    @if (hasActiveFilters) {
+      <button type="button" class="link-clear" (click)="clearAll()">
+        Limpiar filtros
+      </button>
+    }
   </div>
 </div>

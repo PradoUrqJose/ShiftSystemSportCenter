@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Colaborador, ColaboradorService } from '../../../services/colaborador.service';
@@ -13,11 +13,11 @@ import { Subject, takeUntil } from 'rxjs';
 // cuándo mostrarlo vía [mostrarModal]/[isModalVisible] (mismo ModalService
 // de siempre) y le pasa qué colaborador editar (o null para dar de alta).
 @Component({
-  selector: 'app-colaborador-form',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './colaborador-form.component.html',
-  styleUrls: ['./colaborador-form.component.css'],
+    selector: 'app-colaborador-form',
+    imports: [CommonModule, ReactiveFormsModule],
+    templateUrl: './colaborador-form.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./colaborador-form.component.css']
 })
 export class ColaboradorFormComponent implements OnChanges, OnDestroy {
   @Input() mostrarModal: boolean = false;

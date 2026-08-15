@@ -8,12 +8,11 @@ export type BadgeTone = 'holiday' | 'overtime' | 'warning' | 'neutral' | 'brand'
 // por el mismo acento lateral de la pill de turno (ver Fase 2 del plan de
 // rediseño). Este componente no sabe nada de turnos, solo pinta un tag.
 @Component({
-  selector: 'app-badge',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './badge.component.html',
-  styleUrls: ['./badge.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-badge',
+    imports: [CommonModule],
+    templateUrl: './badge.component.html',
+    styleUrls: ['./badge.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BadgeComponent {
   @Input() tone: BadgeTone = 'neutral';

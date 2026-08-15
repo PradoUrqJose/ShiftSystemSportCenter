@@ -6,16 +6,18 @@
 
   <div class="flex gap-2 flex-wrap items-center justify-between">
     <!-- Botones de cambio de vista (semana/mes): variant sigue el estado
-         activo directo (primary = seleccionado, secondary = el otro) en vez
-         de necesitar una clase "active" propia del Button. -->
-    <div class="flex gap-2" *ngIf="opcionMes">
-      <app-button [variant]="!vistaMensual ? 'primary' : 'secondary'" (click)="toggleVistaMensual('week')">
-        Semana
-      </app-button>
-      <app-button [variant]="vistaMensual ? 'primary' : 'secondary'" (click)="toggleVistaMensual('month')">
-        Mes
-      </app-button>
-    </div>
+    activo directo (primary = seleccionado, secondary = el otro) en vez
+    de necesitar una clase "active" propia del Button. -->
+    @if (opcionMes) {
+      <div class="flex gap-2">
+        <app-button [variant]="!vistaMensual ? 'primary' : 'secondary'" (click)="toggleVistaMensual('week')">
+          Semana
+        </app-button>
+        <app-button [variant]="vistaMensual ? 'primary' : 'secondary'" (click)="toggleVistaMensual('month')">
+          Mes
+        </app-button>
+      </div>
+    }
 
     <!-- Navegación entre semanas/meses -->
     <div class="flex gap-2 items-center">

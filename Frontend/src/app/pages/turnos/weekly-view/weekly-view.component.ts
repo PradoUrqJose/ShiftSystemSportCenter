@@ -11,13 +11,12 @@ import { PrimeraPalabraPipe } from '../../../pipes/primera-palabra.pipe';
 import { TooltipService } from '../../../services/tooltip.service';
 
 @Component({
-  selector: 'app-weekly-view',
-  standalone: true,
-  imports: [CommonModule, TurnosDelDiaPipe, PrimeraPalabraPipe],
-  templateUrl: './weekly-view.component.html',
-  styleUrls: ['./weekly-view.component.css', '../turnos.component.css'],
-  providers: [TooltipService],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-weekly-view',
+    imports: [CommonModule, TurnosDelDiaPipe, PrimeraPalabraPipe],
+    templateUrl: './weekly-view.component.html',
+    styleUrls: ['./weekly-view.component.css', '../turnos.component.css'],
+    providers: [TooltipService],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WeeklyViewComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
 
@@ -97,8 +96,8 @@ export class WeeklyViewComponent implements OnInit, OnChanges, AfterViewInit, On
     }));
   }
 
-  trackByFecha(_index: number, dia: DiaSemana): string {
-    return dia.fecha;
+  trackByFecha(index: number, dia: DiaSemana): string {
+    return dia.fecha || `dia-${index}`;
   }
 
   trackByColaboradorId(_index: number, colaborador: Colaborador): number {

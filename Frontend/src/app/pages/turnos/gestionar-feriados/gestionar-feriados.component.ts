@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import Notiflix from 'notiflix';
 import { Subject, takeUntil } from 'rxjs';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
@@ -19,11 +19,11 @@ const FERIADO_SORT_SELECTORS: Record<FeriadoSortField, (f: Feriado) => unknown> 
 };
 
 @Component({
-  selector: 'app-gestionar-feriados',
-  standalone: true,
-  imports: [CommonModule, AgregarFeriadoModalComponent, TableShellComponent, SkeletonComponent, ButtonComponent, SortHeaderComponent],
-  templateUrl: './gestionar-feriados.component.html',
-  styleUrls: ['./gestionar-feriados.component.css']
+    selector: 'app-gestionar-feriados',
+    imports: [AgregarFeriadoModalComponent, TableShellComponent, SkeletonComponent, ButtonComponent, SortHeaderComponent],
+    templateUrl: './gestionar-feriados.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./gestionar-feriados.component.css']
 })
 export default class GestionarFeriadosComponent implements OnInit, OnDestroy {
   feriados: Feriado[] = [];

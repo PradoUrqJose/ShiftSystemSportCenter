@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Subject, Subscription, takeUntil } from 'rxjs';
@@ -13,10 +13,10 @@ import { ExcepcionReporte, ReporteService, ResumenReporte, ResumenSemana } from 
 import { formatearFechaLocal } from '../colaborador-profile/colaborador-analytics.util';
 
 @Component({
-  selector: 'app-resumen-reportes',
-  standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ButtonComponent, EmptyStateComponent, SkeletonComponent],
-  templateUrl: './resumen.component.html',
+    selector: 'app-resumen-reportes',
+    imports: [CommonModule, FormsModule, RouterLink, ButtonComponent, EmptyStateComponent, SkeletonComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    templateUrl: './resumen.component.html'
 })
 export class ResumenComponent implements OnInit, OnDestroy {
   readonly skeletonRows = Array.from({ length: 4 });

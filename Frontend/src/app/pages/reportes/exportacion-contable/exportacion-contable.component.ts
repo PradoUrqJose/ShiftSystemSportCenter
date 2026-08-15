@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { forkJoin, Subject, Subscription, takeUntil } from 'rxjs';
@@ -14,10 +14,10 @@ import { ProgramacionContable, ReporteService } from '../../../services/reporte.
 import { formatearFechaLocal } from '../colaborador-profile/colaborador-analytics.util';
 
 @Component({
-  selector: 'app-exportacion-contable',
-  standalone: true,
-  imports: [CommonModule, FormsModule, NgSelectModule, ExportExcelComponent, ButtonComponent, EmptyStateComponent, SkeletonComponent],
-  templateUrl: './exportacion-contable.component.html',
+    selector: 'app-exportacion-contable',
+    imports: [CommonModule, FormsModule, NgSelectModule, ExportExcelComponent, ButtonComponent, EmptyStateComponent, SkeletonComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    templateUrl: './exportacion-contable.component.html'
 })
 export class ExportacionContableComponent implements OnInit, OnDestroy {
   readonly skeletonRows = Array.from({ length: 4 });

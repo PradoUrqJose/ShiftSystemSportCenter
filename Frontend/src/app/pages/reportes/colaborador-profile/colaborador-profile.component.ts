@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,17 +26,17 @@ import {
 const UMBRAL_HORAS_DIARIAS_DEFAULT = 8;
 
 @Component({
-  selector: 'app-colaborador-profile',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ButtonComponent,
-    EmptyStateComponent,
-    BadgeComponent,
-    SkeletonComponent,
-  ],
-  templateUrl: './colaborador-profile.component.html'
+    selector: 'app-colaborador-profile',
+    imports: [
+        CommonModule,
+        FormsModule,
+        ButtonComponent,
+        EmptyStateComponent,
+        BadgeComponent,
+        SkeletonComponent,
+    ],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    templateUrl: './colaborador-profile.component.html'
 })
 export class ColaboradorProfileComponent implements OnInit, OnDestroy {
   readonly skeletonRows = Array.from({ length: 4 });

@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subject, Subscription, takeUntil } from 'rxjs';
@@ -24,18 +24,17 @@ interface OpcionRegla {
 }
 
 @Component({
-  selector: 'app-excepciones',
-  standalone: true,
-  imports: [
-    CommonModule,
+    selector: 'app-excepciones',
+    imports: [
     FormsModule,
     RouterLink,
     ExportExcelComponent,
     ButtonComponent,
     EmptyStateComponent,
-    SkeletonComponent,
-  ],
-  templateUrl: './excepciones.component.html',
+    SkeletonComponent
+],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    templateUrl: './excepciones.component.html'
 })
 export class ExcepcionesComponent implements OnInit, OnDestroy {
   readonly skeletonRows = Array.from({ length: 6 });

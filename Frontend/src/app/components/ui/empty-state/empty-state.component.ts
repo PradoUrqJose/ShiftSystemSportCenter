@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 // Reemplaza los "Cargando perfil...", "No hay datos..." de texto plano
@@ -7,12 +7,11 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 // "Agregar" cuando la lista está vacía porque no hay registros, no porque
 // esté cargando).
 @Component({
-  selector: 'app-empty-state',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './empty-state.component.html',
-  styleUrls: ['./empty-state.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-empty-state',
+    imports: [],
+    templateUrl: './empty-state.component.html',
+    styleUrls: ['./empty-state.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmptyStateComponent {
   /** Emoji simple, ej. "📭" — evita meter otro set de íconos acá. */

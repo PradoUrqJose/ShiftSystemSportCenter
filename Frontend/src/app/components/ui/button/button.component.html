@@ -11,8 +11,10 @@
   [disabled]="disabled || isLoading"
   [attr.data-tooltip]="variant === 'icon' ? tooltip : null"
   [attr.aria-label]="ariaLabel || tooltip"
->
-  <span class="app-btn__spinner" *ngIf="isLoading" aria-hidden="true"></span>
+  >
+  @if (isLoading) {
+    <span class="app-btn__spinner" aria-hidden="true"></span>
+  }
   <span class="app-btn__content" [class.app-btn__content--hidden]="isLoading">
     <ng-content></ng-content>
   </span>

@@ -1,8 +1,8 @@
 import { Puesto, PuestoService } from './../../../services/puesto.service';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ColaboradorService } from '../../../services/colaborador.service';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { AgregarPuestoModalComponent } from '../agregar-puesto-modal/agregar-puesto-modal.component';
 import { Subject, takeUntil } from 'rxjs';
 import Notiflix from 'notiflix';
@@ -16,11 +16,11 @@ import { SortState, nextSortState, sortRows } from '../../../utils/table-sort.ut
 type PuestoSortField = 'nombre' | 'descripcion' | 'colaboradores';
 
 @Component({
-  selector: 'app-gestionar-puestos',
-  standalone: true,
-  imports: [CommonModule, AgregarPuestoModalComponent, TableShellComponent, SkeletonComponent, ButtonComponent, SortHeaderComponent],
-  templateUrl: './gestionar-puestos.component.html',
-  styleUrls: ['./gestionar-puestos.component.css']
+    selector: 'app-gestionar-puestos',
+    imports: [AgregarPuestoModalComponent, TableShellComponent, SkeletonComponent, ButtonComponent, SortHeaderComponent],
+    templateUrl: './gestionar-puestos.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./gestionar-puestos.component.css']
 })
 export default class GestionarPuestosComponent implements OnInit, OnDestroy {
   puestos: Puesto[] = [];

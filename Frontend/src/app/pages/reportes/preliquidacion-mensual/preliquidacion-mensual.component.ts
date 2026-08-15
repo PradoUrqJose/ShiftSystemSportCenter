@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
@@ -46,20 +46,19 @@ const MESES = [
 // listado en el que cada fila lleva al perfil analítico del colaborador
 // (/reportes/colaborador-profile) en vez de abrir un detalle propio.
 @Component({
-  selector: 'app-preliquidacion-mensual',
-  standalone: true,
-  imports: [
-    CommonModule,
+    selector: 'app-preliquidacion-mensual',
+    imports: [
     FormsModule,
     RouterLink,
     ExportExcelComponent,
     ButtonComponent,
     BadgeComponent,
     EmptyStateComponent,
-    SkeletonComponent,
-  ],
-  templateUrl: './preliquidacion-mensual.component.html',
-  styleUrl: './preliquidacion-mensual.component.css',
+    SkeletonComponent
+],
+    templateUrl: './preliquidacion-mensual.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './preliquidacion-mensual.component.css'
 })
 export class PreliquidacionMensualComponent implements OnInit, OnDestroy {
   readonly meses = MESES;

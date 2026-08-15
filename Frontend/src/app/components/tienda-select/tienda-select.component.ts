@@ -8,12 +8,11 @@ import { Tienda } from '../../services/tienda.service';
 // útil ya con una docena de tiendas cargadas. Mismo patrón de dropdown
 // (document:click + stopPropagation en el panel) que ya usa FilterBarComponent.
 @Component({
-  selector: 'app-tienda-select',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './tienda-select.component.html',
-  styleUrls: ['./tienda-select.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-tienda-select',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './tienda-select.component.html',
+    styleUrls: ['./tienda-select.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TiendaSelectComponent {
   @Input() tiendas: Tienda[] = [];

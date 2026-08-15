@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 
 // Reemplaza a <input type="time">: en Chrome ese input obliga a click en
@@ -8,12 +8,11 @@ import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Ou
 // Sin flechitas de incremento: se probaron en el mock y nadie las usaba
 // (feedback de Jose), el flujo real es tabular o escribir directo.
 @Component({
-  selector: 'app-time-picker',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './time-picker.component.html',
-  styleUrls: ['./time-picker.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-time-picker',
+    imports: [],
+    templateUrl: './time-picker.component.html',
+    styleUrls: ['./time-picker.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TimePickerComponent {
   @Input() id: string = '';

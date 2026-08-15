@@ -48,12 +48,11 @@ interface CeldaMes {
 // de auto-limpiar al navegar (se asume que el operador ya está armando algo
 // multi-semana a propósito).
 @Component({
-  selector: 'app-week-days-picker',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './week-days-picker.component.html',
-  styleUrls: ['./week-days-picker.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-week-days-picker',
+    imports: [CommonModule],
+    templateUrl: './week-days-picker.component.html',
+    styleUrls: ['./week-days-picker.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WeekDaysPickerComponent {
   @Input() fechasSeleccionadas: Set<string> = new Set();

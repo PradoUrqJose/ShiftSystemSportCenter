@@ -8,9 +8,11 @@
   </div>
 
   <!-- Tabla -->
-  <div *ngIf="errorMessage" class="bg-red-100 text-red-700 p-3 rounded-lg mb-4 border border-red-400 ">
-    {{ errorMessage }}
-  </div>
+  @if (errorMessage) {
+    <div class="bg-red-100 text-red-700 p-3 rounded-lg mb-4 border border-red-400 ">
+      {{ errorMessage }}
+    </div>
+  }
   <div class="mt-6">
     <app-table-shell>
       <table class="app-table">
@@ -26,33 +28,38 @@
           </tr>
         </thead>
         <tbody>
-          <ng-container *ngIf="!isLoading; else feriadosSkeleton">
-            <tr *ngFor="let feriado of feriados; let i = index; trackBy: trackByFeriadoId" [style.--row-i]="i">
-              <td class="p-4">{{ feriado.descripcion || 'Sin descripción' }}</td>
-              <td class="p-4">{{ formatearFecha(feriado.fecha) }}</td>
-              <td class="p-4 flex justify-center items-center space-x-2">
-                <button (click)="editarFeriado(feriado)" class="text-blue-600 hover:text-blue-800 transition">
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-                <button (click)="eliminarFeriado(feriado.id)" class="text-red-600 hover:text-red-800 transition">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </td>
-            </tr>
-            <tr *ngIf="feriados.length === 0">
-              <td colspan="3" class="p-4 text-center text-ink-faint">No hay feriados registrados.</td>
-            </tr>
-          </ng-container>
-          <ng-template #feriadosSkeleton>
-            <tr *ngFor="let _ of skeletonRows">
-              <td class="p-4"><app-skeleton width="70%"></app-skeleton></td>
-              <td class="p-4"><app-skeleton width="40%"></app-skeleton></td>
-              <td class="p-4 flex justify-center gap-2">
-                <app-skeleton width="18px" height="18px" shape="circle"></app-skeleton>
-                <app-skeleton width="18px" height="18px" shape="circle"></app-skeleton>
-              </td>
-            </tr>
-          </ng-template>
+          @if (!isLoading) {
+            @for (feriado of feriados; track trackByFeriadoId(i, feriado); let i = $index) {
+              <tr [style.--row-i]="i">
+                <td class="p-4">{{ feriado.descripcion || 'Sin descripción' }}</td>
+                <td class="p-4">{{ formatearFecha(feriado.fecha) }}</td>
+                <td class="p-4 flex justify-center items-center space-x-2">
+                  <button (click)="editarFeriado(feriado)" class="text-blue-600 hover:text-blue-800 transition">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button (click)="eliminarFeriado(feriado.id)" class="text-red-600 hover:text-red-800 transition">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+            @if (feriados.length === 0) {
+              <tr>
+                <td colspan="3" class="p-4 text-center text-ink-faint">No hay feriados registrados.</td>
+              </tr>
+            }
+          } @else {
+            @for (_ of skeletonRows; track $index) {
+              <tr>
+                <td class="p-4"><app-skeleton width="70%"></app-skeleton></td>
+                <td class="p-4"><app-skeleton width="40%"></app-skeleton></td>
+                <td class="p-4 flex justify-center gap-2">
+                  <app-skeleton width="18px" height="18px" shape="circle"></app-skeleton>
+                  <app-skeleton width="18px" height="18px" shape="circle"></app-skeleton>
+                </td>
+              </tr>
+            }
+          }
         </tbody>
       </table>
     </app-table-shell>

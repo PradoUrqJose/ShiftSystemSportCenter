@@ -7,13 +7,13 @@
   </div>
 
   <header class="profile-hero">
-    <ng-container *ngIf="colaborador; else headerSkeleton">
+    @if (colaborador) {
       <div class="profile-identity">
         <img
           [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
           [alt]="'Foto de ' + colaborador.nombre + ' ' + colaborador.apellido"
           class="profile-identity__photo"
-        >
+          >
         <div class="profile-identity__content">
           <div class="profile-identity__title">
             <h1>{{ colaborador.nombre }} {{ colaborador.apellido }}</h1>
@@ -25,10 +25,13 @@
           <dl class="profile-identity__details">
             <div>
               <dt>Empresa</dt>
-              <dd *ngIf="empresaIdContexto; else empresaActual">
-                {{ nombreEmpresaContexto || 'Sin turnos en el período' }}
-              </dd>
-              <ng-template #empresaActual><dd>{{ colaborador.empresaNombre }}</dd></ng-template>
+              @if (empresaIdContexto) {
+                <dd>
+                  {{ nombreEmpresaContexto || 'Sin turnos en el período' }}
+                </dd>
+              } @else {
+                <dd>{{ colaborador.empresaNombre }}</dd>
+              }
             </div>
             <div>
               <dt>Puesto actual</dt>
@@ -41,9 +44,7 @@
           </dl>
         </div>
       </div>
-    </ng-container>
-
-    <ng-template #headerSkeleton>
+    } @else {
       <div class="profile-identity">
         <app-skeleton width="72px" height="72px" shape="circle"></app-skeleton>
         <div class="profile-identity__content">
@@ -51,7 +52,8 @@
           <app-skeleton width="310px" height="14px"></app-skeleton>
         </div>
       </div>
-    </ng-template>
+    }
+
 
     <form class="profile-period" (ngSubmit)="loadStatistics()">
       <div class="profile-period__heading">
@@ -74,13 +76,19 @@
     </form>
   </header>
 
-  <p class="profile-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  @if (errorMessage) {
+    <p class="profile-error">{{ errorMessage }}</p>
+  }
 
-  <div class="profile-skeleton" *ngIf="cargandoStats">
-    <app-skeleton *ngFor="let _ of skeletonRows" height="92px" radius="12px"></app-skeleton>
-  </div>
+  @if (cargandoStats) {
+    <div class="profile-skeleton">
+      @for (_ of skeletonRows; track $index) {
+        <app-skeleton height="92px" radius="12px"></app-skeleton>
+      }
+    </div>
+  }
 
-  <ng-container *ngIf="!cargandoStats">
+  @if (!cargandoStats) {
     <section class="profile-summary" aria-label="Resumen del período">
       <div class="profile-metric">
         <span>Total programado</span>
@@ -103,7 +111,6 @@
         <small>días con excepciones</small>
       </div>
     </section>
-
     <div class="profile-grid">
       <section class="profile-panel profile-panel--composition">
         <div class="profile-panel__heading">
@@ -133,7 +140,6 @@
           </div>
         </div>
       </section>
-
       <section class="profile-panel profile-panel--stores">
         <div class="profile-panel__heading">
           <div>
@@ -141,23 +147,25 @@
             <p>Dónde se concentraron las horas del período.</p>
           </div>
         </div>
-        <div *ngIf="tiendasTrabajadas.length; else sinTiendas" class="profile-stores">
-          <div class="profile-stores__row" *ngFor="let tienda of tiendasTrabajadas">
-            <div class="profile-stores__label">
-              <span>{{ tienda.nombre }}</span>
-              <strong>{{ formatearHorasDia(tienda.horas, true) }} h</strong>
-            </div>
-            <div class="profile-stores__track" aria-hidden="true">
-              <span [style.width.%]="tienda.porcentaje"></span>
-            </div>
-            <small>{{ tienda.porcentaje | number:'1.0-0' }}% del total</small>
+        @if (tiendasTrabajadas.length) {
+          <div class="profile-stores">
+            @for (tienda of tiendasTrabajadas; track tienda) {
+              <div class="profile-stores__row">
+                <div class="profile-stores__label">
+                  <span>{{ tienda.nombre }}</span>
+                  <strong>{{ formatearHorasDia(tienda.horas, true) }} h</strong>
+                </div>
+                <div class="profile-stores__track" aria-hidden="true">
+                  <span [style.width.%]="tienda.porcentaje"></span>
+                </div>
+                <small>{{ tienda.porcentaje | number:'1.0-0' }}% del total</small>
+              </div>
+            }
           </div>
-        </div>
-        <ng-template #sinTiendas>
+        } @else {
           <p class="profile-empty">Sin turnos en el rango seleccionado.</p>
-        </ng-template>
+        }
       </section>
-
       <section class="profile-panel profile-panel--weeks">
         <div class="profile-panel__heading">
           <div>
@@ -165,40 +173,52 @@
             <p>Semanas completas con actividad, ordenadas por horas.</p>
           </div>
         </div>
-        <div *ngIf="semanasMayorCarga.length; else sinSemanasCompletas" class="profile-list">
-          <div *ngFor="let semana of semanasMayorCarga" class="profile-list__row">
-            <span>{{ semana.inicio }} – {{ semana.fin }}</span>
-            <strong>{{ formatearHorasDia(semana.horas, true) }} h</strong>
+        @if (semanasMayorCarga.length) {
+          <div class="profile-list">
+            @for (semana of semanasMayorCarga; track semana) {
+              <div class="profile-list__row">
+                <span>{{ semana.inicio }} – {{ semana.fin }}</span>
+                <strong>{{ formatearHorasDia(semana.horas, true) }} h</strong>
+              </div>
+            }
           </div>
-        </div>
-        <ng-template #sinSemanasCompletas>
+        } @else {
           <p class="profile-empty">No hay semanas completas con actividad en el rango.</p>
-        </ng-template>
+        }
       </section>
-
       <section class="profile-panel profile-panel--wide">
         <div class="profile-panel__heading">
           <div>
             <h2>Excepciones del período</h2>
             <p>Días con turno partido o que superan el umbral de {{ umbralHorasDiarias }} horas.</p>
           </div>
-          <span class="profile-panel__count" *ngIf="excepciones.length">{{ excepciones.length }}</span>
+          @if (excepciones.length) {
+            <span class="profile-panel__count">{{ excepciones.length }}</span>
+          }
         </div>
-        <div *ngIf="excepciones.length; else sinExcepciones" class="profile-list">
-          <div *ngFor="let excepcion of excepciones; trackBy: trackByExcepcion" class="profile-list__row profile-list__row--exception">
-            <span>{{ formatearFecha(excepcion.fecha) }}</span>
-            <span class="profile-list__badges">
-              <app-badge *ngIf="excepcion.partido" tone="warning">Turno partido · {{ excepcion.cantidadTurnos }}</app-badge>
-              <app-badge *ngIf="excepcion.horasExtra" tone="overtime">Supera umbral · {{ formatearHorasDia(excepcion.horas, true) }} h</app-badge>
-              <app-badge *ngIf="excepcion.esFeriado" tone="holiday">Feriado</app-badge>
-            </span>
+        @if (excepciones.length) {
+          <div class="profile-list">
+            @for (excepcion of excepciones; track trackByExcepcion($index, excepcion)) {
+              <div class="profile-list__row profile-list__row--exception">
+                <span>{{ formatearFecha(excepcion.fecha) }}</span>
+                <span class="profile-list__badges">
+                  @if (excepcion.partido) {
+                    <app-badge tone="warning">Turno partido · {{ excepcion.cantidadTurnos }}</app-badge>
+                  }
+                  @if (excepcion.horasExtra) {
+                    <app-badge tone="overtime">Supera umbral · {{ formatearHorasDia(excepcion.horas, true) }} h</app-badge>
+                  }
+                  @if (excepcion.esFeriado) {
+                    <app-badge tone="holiday">Feriado</app-badge>
+                  }
+                </span>
+              </div>
+            }
           </div>
-        </div>
-        <ng-template #sinExcepciones>
+        } @else {
           <app-empty-state icon="✓" title="Sin excepciones" description="Ningún día supera el umbral ni contiene más de un turno."></app-empty-state>
-        </ng-template>
+        }
       </section>
-
       <section class="profile-panel profile-panel--wide">
         <div class="profile-panel__heading">
           <div>
@@ -206,21 +226,24 @@
             <p>Últimos turnos incluidos en el período analizado.</p>
           </div>
         </div>
-        <div *ngIf="turnosRecientes.length; else sinTurnos" class="profile-activity">
-          <div class="profile-activity__header" aria-hidden="true">
-            <span>Fecha</span><span>Tienda</span><span>Horario</span><span>Duración</span>
+        @if (turnosRecientes.length) {
+          <div class="profile-activity">
+            <div class="profile-activity__header" aria-hidden="true">
+              <span>Fecha</span><span>Tienda</span><span>Horario</span><span>Duración</span>
+            </div>
+            @for (turno of turnosRecientes; track trackByTurnoId($index, turno)) {
+              <div class="profile-activity__row">
+                <span>{{ formatearFecha(turno.fecha) }}</span>
+                <strong>{{ turno.nombreTienda }}</strong>
+                <span>{{ formatearHora(turno.horaEntrada) }} – {{ formatearHora(turno.horaSalida) }}</span>
+                <span>{{ formatearHorasDia(turno.horasTrabajadas, false) }} h</span>
+              </div>
+            }
           </div>
-          <div *ngFor="let turno of turnosRecientes; trackBy: trackByTurnoId" class="profile-activity__row">
-            <span>{{ formatearFecha(turno.fecha) }}</span>
-            <strong>{{ turno.nombreTienda }}</strong>
-            <span>{{ formatearHora(turno.horaEntrada) }} – {{ formatearHora(turno.horaSalida) }}</span>
-            <span>{{ formatearHorasDia(turno.horasTrabajadas, false) }} h</span>
-          </div>
-        </div>
-        <ng-template #sinTurnos>
+        } @else {
           <p class="profile-empty">Sin turnos recientes en el rango seleccionado.</p>
-        </ng-template>
+        }
       </section>
     </div>
-  </ng-container>
+  }
 </section>

@@ -21,16 +21,21 @@
 
 <div class="h-[86vh] overflow-y-auto scrollbar-hidden">
   <!-- Skeleton de carga (misma grilla-fantasma que turnos.component.html) -->
-  <app-weekly-schedule-skeleton *ngIf="isLoading$ | async"></app-weekly-schedule-skeleton>
+  @if (isLoading$ | async) {
+    <app-weekly-schedule-skeleton></app-weekly-schedule-skeleton>
+  }
 
   <!-- Tabla de turnos semanal -->
-  <div *ngIf="!(isLoading$ | async)">
-    <app-weekly-view *ngIf="!(isLoading$ | async)" [diasSemana]="(diasSemana$ | async) || []"
-      [colaboradores]="colaboradores" [turnos]="(turnos$ | async) || []" (abrirModal)="abrirModal($event)"
-      (abrirModalEdicion)="abrirModalEdicion($event)" [hideTotal]=false>
-    </app-weekly-view>
-
-  </div>
+  @if (!(isLoading$ | async)) {
+    <div>
+      @if (!(isLoading$ | async)) {
+        <app-weekly-view [diasSemana]="(diasSemana$ | async) || []"
+          [colaboradores]="colaboradores" [turnos]="(turnos$ | async) || []" (abrirModal)="abrirModal($event)"
+          (abrirModalEdicion)="abrirModalEdicion($event)" [hideTotal]=false>
+        </app-weekly-view>
+      }
+    </div>
+  }
 
   <!-- Modal de turnos -->
   <app-turno-modal [mostrarModal]="(mostrarModal$ | async) === true"

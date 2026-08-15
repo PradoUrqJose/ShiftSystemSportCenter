@@ -1,15 +1,15 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, ChangeDetectionStrategy } from '@angular/core';
 import { Puesto, PuestoService } from '../../../services/puesto.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
-  selector: 'app-agregar-puesto-modal',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './agregar-puesto-modal.component.html',
-  styleUrl: './agregar-puesto-modal.component.css'
+    selector: 'app-agregar-puesto-modal',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './agregar-puesto-modal.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './agregar-puesto-modal.component.css'
 })
 export class AgregarPuestoModalComponent implements OnDestroy {
   // Entradas desde el componente padre

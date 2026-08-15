@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'icon';
@@ -10,19 +10,18 @@ export type ButtonHue = 'brand' | 'teal' | 'violet' | 'neutral';
 // los consumidores escuchan (click) directo en <app-button> sin necesidad
 // de un @Output propio — mismo patrón que usa cualquier elemento nativo.
 @Component({
-  selector: 'app-button',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './button.component.html',
-  styleUrls: ['./button.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  // El host (<app-button>) es inline por defecto (custom element sin
-  // estilo propio) — un ancho 100% en el <button> interno no tiene contra
-  // qué crecer ahí adentro. [fullWidth] blockifica también el host, así el
-  // botón realmente llena a su contenedor (ej. submit de un form angosto).
-  host: {
-    '[class.app-button--full]': "fullWidth && variant !== 'icon'",
-  },
+    selector: 'app-button',
+    imports: [],
+    templateUrl: './button.component.html',
+    styleUrls: ['./button.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    // El host (<app-button>) es inline por defecto (custom element sin
+    // estilo propio) — un ancho 100% en el <button> interno no tiene contra
+    // qué crecer ahí adentro. [fullWidth] blockifica también el host, así el
+    // botón realmente llena a su contenedor (ej. submit de un form angosto).
+    host: {
+        '[class.app-button--full]': "fullWidth && variant !== 'icon'",
+    }
 })
 export class ButtonComponent {
   @Input() variant: ButtonVariant = 'primary';

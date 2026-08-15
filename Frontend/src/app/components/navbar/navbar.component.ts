@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { AvatarComponent } from '../ui/avatar/avatar.component';
@@ -13,11 +13,11 @@ interface NavItem {
 }
 
 @Component({
-  selector: 'app-navbar',
-  standalone: true,
-  imports: [RouterModule, CommonModule, AvatarComponent, BadgeComponent, ButtonComponent],
-  templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.css']
+    selector: 'app-navbar',
+    imports: [RouterModule, AvatarComponent, BadgeComponent, ButtonComponent],
+    templateUrl: './navbar.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./navbar.component.css']
 })
 export default class NavbarComponent {
   readonly navItems: NavItem[] = [

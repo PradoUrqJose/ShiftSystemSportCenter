@@ -1,4 +1,8 @@
 <span class="app-avatar" [style.width.px]="size" [style.height.px]="size" [style.fontSize.px]="size * 0.37">
-  <img *ngIf="photoUrl" [src]="photoUrl" [alt]="initials" class="app-avatar__img" />
-  <span *ngIf="!photoUrl" class="app-avatar__initials">{{ initials }}</span>
+  @if (photoUrl) {
+    <img [src]="photoUrl" [alt]="initials" class="app-avatar__img" />
+  }
+  @if (!photoUrl) {
+    <span class="app-avatar__initials">{{ initials }}</span>
+  }
 </span>

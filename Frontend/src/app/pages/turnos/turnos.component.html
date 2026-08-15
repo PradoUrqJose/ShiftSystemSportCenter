@@ -8,19 +8,21 @@
           (cambiarVista)="toggleVistaMensual($event)" (cambiarSemanaOMes)="cambiarSemanaOMesHandler($event)">
         </app-header>
         <!-- Acciones de turnos: separadas de la navegación por un divisor.
-               Con texto visible (no solo ícono) para que la acción se
-               entienda sin pasar el mouse. -->
+        Con texto visible (no solo ícono) para que la acción se
+        entienda sin pasar el mouse. -->
         <div class="toolbar-divider"></div>
         <div class="flex items-center gap-2 flex-shrink-0">
-          <app-button variant="secondary" hue="teal" *ngIf="!calendario.vistaMensual" [disabled]="copiandoSemana"
-            (click)="copiarSemanaAnterior()" ariaLabel="Copiar Semana">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <rect x="8" y="8" width="12" height="12" rx="2" />
-              <path d="M4 16V6a2 2 0 0 1 2-2h10" />
-            </svg>
-            <span>Copiar Semana</span>
-          </app-button>
+          @if (!calendario.vistaMensual) {
+            <app-button variant="secondary" hue="teal" [disabled]="copiandoSemana"
+              (click)="copiarSemanaAnterior()" ariaLabel="Copiar Semana">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="8" y="8" width="12" height="12" rx="2" />
+                <path d="M4 16V6a2 2 0 0 1 2-2h10" />
+              </svg>
+              <span>Copiar Semana</span>
+            </app-button>
+          }
           <app-button variant="secondary" hue="violet" (click)="abrirModalTurnosMasivos()" ariaLabel="Turno Masivo">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
@@ -39,89 +41,104 @@
         <app-filter-bar [companies]="empresasFromList((colaboradores$ | async) || [])"
           [collaborators]="(colaboradores$ | async) || []" [selectedCompany]="selectedCompanyForMonthly"
           [selectedCollaboratorIds]="colaboradoresSeleccionadosSemana" (companyChange)="onMonthlyCompanyChange($event)"
-          (collaboratorChange)="onMonthlyCollaboratorChange($event)"></app-filter-bar>
+        (collaboratorChange)="onMonthlyCollaboratorChange($event)"></app-filter-bar>
       </div>
     </div>
   </div>
 
   <!-- Skeleton de carga: grilla-fantasma con la forma real de cada vista
-       (reemplaza el spinner .sk-circle genérico) — misma condición
-       calendario.isLoading$ que ya controlaba el spinner, no se toca
-       TurnosCalendarService. La ghost-table semanal se extrajo a
-       app-weekly-schedule-skeleton (Fase 4) porque semana-normal.component
-       necesitaba exactamente la misma. -->
-  <app-weekly-schedule-skeleton *ngIf="!calendario.vistaMensual && (calendario.isLoading$ | async)">
-  </app-weekly-schedule-skeleton>
+  (reemplaza el spinner .sk-circle genérico) — misma condición
+  calendario.isLoading$ que ya controlaba el spinner, no se toca
+  TurnosCalendarService. La ghost-table semanal se extrajo a
+  app-weekly-schedule-skeleton (Fase 4) porque semana-normal.component
+  necesitaba exactamente la misma. -->
+  @if (!calendario.vistaMensual && (calendario.isLoading$ | async)) {
+    <app-weekly-schedule-skeleton>
+    </app-weekly-schedule-skeleton>
+  }
 
-  <div *ngIf="calendario.vistaMensual && (calendario.isLoading$ | async)" class="flex flex-col sm:flex-row gap-3"
-    aria-hidden="true">
-    <div class="w-[24%] flex flex-col gap-2">
-      <app-skeleton *ngFor="let _ of skeletonRows" width="100%" height="40px" radius="10px"></app-skeleton>
+  @if (calendario.vistaMensual && (calendario.isLoading$ | async)) {
+    <div class="flex flex-col sm:flex-row gap-3"
+      aria-hidden="true">
+      <div class="w-[24%] flex flex-col gap-2">
+        @for (_ of skeletonRows; track $index) {
+          <app-skeleton width="100%" height="40px" radius="10px"></app-skeleton>
+        }
+      </div>
+      <div class="w-full sm:w-[76%] grid grid-cols-7 gap-2">
+        @for (_ of skeletonMonthCells; track $index) {
+          <app-skeleton width="100%" height="8rem" radius="10px"></app-skeleton>
+        }
+      </div>
     </div>
-    <div class="w-full sm:w-[76%] grid grid-cols-7 gap-2">
-      <app-skeleton *ngFor="let _ of skeletonMonthCells" width="100%" height="8rem" radius="10px"></app-skeleton>
-    </div>
-  </div>
+  }
 
   <!-- Tabla de turnos semanal -->
-  <div *ngIf="!calendario.vistaMensual && !(calendario.isLoading$ | async)" class="table-wrapper">
-    <app-weekly-view [diasSemana]="(calendario.diasSemana$ | async) || []"
-      [colaboradores]="(colaboradores$ | async) || []" [turnos]="(calendario.turnos$ | async) || []"
-      [externalCompanyFilter]="selectedCompanyForMonthly"
-      [externalCollaboratorFilter]="colaboradoresSeleccionadosSemana"
-      (abrirModal)="abrirModal($event.colaboradorId, $event.fecha)" (abrirModalEdicion)="abrirModalEdicion($event)">
-    </app-weekly-view>
-  </div>
+  @if (!calendario.vistaMensual && !(calendario.isLoading$ | async)) {
+    <div class="table-wrapper">
+      <app-weekly-view [diasSemana]="(calendario.diasSemana$ | async) || []"
+        [colaboradores]="(colaboradores$ | async) || []" [turnos]="(calendario.turnos$ | async) || []"
+        [externalCompanyFilter]="selectedCompanyForMonthly"
+        [externalCollaboratorFilter]="colaboradoresSeleccionadosSemana"
+        (abrirModal)="abrirModal($event.colaboradorId, $event.fecha)" (abrirModalEdicion)="abrirModalEdicion($event)">
+      </app-weekly-view>
+    </div>
+  }
 
   <!-- Contenedor principal para las tablas -->
-  <div class="flex flex-col sm:flex-row gap-3 space-y-6 sm:space-y-0"
-    *ngIf="calendario.vistaMensual && !(calendario.isLoading$ | async)">
-    <!-- Tabla de selección de colaborador -->
-    <div class="w-[24%]">
-      <div *ngIf="calendario.colaboradorSeleccionado === 0" class="text-red-500 text-sm py-4 text-center">
-        * Seleccione un colaborador
+  @if (calendario.vistaMensual && !(calendario.isLoading$ | async)) {
+    <div class="flex flex-col sm:flex-row gap-3 space-y-6 sm:space-y-0"
+      >
+      <!-- Tabla de selección de colaborador -->
+      <div class="w-[24%]">
+        @if (calendario.colaboradorSeleccionado === 0) {
+          <div class="text-red-500 text-sm py-4 text-center">
+            * Seleccione un colaborador
+          </div>
+        }
+        <table class="w-full shadow bg-transparent rounded-lg overflow-hidden bg-white">
+          <thead>
+            <tr class="bg-blue-50 text-gray-800">
+              <th class="text-center p-3">Colaborador</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (colaborador of colaboradoresFiltrados$ | async; track trackByColaboradorId($index, colaborador)) {
+              <tr
+                class="hover:bg-gray-50 transition">
+                <td class="py-4 px-4 flex justify-start items-center gap-3 w-full"
+                  [ngClass]="{'bg-blue-100 text-blue-800 font-bold': colaborador.id === calendario.colaboradorSeleccionado}">
+                  <button (click)="calendario.mostrarTurnosMensuales(colaborador.id)"
+                    class="flex justify-start items-center w-full gap-3 transition">
+                    <div class="photo flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                      <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
+                        alt="Foto de {{ colaborador.nombre }}" class="w-full h-full object-cover" />
+                    </div>
+                    <div class="text-left">
+                      <div class="colaborador-nombre text-sm font-bold">
+                        {{ colaborador.nombre | primeraPalabra }} {{ colaborador.apellido | primeraPalabra }}
+                      </div>
+                      <div class="colaborador-empresa inline-block text-gray-700 font-bold">
+                        {{ colaborador.empresaNombre }}
+                      </div>
+                    </div>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
       </div>
-      <table class="w-full shadow bg-transparent rounded-lg overflow-hidden bg-white">
-        <thead>
-          <tr class="bg-blue-50 text-gray-800">
-            <th class="text-center p-3">Colaborador</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let colaborador of colaboradoresFiltrados$ | async; trackBy: trackByColaboradorId"
-            class="hover:bg-gray-50 transition">
-            <td class="py-4 px-4 flex justify-start items-center gap-3 w-full"
-              [ngClass]="{'bg-blue-100 text-blue-800 font-bold': colaborador.id === calendario.colaboradorSeleccionado}">
-              <button (click)="calendario.mostrarTurnosMensuales(colaborador.id)"
-                class="flex justify-start items-center w-full gap-3 transition">
-                <div class="photo flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                  <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
-                    alt="Foto de {{ colaborador.nombre }}" class="w-full h-full object-cover" />
-                </div>
-                <div class="text-left">
-                  <div class="colaborador-nombre text-sm font-bold">
-                    {{ colaborador.nombre | primeraPalabra }} {{ colaborador.apellido | primeraPalabra }}
-                  </div>
-                  <div class="colaborador-empresa inline-block text-gray-700 font-bold">
-                    {{ colaborador.empresaNombre }}
-                  </div>
-                </div>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Tabla de turnos mensual -->
-    <div class="w-full sm:w-[76%]">
-      <app-monthly-view [semanasDelMes]="calendario.semanasDelMes"
-        [colaboradorSeleccionado]="calendario.colaboradorSeleccionado" [turnosMensuales$]="calendario.turnosMensuales$"
-        [diasSemana]="(calendario.diasSemana$ | async) || []" [mes]="calendario.mes" [anio]="calendario.anio"
-        (abrirModal)="abrirModal($event.colaboradorId, $event.fecha)" (abrirModalEdicion)="abrirModalEdicion($event)"
+      <!-- Tabla de turnos mensual -->
+      <div class="w-full sm:w-[76%]">
+        <app-monthly-view [semanasDelMes]="calendario.semanasDelMes"
+          [colaboradorSeleccionado]="calendario.colaboradorSeleccionado" [turnosMensuales$]="calendario.turnosMensuales$"
+          [diasSemana]="(calendario.diasSemana$ | async) || []" [mes]="calendario.mes" [anio]="calendario.anio"
+          (abrirModal)="abrirModal($event.colaboradorId, $event.fecha)" (abrirModalEdicion)="abrirModalEdicion($event)"
         (turnosModificados)="calendario.actualizarResumenMensual()"></app-monthly-view>
+      </div>
     </div>
-  </div>
+  }
 
   <!-- Modal para Turnos -->
   <app-turno-modal [mostrarModal]="(mostrarModal$ | async) === true"

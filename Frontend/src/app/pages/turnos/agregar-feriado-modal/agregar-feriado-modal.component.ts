@@ -1,15 +1,15 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
-  selector: 'app-agregar-feriado-modal',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './agregar-feriado-modal.component.html',
-  styleUrl: './agregar-feriado-modal.component.css'
+    selector: 'app-agregar-feriado-modal',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './agregar-feriado-modal.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './agregar-feriado-modal.component.css'
 })
 export class AgregarFeriadoModalComponent implements OnDestroy {
   // Entradas desde el componente padre

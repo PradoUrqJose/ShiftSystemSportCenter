@@ -6,6 +6,7 @@ import {
   ChangeDetectorRef,
   Output,
   EventEmitter,
+  ChangeDetectionStrategy
 } from '@angular/core';
 
 // -------------- Service Imports --------------
@@ -45,14 +46,14 @@ import { ButtonComponent } from '../../components/ui/button/button.component';
 import { PrimeraPalabraPipe } from '../../pipes/primera-palabra.pipe';
 
 @Component({
-  selector: 'app-turnos',
-  templateUrl: './turnos.component.html',
-  standalone: true,
-  styleUrls: ['./turnos.component.css'],
-  imports: [CommonModule, FormsModule, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent, TurnosMasivosModalComponent, SkeletonComponent, WeeklyScheduleSkeletonComponent, PrimeraPalabraPipe, ButtonComponent],
-  // TurnosCalendarService: una instancia propia por página (no singleton),
-  // dueña de qué semana/mes se muestra y qué turnos trae — ver el servicio.
-  providers: [TurnosCalendarService],
+    selector: 'app-turnos',
+    templateUrl: './turnos.component.html',
+    styleUrls: ['./turnos.component.css'],
+    imports: [CommonModule, FormsModule, HeaderComponent, WeeklyViewComponent, MonthlyViewComponent, TurnoModalComponent, FilterBarComponent, TurnosMasivosModalComponent, SkeletonComponent, WeeklyScheduleSkeletonComponent, PrimeraPalabraPipe, ButtonComponent],
+    // TurnosCalendarService: una instancia propia por página (no singleton),
+    // dueña de qué semana/mes se muestra y qué turnos trae — ver el servicio.
+    changeDetection: ChangeDetectionStrategy.Eager,
+    providers: [TurnosCalendarService]
 })
 export default class TurnosComponent implements OnInit, OnDestroy {
   //! Variables de estado

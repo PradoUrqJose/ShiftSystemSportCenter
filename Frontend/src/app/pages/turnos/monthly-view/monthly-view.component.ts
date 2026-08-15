@@ -8,13 +8,12 @@ import { TurnosDelDiaPipe } from '../../../pipes/turnos-del-dia.pipe';
 import { TooltipService } from '../../../services/tooltip.service';
 
 @Component({
-  selector: 'app-monthly-view',
-  standalone: true,
-  imports: [CommonModule, TurnosDelDiaPipe],
-  templateUrl: './monthly-view.component.html',
-  styleUrls: ['./monthly-view.component.css', '../turnos.component.css'],
-  providers: [TooltipService],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-monthly-view',
+    imports: [CommonModule, TurnosDelDiaPipe],
+    templateUrl: './monthly-view.component.html',
+    styleUrls: ['./monthly-view.component.css', '../turnos.component.css'],
+    providers: [TooltipService],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MonthlyViewComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
   // Celdas de turno renderizadas (ver #turnoCell en el html) — de acá salen
@@ -79,6 +78,10 @@ export class MonthlyViewComponent implements OnInit, OnChanges, AfterViewInit, O
 
   private subscribeToTurnos(): void {
     this.turnosSubscription?.unsubscribe();
+    if (!this.turnosMensuales$) {
+      this.turnos = [];
+      return;
+    }
     this.turnosSubscription = this.turnosMensuales$.subscribe(turnos => {
       this.turnos = turnos || [];
       this.cargarResumenMensual(); // Recargar resumen cada vez que cambian los turnos
@@ -127,8 +130,8 @@ export class MonthlyViewComponent implements OnInit, OnChanges, AfterViewInit, O
     return this.turnoService.esFeriado(fecha, this.feriados);
   }
 
-  trackByFecha(_index: number, dia: DiaSemana): string {
-    return dia.fecha;
+  trackByFecha(index: number, dia: DiaSemana): string {
+    return dia.fecha || `dia-${index}`;
   }
 
   trackBySemanaIndex(index: number): number {
