@@ -1,17 +1,18 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TiendaService, Tienda } from '../../../services/tienda.service';
 import Notiflix from 'notiflix';
-import { Observable } from 'rxjs';
+import { Observable, Subject, takeUntil } from 'rxjs';
+import { MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
 
 @Component({
-  selector: 'app-gestionar-tiendas-modal',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './gestionar-tiendas-modal.component.html',
-  styleUrls: ['./gestionar-tiendas-modal.component.css']
+    selector: 'app-gestionar-tiendas-modal',
+    imports: [CommonModule],
+    templateUrl: './gestionar-tiendas-modal.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./gestionar-tiendas-modal.component.css']
 })
-export class GestionarTiendasModalComponent {
+export class GestionarTiendasModalComponent implements OnDestroy {
   @Input() mostrarModal: boolean = false;
   @Input() isModalVisible: boolean = false;
   @Input() tiendas$: Observable<Tienda[]> = new Observable<Tienda[]>();
@@ -23,11 +24,18 @@ export class GestionarTiendasModalComponent {
   isLoading: boolean = false; // Indicador de carga
   errorMessage: string | null = null; // Mensaje de error
 
+  private readonly destroy$ = new Subject<void>();
+
   constructor(private tiendaService: TiendaService) {}
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   cerrarModal(): void {
     this.isModalVisible = false;
-    setTimeout(() => this.cerrarModalEvent.emit(), 300);
+    setTimeout(() => this.cerrarModalEvent.emit(), MODAL_CLOSE_DELAY_MS);
   }
 
   abrirModalAgregarTienda(): void {
@@ -38,6 +46,10 @@ export class GestionarTiendasModalComponent {
     this.tiendaEditada.emit(tienda);
   }
 
+  trackByTiendaId(_index: number, tienda: Tienda): number | undefined {
+    return tienda.id;
+  }
+
   eliminarTienda(id: number): void {
     this.isLoading = true;
     Notiflix.Confirm.show(
@@ -46,7 +58,7 @@ export class GestionarTiendasModalComponent {
       'Eliminar',
       'Cancelar',
       () => {
-        this.tiendaService.deleteTienda(id).subscribe({
+        this.tiendaService.deleteTienda(id).pipe(takeUntil(this.destroy$)).subscribe({
           next: () => {
             this.tiendaEliminada.emit();
             this.isLoading = false;
@@ -66,7 +78,6 @@ export class GestionarTiendasModalComponent {
         });
       },
       () => {
-        console.log('Eliminación cancelada');
         this.isLoading = false;
       }
     );

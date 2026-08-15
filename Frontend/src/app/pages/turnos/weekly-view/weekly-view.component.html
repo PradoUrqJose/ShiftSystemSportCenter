@@ -6,95 +6,102 @@
           <span>Colaborador</span>
         </div>
       </th>
-      <th *ngFor="let dia of completarSemana(diasSemana)"
-        class="bg-blue-50 text-center px-2 py-4 capitalize font-normal semana-column w-[20%] sm:w-[10.57%]">
+      @for (dia of diasSemanaCompleta; track trackByFecha($index, dia)) {
+        <th
+          class="bg-blue-50 text-center px-2 py-4 capitalize font-normal semana-column w-[20%] sm:w-[10.57%]"
+          [ngClass]="{ 'dia-actual': dia.esDiaActual, 'feriado-semanal': dia.esFeriado }">
         <span class="text-lg font-bold py-2 px-4 rounded-full" [ngClass]="{
-            'dia-actual-encabezado': esDiaActual(dia.fecha),
-            'feriado-semanal-encabezado': esFeriado(dia.fecha)
+            'dia-actual-encabezado': dia.esDiaActual,
+            'feriado-semanal-encabezado': dia.esFeriado
           }">
-          {{ dia.dayNumber ? dia.dayNumber : '-' }}
-          <span class="dayNumber font-normal">{{ dia.nombre }}</span>
-        </span>
-      </th>
+            {{ dia.dayNumber ? dia.dayNumber : '-' }}
+            <span class="dayNumber font-normal">{{ dia.nombre }}</span>
+          </span>
+        </th>
+      }
       <th [ngClass]="{'hidden': hideTotal}" class="bg-blue-50 px-2 py-4 w-[6%] text-center">Total</th>
     </tr>
   </thead>
 
   <tbody>
-    <ng-container *ngIf="filteredColaboradores as colaboradores">
-      <tr *ngFor="let colaborador of colaboradores" class="hover:bg-gray-50 transition">
-        <!-- Columna de colaborador -->
-        <td class="py-4 px-4 flex justify-start items-center gap-3 w-full">
-          <div (click)="viewProfile(colaborador.id)"
-          class="hover-photo relative cursor-pointer photo flex items-center justify-center w-12 h-12 rounded-full bg-gray-200">
-          <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'" alt="Foto de perfil" class="w-12 h-12 rounded-full object-cover object-center">
-        </div>
-          <div class="colaborador">
-            <div class="colaborador-nombre text-sm font-bold">
-              {{ colaborador.nombre }} {{ colaborador.apellido }}
+    @if (filteredColaboradores; as colaboradores) {
+      @for (colaborador of colaboradores; track trackByColaboradorId(i, colaborador); let i = $index) {
+        <tr class="hover:bg-gray-50 transition" [style.--row-i]="i">
+          <!-- Columna de colaborador -->
+          <td class="py-4 px-4 flex justify-start items-center gap-3 w-full">
+            <div (click)="viewProfile(colaborador.id)"
+              class="hover-photo relative cursor-pointer photo flex items-center justify-center w-12 h-12 rounded-full bg-gray-200">
+              <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'" alt="Foto de perfil" class="w-12 h-12 rounded-full object-cover object-center">
             </div>
-            <div class="colaborador-empresa inline-block text-gray-700 font-bold">
-              {{ colaborador.empresaNombre }}
+            <div class="colaborador">
+              <div class="colaborador-nombre text-sm font-bold">
+                {{ colaborador.nombre | primeraPalabra }} {{ colaborador.apellido | primeraPalabra }}
+              </div>
+              <div class="colaborador-empresa inline-block text-gray-700 font-bold">
+                {{ colaborador.empresaNombre }}
+              </div>
             </div>
-          </div>
-        </td>
-
-        <!-- Celdas de los días de la semana -->
-        <td *ngFor="let dia of completarSemana(diasSemana)" class="text-center semana-column" [ngClass]="{
-            'dia-actual': esDiaActual(dia.fecha) || dia.fecha === 'empty',
-            'feriado-semanal': esFeriado(dia.fecha)
+          </td>
+          <!-- Celdas de los días de la semana -->
+          @for (dia of diasSemanaCompleta; track trackByFecha($index, dia)) {
+<td class="text-center semana-column" [ngClass]="{
+            'dia-actual': dia.esDiaActual || dia.fecha === 'empty',
+            'feriado-semanal': dia.esFeriado
           }">
-          <ng-container *ngIf="dia.fecha !== 'empty'; else emptyCell">
-            <ng-container *ngIf="turnos as turnos">
-              <ng-container *ngIf="obtenerTurnos(turnos, colaborador.id, dia.fecha) as turnosDelDia">
-                <!-- Múltiples turnos del día -->
-                <div *ngIf="turnosDelDia.length > 0; else agregarBoton" class="space-y-1">
-                  <div *ngFor="let turno of turnosDelDia; let i = index"
-                    class="container-green cursor-pointer transition border-green-100 p-1 rounded-lg text-xs"
-                    [ngClass]="{
-                      'almuerzo-tomado': turno.tomoAlmuerzo,
-                      'border-2 border-red-500': esFeriado(dia.fecha),
-                      'midHours': (turno.horasTrabajadas ?? 0) > 8,
-                      'bg-blue-100 border-blue-300': turnosDelDia.length > 1 && i === 0,
-                      'bg-orange-100 border-orange-300': turnosDelDia.length > 1 && i === 1
-                    }"
-                    [attr.data-horas-trabajadas]="formatearHorasDia(turno.horasTrabajadas)"
-                    [attr.data-tienda]="turno.nombreTienda"
-                    (click)="abrirModalEdicion.emit(turno)"
-                    [title]="'Turno ' + (i + 1) + (turnosDelDia.length > 1 ? ' de ' + turnosDelDia.length : '')">
-                    <div class="flex items-center justify-center space-x-1">
-                      <span>{{ formatearHora(turno.horaEntrada) }}-{{ formatearHora(turno.horaSalida) }}</span>
+              @if (dia.fecha !== 'empty') {
+                @if (turnos | turnosDelDia:colaborador.id:dia.fecha; as turnosDelDia) {
+                  <!-- Múltiples turnos del día -->
+                  @if (turnosDelDia.length > 0) {
+                    <div class="space-y-1">
+                      @for (turno of turnosDelDia; track trackByTurnoId(i, turno); let i = $index) {
+                        <div
+                          #turnoCell
+                          class="container-green cursor-pointer transition border-green-100 p-1 rounded-lg text-xs"
+                  [ngClass]="{
+                    'almuerzo-tomado': turno.tomoAlmuerzo,
+                    'border-2 border-red-500': dia.esFeriado,
+                    'midHours': (turno.horasTrabajadas ?? 0) > 8,
+                    'shift-split-1': turnosDelDia.length > 1 && i === 0,
+                    'shift-split-2': turnosDelDia.length > 1 && i === 1
+                  }"
+                          [attr.data-horas-trabajadas]="formatearHorasDia(turno.horasTrabajadas)"
+                          [attr.data-tienda]="turno.nombreTienda"
+                          [attr.data-almuerzo]="turno.tomoAlmuerzo ? 'true' : null"
+                          (click)="abrirModalEdicion.emit(turno)"
+                          [title]="'Turno ' + (i + 1) + (turnosDelDia.length > 1 ? ' de ' + turnosDelDia.length : '')">
+                          <div class="flex items-center justify-center space-x-1">
+                            <span>{{ formatearHora(turno.horaEntrada) }}-{{ formatearHora(turno.horaSalida) }}</span>
+                          </div>
+                        </div>
+                      }
                     </div>
-                  </div>
-                </div>
-              </ng-container>
-
-              <!-- Botón para agregar turno -->
-              <ng-template #agregarBoton>
-                <button class="plus_button hover:text-blue-800 transition text-blue-500 hover:bg-blue-50 p-2 rounded-lg"
-                  (click)="abrirModal.emit({ colaboradorId: colaborador.id, fecha: dia.fecha })" title="Agregar Turno">
-                  <i class="fa-regular fa-square-plus"></i>
-                </button>
-              </ng-template>
-            </ng-container>
-          </ng-container>
-
-          <!-- Celda vacía para días faltantes -->
-          <ng-template #emptyCell></ng-template>
-        </td>
-        <!-- Columna de total de horas -->
-        <td [ngClass]="{'hidden': hideTotal, 'text-red-500': horasTotalesSemana[colaborador.id] > 48}" class="p-2 text-center font-bold semana-column relative">
-          <div class="flex items-center justify-center">
-            <span>{{ getHorasTotalesSemanaFormateadas(colaborador.id) }}</span>
-            <ng-container *ngIf="tieneTurnosFeriados(colaborador.id)">
-              <span> ⚠️ </span>
-            </ng-container>
-            <ng-container *ngIf="horasTotalesSemana[colaborador.id] > 48">
-              <span class="absolute -right-1"> ❗ </span>
-            </ng-container>
-          </div>
-        </td>
-      </tr>
-    </ng-container>
+                  } @else {
+                    <button class="plus_button hover:text-blue-800 transition text-blue-500 hover:bg-blue-50 p-2 rounded-lg"
+                      (click)="abrirModal.emit({ colaboradorId: colaborador.id, fecha: dia.fecha })" title="Agregar Turno">
+                      <i class="fa-regular fa-square-plus"></i>
+                    </button>
+                  }
+                  <!-- Botón para agregar turno -->
+                }
+              } @else {
+              }
+              <!-- Celda vacía para días faltantes -->
+            </td>
+          }
+          <!-- Columna de total de horas -->
+          <td [ngClass]="{'hidden': hideTotal, 'text-red-500': horasTotalesSemana[colaborador.id] > 48}" class="p-2 text-center font-bold semana-column relative">
+            <div class="flex items-center justify-center">
+              <span>{{ getHorasTotalesSemanaFormateadas(colaborador.id) }}</span>
+              @if (tieneTurnosFeriados(colaborador.id)) {
+                <span> ⚠️ </span>
+              }
+              @if (horasTotalesSemana[colaborador.id] > 48) {
+                <span class="absolute -right-1"> ❗ </span>
+              }
+            </div>
+          </td>
+        </tr>
+      }
+    }
   </tbody>
 </table>

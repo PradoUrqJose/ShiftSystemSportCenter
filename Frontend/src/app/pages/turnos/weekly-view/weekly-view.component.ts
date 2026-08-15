@@ -2,30 +2,51 @@ import { CommonModule } from '@angular/common';
 import { CalendarioService, DiaSemana } from './../../../services/calendario.service';
 import { Colaborador } from './../../../services/colaborador.service';
 import { Turno, TurnoService } from './../../../services/turno.service';
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, SimpleChanges } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
 import { Router } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
+import { TurnosDelDiaPipe } from '../../../pipes/turnos-del-dia.pipe';
+import { PrimeraPalabraPipe } from '../../../pipes/primera-palabra.pipe';
+import { TooltipService } from '../../../services/tooltip.service';
 
 @Component({
-  selector: 'app-weekly-view',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './weekly-view.component.html',
-  styleUrls: ['./weekly-view.component.css', '../turnos.component.css']
+    selector: 'app-weekly-view',
+    imports: [CommonModule, TurnosDelDiaPipe, PrimeraPalabraPipe],
+    templateUrl: './weekly-view.component.html',
+    styleUrls: ['./weekly-view.component.css', '../turnos.component.css'],
+    providers: [TooltipService],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WeeklyViewComponent implements OnInit {
+export class WeeklyViewComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
+
+  // Celdas de turno renderizadas (ver #turnoCell en el html) — de acá salen
+  // los tooltips, ver ngAfterViewInit.
+  @ViewChildren('turnoCell') turnoCells!: QueryList<ElementRef<HTMLElement>>;
+
+  private readonly destroy$ = new Subject<void>();
+
+  // Días de la semana ya completados (7 días) y con esFeriado/esDiaActual
+  // precalculados una sola vez. Antes el template llamaba
+  // completarSemana(diasSemana), esDiaActual(dia.fecha) y esFeriado(dia.fecha)
+  // en cada *ngFor anidado (una vez por cada colaborador × 7 días, en cada
+  // ciclo de detección de cambios) — esDiaActual además instanciaba
+  // `new Date()` en cada llamada. Calcularlo una vez acá evita ese trabajo
+  // repetido.
+  diasSemanaCompleta: (DiaSemana & { esDiaActual: boolean })[] = [];
 
   constructor(
     private turnoService: TurnoService,
     private feriadoService: FeriadoService,
     private calendarioService: CalendarioService,
     private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private tooltipService: TooltipService
   ) { }
 
   ngOnInit(): void {
     this.cargarFeriados();
-    this.diasSemana = this.completarSemana(this.diasSemana);
+    this.recalcularDiasSemana();
     if (this.turnos && this.colaboradores) {
       this.calcularHorasTotales();
     }
@@ -33,8 +54,25 @@ export class WeeklyViewComponent implements OnInit {
     this.applySortAndFilter();
   }
 
+  ngAfterViewInit(): void {
+    this.actualizarTooltips();
+    // turnoCells.changes emite cada vez que cambia el set de celdas
+    // renderizadas (turnos nuevos, cambio de semana, filtro de colaborador)
+    // — reemplaza al polling manual que hacía el padre en ngAfterViewChecked.
+    this.turnoCells.changes.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.actualizarTooltips();
+    });
+  }
+
+  private actualizarTooltips(): void {
+    this.tooltipService.inicializar(this.turnoCells.toArray());
+  }
+
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['diasSemana']) {
+      this.recalcularDiasSemana();
+    }
     if (changes['colaboradores'] && changes['colaboradores'].currentValue) {
       this.filteredColaboradores = [...this.colaboradores];
       if (this.turnos) {
@@ -48,6 +86,26 @@ export class WeeklyViewComponent implements OnInit {
       }
       this.cdr.detectChanges();
     }
+  }
+
+  private recalcularDiasSemana(): void {
+    this.diasSemanaCompleta = this.completarSemana(this.diasSemana).map((dia) => ({
+      ...dia,
+      esFeriado: this.esFeriado(dia.fecha),
+      esDiaActual: this.esDiaActual(dia.fecha),
+    }));
+  }
+
+  trackByFecha(index: number, dia: DiaSemana): string {
+    return dia.fecha || `dia-${index}`;
+  }
+
+  trackByColaboradorId(_index: number, colaborador: Colaborador): number {
+    return colaborador.id;
+  }
+
+  trackByTurnoId(_index: number, turno: Turno): number {
+    return turno.id;
   }
 
   calcularHorasTotales() {
@@ -95,33 +153,6 @@ export class WeeklyViewComponent implements OnInit {
   selectedCollaboratorId: number | null = null; // Filtro por colaborador
   selectedCollaboratorIds: number[] = []; // Multi-select
 
-  // Método para obtener el turno de un colaborador en una fecha específica
-  obtenerTurno(
-    turnos: Turno[] | null,
-    colaboradorId: number,
-    fecha: string
-  ): Turno | undefined {
-    if (!turnos) return undefined; // Manejo de null
-    return this.turnoService.obtenerTurno(turnos, colaboradorId, fecha) || undefined;
-  }
-
-  // Método para obtener múltiples turnos de un colaborador en una fecha específica
-  obtenerTurnos(
-    turnos: Turno[] | null,
-    colaboradorId: number,
-    fecha: string
-  ): Turno[] {
-    if (!turnos) return []; // Manejo de null
-    return turnos.filter(turno =>
-      turno.colaboradorId === colaboradorId && turno.fecha === fecha
-    ).sort((a, b) => {
-      // Ordenar por hora de entrada
-      const horaA = a.horaEntrada || '00:00';
-      const horaB = b.horaEntrada || '00:00';
-      return horaA.localeCompare(horaB);
-    });
-  }
-
   // Método para formatear las horas trabajadas
   formatearHorasDia(horasTrabajadas: number | undefined): string {
     return this.calendarioService.formatearHoras(horasTrabajadas ?? 0);
@@ -144,14 +175,7 @@ export class WeeklyViewComponent implements OnInit {
 
 
   esDiaActual(fecha: string): boolean {
-    const hoy = new Date();
-    const [year, month, day] = fecha.split('-').map(Number); // Dividir y convertir a números
-    const fechaComparar = new Date(year, month - 1, day); // Meses son 0-indexados en JavaScript
-    // Normalizar ambas fechas a medianoche
-    hoy.setHours(0, 0, 0, 0);
-    fechaComparar.setHours(0, 0, 0, 0);
-
-    return hoy.getTime() === fechaComparar.getTime();
+    return this.calendarioService.esDiaActual(fecha);
   }
 
   //! Métodos de utilidad
@@ -185,13 +209,19 @@ export class WeeklyViewComponent implements OnInit {
     );
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   cargarFeriados(): void {
-    this.feriadoService.getFeriados().subscribe({
+    this.feriadoService.getFeriados().pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.feriados = data; // Guardar los feriados
-      },
-      error: (error) => {
-        console.error('Error al cargar los feriados:', error);
+        this.recalcularDiasSemana(); // esFeriado por día depende de this.feriados
+        // Esta respuesta llega async, fuera de cualquier click o cambio de
+        // @Input — con OnPush, Angular no la detecta sola sin este aviso.
+        this.cdr.markForCheck();
       },
     });
   }

@@ -1,142 +1,249 @@
-<div class="min-h-screen w-full mx-auto gradient-empresa px-8 py-4"
-  [style.--empresa-color]="getEmpresaColor(colaborador?.empresaNombre)">
-  <div class="flex items-center justify-between mb-8 gap-4">
-    <button (click)="goBack()"
-      class="buttonStyle gray-button font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">
-      <i class="fa-solid fa-arrow-left mr-2"></i> Volver
+<section class="profile">
+  <div class="profile__back">
+    <button type="button" (click)="goBack()">
+      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+      Colaboradores
     </button>
-    <div class="relative flex items-center gap-2 gradient-to-diag shadow-md rounded-lg p-2 border border-gray-200">
-      <div class="relative">
-        <input #fechaInicioInput type="date" [(ngModel)]="fechaInicio" (click)="abrirCalendario('inicio')"
-          (change)="loadStatistics(colaborador!.id!)"
-          class="appearance-none w-32 p-2 pl-8 border-none rounded-md bg-transparent text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
-        <span class="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-          </svg>
-        </span>
-      </div>
-      <span class="text-gray-500 font-medium">-</span>
-      <div class="relative">
-        <input #fechaFinInput type="date" [(ngModel)]="fechaFin" (click)="abrirCalendario(' fin')"
-          (change)="loadStatistics(colaborador!.id!)"
-          class="appearance-none w-32 p-2 pl-8 border-none rounded-md bg-transparent text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
-        <span class="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-          </svg>
-        </span>
-      </div>
-    </div>
   </div>
 
-  <div *ngIf="colaborador; else loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
-    <div class="card fade-in order-1 aspect-square overflow-hidden">
-      <div class="flex items-center justify-center">
-        <div class="wallp w-full flex justify-center items-center p-1"
-          [ngStyle]="getWallpStyles(colaborador.empresaNombre, true)">
-          <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'" alt="Foto de perfil"
-            class="w-36 h-36 rounded-full bg-[#ffffffcf] object-cover shadow-md">
-        </div>
-      </div>
-
-      <div class="text-gray-600 space-y-2 text-sm p-4 pt-2 px-4 items-center justify-center">
-        <div class="flex justify-between items-center">
-          <h3 class="text-lg font-bold text-gray-800">{{ colaborador.nombre }} {{ colaborador.apellido }}
-          </h3>
-          <span class="inline-block px-3 py-1 text-sm font-semibold rounded-full"
-            [ngClass]="{'bg-green-100 text-green-800': colaborador.habilitado, 'bg-red-100 text-red-800': !colaborador.habilitado}">
-            {{ colaborador.habilitado ? 'Habilitado' : 'Deshabilitado' }}
-          </span>
-        </div>
-        <p>{{ colaborador.email }}</p>
-        <div class="flex justify-between items-center">
-          <div class="flex flex-col w-full">
-            <p class="text-black font-bold">DNI</p>
-            <p class="ml-5">{{ colaborador.dni || 'N/A' }}</p>
+  <header class="profile-hero">
+    @if (colaborador) {
+      <div class="profile-identity">
+        <img
+          [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
+          [alt]="'Foto de ' + colaborador.nombre + ' ' + colaborador.apellido"
+          class="profile-identity__photo"
+          >
+        <div class="profile-identity__content">
+          <div class="profile-identity__title">
+            <h1>{{ colaborador.nombre }} {{ colaborador.apellido }}</h1>
+            <app-badge [tone]="colaborador.habilitado ? 'neutral' : 'warning'">
+              {{ colaborador.habilitado ? 'Habilitado' : 'Deshabilitado' }}
+            </app-badge>
           </div>
-          <div class="flex flex-col w-full">
-            <p class="text-black font-bold">Teléfono</p>
-            <p class="ml-5">{{ colaborador.telefono }}</p>
-          </div>
+          <p>Análisis de carga programada y distribución de turnos</p>
+          <dl class="profile-identity__details">
+            <div>
+              <dt>Empresa</dt>
+              @if (empresaIdContexto) {
+                <dd>
+                  {{ nombreEmpresaContexto || 'Sin turnos en el período' }}
+                </dd>
+              } @else {
+                <dd>{{ colaborador.empresaNombre }}</dd>
+              }
+            </div>
+            <div>
+              <dt>Puesto actual</dt>
+              <dd>{{ colaborador.puestoNombre || 'Sin puesto' }}</dd>
+            </div>
+            <div>
+              <dt>DNI</dt>
+              <dd>{{ colaborador.dni || 'No registrado' }}</dd>
+            </div>
+          </dl>
         </div>
       </div>
-    </div>
-    <div class="card fade-in order-2 aspect-square flex flex-col">
-      <div class="p-6 pb-0">
-        <h4 class="text-lg font-bold text-gray-800 text-left quicksand">Progreso</h4>
-        <p class="text-2xl text-gray-800 mb-2 poiret-one font-extralight">
-          <span [countUp]="totalHorasSemanaActual" [options]="{ duration: 1 }"></span> h
-        </p>
+    } @else {
+      <div class="profile-identity">
+        <app-skeleton width="72px" height="72px" shape="circle"></app-skeleton>
+        <div class="profile-identity__content">
+          <app-skeleton width="240px" height="24px"></app-skeleton>
+          <app-skeleton width="310px" height="14px"></app-skeleton>
+        </div>
       </div>
-      <div class="relative w-full h-0 grow-[3] shrink-0 p-6 pt-0 pb-3">
-        <canvas baseChart
-                [datasets]="barChartSemanaActualData.datasets"
-                [labels]="barChartSemanaActualData.labels"
-                [options]="barChartSemanaActualOptions"
-                [type]="'bar'">
-        </canvas>
-      </div>
-    </div>
+    }
 
-    <div class="card p-6 fade-in order-3 md:col-span-2 lg:col-span-2 grid gap-2"> <!-- Automático -->
-      <h4 class="text-lg font-semibold text-gray-800">Tiendas Trabajadas</h4>
-      <div class="relative w-full h-full">
-        <canvas baseChart
-                [datasets]="horizontalBarChartData.datasets"
-                [labels]="horizontalBarChartData.labels"
-                [options]="horizontalBarChartOptions"
-                [type]="'bar'"></canvas>
-      </div>
-    </div>
 
-    <div class="card p-6 pb-2 fade-in order-4 md:col-span-2 lg:order-2 xl:order-4 lg:col-span-2">
-      <h4 class="text-lg font-semibold text-gray-800 mb-4">Horas por Mes</h4>
-      <div class="relative w-full">
-        <canvas baseChart [datasets]="barChartData.datasets" [labels]="barChartData.labels" [options]="barChartOptions"
-          [type]="'bar'"></canvas>
+    <form class="profile-period" (ngSubmit)="loadStatistics()">
+      <div class="profile-period__heading">
+        <span>Período analizado</span>
+        <small>Las cifras corresponden a horas programadas</small>
       </div>
-    </div>
+      <div class="profile-period__fields">
+        <label>
+          <span>Desde</span>
+          <input #fechaInicioInput type="date" [(ngModel)]="fechaInicio" name="fechaInicio"
+            (click)="abrirCalendario('inicio')">
+        </label>
+        <label>
+          <span>Hasta</span>
+          <input #fechaFinInput type="date" [(ngModel)]="fechaFin" name="fechaFin"
+            (click)="abrirCalendario('fin')">
+        </label>
+        <app-button type="submit" variant="primary" [isLoading]="cargandoStats">Actualizar</app-button>
+      </div>
+    </form>
+  </header>
 
-    <div class="card p-6 fade-in order-5 md:col-span-2 lg:col-span-2">
-      <h4 class="text-lg font-semibold text-gray-800 mb-4">Turnos Recientes</h4>
-      <div class="flex flex-col">
-        <div class="-m-1.5 overflow-x-auto">
-          <div class="p-1.5 min-w-full inline-block align-middle">
-            <div class="border rounded-lg shadow overflow-hidden">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead [ngStyle]="getWallpStyles(colaborador.empresaNombre, false)">
-                  <tr class="">
-                    <th scope="col" class="px-6 py-3 text-start text-xs font-bold nunito  uppercase">Fecha</th>
-                    <th scope="col" class="px-6 py-3 text-start text-xs font-bold nunito uppercase">Tienda</th>
-                    <th scope="col" class="px-6 py-3 text-start text-xs font-bold nunito uppercase">Ingreso
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-end text-xs font-bold nunito uppercase">Salida</th>
-                    <th scope="col" class="px-6 py-3 text-end text-xs font-bold nunito uppercase">Horas</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                  <tr *ngFor="let turno of turnosRecientes" class="trHead bg-neutral-100 even:bg-gray-50 transition">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{{ turno.fecha }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ turno.nombreTienda }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ formatearHora(turno.horaEntrada) }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ formatearHora(turno.horaSalida) }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ formatearHorasDia(turno.horasTrabajadas, false )}}</td>
-                  </tr>
-                </tbody>
-              </table>
+  @if (errorMessage) {
+    <p class="profile-error">{{ errorMessage }}</p>
+  }
+
+  @if (cargandoStats) {
+    <div class="profile-skeleton">
+      @for (_ of skeletonRows; track $index) {
+        <app-skeleton height="92px" radius="12px"></app-skeleton>
+      }
+    </div>
+  }
+
+  @if (!cargandoStats) {
+    <section class="profile-summary" aria-label="Resumen del período">
+      <div class="profile-metric">
+        <span>Total programado</span>
+        <strong>{{ formatearHorasDia(horasNormales + horasFeriados, true) }}</strong>
+        <small>horas en el período</small>
+      </div>
+      <div class="profile-metric">
+        <span>Promedio semanal</span>
+        <strong>{{ formatearHorasDia(promedioSemanal, true) }}</strong>
+        <small>{{ semanasConActividad }} semanas completas activas</small>
+      </div>
+      <div class="profile-metric">
+        <span>Trabajo en feriado</span>
+        <strong>{{ formatearHorasDia(horasFeriados, true) }}</strong>
+        <small>{{ totalTurnosFeriados }} turnos identificados</small>
+      </div>
+      <div class="profile-metric" [class.profile-metric--attention]="excepciones.length > 0">
+        <span>Requiere revisión</span>
+        <strong>{{ excepciones.length }}</strong>
+        <small>días con excepciones</small>
+      </div>
+    </section>
+    <div class="profile-grid">
+      <section class="profile-panel profile-panel--composition">
+        <div class="profile-panel__heading">
+          <div>
+            <h2>Composición de horas</h2>
+            <p>Proporción entre jornadas regulares y feriados.</p>
+          </div>
+        </div>
+        <div class="profile-composition">
+          <div class="profile-composition__bar" aria-hidden="true">
+            <span class="profile-composition__normal" [style.width.%]="porcentajeHorasNormales"></span>
+            <span class="profile-composition__holiday" [style.width.%]="porcentajeHorasFeriados"></span>
+          </div>
+          <div class="profile-composition__legend">
+            <div>
+              <i class="profile-dot profile-dot--normal" aria-hidden="true"></i>
+              <span>Regulares</span>
+              <strong>{{ formatearHorasDia(horasNormales, true) }} h</strong>
+              <small>{{ porcentajeHorasNormales | number:'1.0-0' }}%</small>
+            </div>
+            <div>
+              <i class="profile-dot profile-dot--holiday" aria-hidden="true"></i>
+              <span>Feriados</span>
+              <strong>{{ formatearHorasDia(horasFeriados, true) }} h</strong>
+              <small>{{ porcentajeHorasFeriados | number:'1.0-0' }}%</small>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+      <section class="profile-panel profile-panel--stores">
+        <div class="profile-panel__heading">
+          <div>
+            <h2>Distribución por tienda</h2>
+            <p>Dónde se concentraron las horas del período.</p>
+          </div>
+        </div>
+        @if (tiendasTrabajadas.length) {
+          <div class="profile-stores">
+            @for (tienda of tiendasTrabajadas; track tienda) {
+              <div class="profile-stores__row">
+                <div class="profile-stores__label">
+                  <span>{{ tienda.nombre }}</span>
+                  <strong>{{ formatearHorasDia(tienda.horas, true) }} h</strong>
+                </div>
+                <div class="profile-stores__track" aria-hidden="true">
+                  <span [style.width.%]="tienda.porcentaje"></span>
+                </div>
+                <small>{{ tienda.porcentaje | number:'1.0-0' }}% del total</small>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="profile-empty">Sin turnos en el rango seleccionado.</p>
+        }
+      </section>
+      <section class="profile-panel profile-panel--weeks">
+        <div class="profile-panel__heading">
+          <div>
+            <h2>Semanas de mayor carga</h2>
+            <p>Semanas completas con actividad, ordenadas por horas.</p>
+          </div>
+        </div>
+        @if (semanasMayorCarga.length) {
+          <div class="profile-list">
+            @for (semana of semanasMayorCarga; track semana) {
+              <div class="profile-list__row">
+                <span>{{ semana.inicio }} – {{ semana.fin }}</span>
+                <strong>{{ formatearHorasDia(semana.horas, true) }} h</strong>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="profile-empty">No hay semanas completas con actividad en el rango.</p>
+        }
+      </section>
+      <section class="profile-panel profile-panel--wide">
+        <div class="profile-panel__heading">
+          <div>
+            <h2>Excepciones del período</h2>
+            <p>Días con turno partido o que superan el umbral de {{ umbralHorasDiarias }} horas.</p>
+          </div>
+          @if (excepciones.length) {
+            <span class="profile-panel__count">{{ excepciones.length }}</span>
+          }
+        </div>
+        @if (excepciones.length) {
+          <div class="profile-list">
+            @for (excepcion of excepciones; track trackByExcepcion($index, excepcion)) {
+              <div class="profile-list__row profile-list__row--exception">
+                <span>{{ formatearFecha(excepcion.fecha) }}</span>
+                <span class="profile-list__badges">
+                  @if (excepcion.partido) {
+                    <app-badge tone="warning">Turno partido · {{ excepcion.cantidadTurnos }}</app-badge>
+                  }
+                  @if (excepcion.horasExtra) {
+                    <app-badge tone="overtime">Supera umbral · {{ formatearHorasDia(excepcion.horas, true) }} h</app-badge>
+                  }
+                  @if (excepcion.esFeriado) {
+                    <app-badge tone="holiday">Feriado</app-badge>
+                  }
+                </span>
+              </div>
+            }
+          </div>
+        } @else {
+          <app-empty-state icon="✓" title="Sin excepciones" description="Ningún día supera el umbral ni contiene más de un turno."></app-empty-state>
+        }
+      </section>
+      <section class="profile-panel profile-panel--wide">
+        <div class="profile-panel__heading">
+          <div>
+            <h2>Actividad reciente</h2>
+            <p>Últimos turnos incluidos en el período analizado.</p>
+          </div>
+        </div>
+        @if (turnosRecientes.length) {
+          <div class="profile-activity">
+            <div class="profile-activity__header" aria-hidden="true">
+              <span>Fecha</span><span>Tienda</span><span>Horario</span><span>Duración</span>
+            </div>
+            @for (turno of turnosRecientes; track trackByTurnoId($index, turno)) {
+              <div class="profile-activity__row">
+                <span>{{ formatearFecha(turno.fecha) }}</span>
+                <strong>{{ turno.nombreTienda }}</strong>
+                <span>{{ formatearHora(turno.horaEntrada) }} – {{ formatearHora(turno.horaSalida) }}</span>
+                <span>{{ formatearHorasDia(turno.horasTrabajadas, false) }} h</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="profile-empty">Sin turnos recientes en el rango seleccionado.</p>
+        }
+      </section>
     </div>
-
-  </div>
-  <ng-template #loading>
-    <div class="text-center text-gray-600">Cargando perfil...</div>
-  </ng-template>
-</div>
+  }
+</section>

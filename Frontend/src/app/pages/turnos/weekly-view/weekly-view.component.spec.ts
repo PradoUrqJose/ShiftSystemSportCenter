@@ -1,5 +1,8 @@
 import { Turno } from './../../../services/turno.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient, withXhr } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { WeeklyViewComponent } from './weekly-view.component';
 
 describe('WeeklyViewComponent', () => {
@@ -8,7 +11,8 @@ describe('WeeklyViewComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [WeeklyViewComponent],
+      imports: [WeeklyViewComponent],
+      providers: [provideHttpClient(withXhr()), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
   });
 

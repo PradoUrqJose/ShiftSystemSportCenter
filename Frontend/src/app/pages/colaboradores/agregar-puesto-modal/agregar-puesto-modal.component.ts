@@ -1,16 +1,17 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, ChangeDetectionStrategy } from '@angular/core';
 import { Puesto, PuestoService } from '../../../services/puesto.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
-  selector: 'app-agregar-puesto-modal',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './agregar-puesto-modal.component.html',
-  styleUrl: './agregar-puesto-modal.component.css'
+    selector: 'app-agregar-puesto-modal',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './agregar-puesto-modal.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './agregar-puesto-modal.component.css'
 })
-export class AgregarPuestoModalComponent {
+export class AgregarPuestoModalComponent implements OnDestroy {
   // Entradas desde el componente padre
   @Input() mostrarModal: boolean = false;
   @Input() isModalVisible: boolean = false;
@@ -22,8 +23,14 @@ export class AgregarPuestoModalComponent {
 
   isSubmitting: boolean = false; // Estado para deshabilitar el botón mientras se procesa
   errorMessage: string | null = null; // Añadir para mostrar errores
+  private readonly destroy$ = new Subject<void>();
 
   constructor(private puestoService: PuestoService) {}
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   // Método para cerrar el modal
   cerrarModal(): void {
@@ -51,26 +58,26 @@ export class AgregarPuestoModalComponent {
     this.errorMessage = null;
 
     if (this.puestoActual.id) {
-      this.puestoService.updatePuesto(this.puestoActual.id, this.puestoActual).subscribe({
+      this.puestoService.updatePuesto(this.puestoActual.id, this.puestoActual).pipe(takeUntil(this.destroy$)).subscribe({
         next: (puesto) => {
           this.puestoAgregado.emit(puesto);
           this.isSubmitting = false;
           this.cerrarModal();
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || 'Error al actualizar el puesto.';
+          this.errorMessage = err.message || 'Error al actualizar el puesto.';
           this.isSubmitting = false;
         }
       });
     } else {
-      this.puestoService.addPuesto(this.puestoActual).subscribe({
+      this.puestoService.addPuesto(this.puestoActual).pipe(takeUntil(this.destroy$)).subscribe({
         next: (puesto) => {
           this.puestoAgregado.emit(puesto);
           this.isSubmitting = false;
           this.cerrarModal();
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || 'Error al agregar el puesto.';
+          this.errorMessage = err.message || 'Error al agregar el puesto.';
           this.isSubmitting = false;
         }
       });

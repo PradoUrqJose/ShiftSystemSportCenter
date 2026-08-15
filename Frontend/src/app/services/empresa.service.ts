@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { PageResponse, PAGE_SIZE_ALL } from '../models/page-response.model';
 
 export interface Empresa {
   id: number;
@@ -19,8 +20,15 @@ export class EmpresaService {
 
   constructor(private http: HttpClient) {}
 
+  // GET /api/empresas devuelve paginado (Page<EmpresaDTO>) desde la Etapa 2
+  // del backend. Pedimos una página grande para no truncar la lista mientras
+  // no haya paginación real en la UI (ver PAGE_SIZE_ALL).
   getEmpresas(): Observable<Empresa[]> {
-    return this.http.get<Empresa[]>(this.apiUrl);
+    return this.http
+      .get<PageResponse<Empresa>>(this.apiUrl, {
+        params: { size: PAGE_SIZE_ALL },
+      })
+      .pipe(map((page) => page.content));
   }
 
   addEmpresa(empresa: Empresa): Observable<Empresa> {
@@ -29,10 +37,6 @@ export class EmpresaService {
 
   updateEmpresa(id: number, empresa: Empresa): Observable<Empresa> {
     return this.http.put<Empresa>(`${this.apiUrl}/${id}`, empresa);
-  }
-
-  deleteEmpresa(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
   // En empresa.service.ts

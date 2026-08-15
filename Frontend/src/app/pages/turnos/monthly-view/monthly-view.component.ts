@@ -1,19 +1,25 @@
 import { CommonModule } from '@angular/common';
 import { CalendarioService, DiaSemana } from './../../../services/calendario.service';
 import { ResumenMensual, Turno, TurnoService } from './../../../services/turno.service';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { Feriado, FeriadoService } from '../../../services/feriado.service';
-import { Observable, Subscription } from 'rxjs';
-import { shareReplay } from 'rxjs/operators';
+import { Observable, Subject, Subscription, takeUntil } from 'rxjs';
+import { TurnosDelDiaPipe } from '../../../pipes/turnos-del-dia.pipe';
+import { TooltipService } from '../../../services/tooltip.service';
 
 @Component({
-  selector: 'app-monthly-view',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './monthly-view.component.html',
-  styleUrls: ['./monthly-view.component.css', '../turnos.component.css']
+    selector: 'app-monthly-view',
+    imports: [CommonModule, TurnosDelDiaPipe],
+    templateUrl: './monthly-view.component.html',
+    styleUrls: ['./monthly-view.component.css', '../turnos.component.css'],
+    providers: [TooltipService],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MonthlyViewComponent implements OnInit, OnDestroy {
+export class MonthlyViewComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
+  // Celdas de turno renderizadas (ver #turnoCell en el html) — de acá salen
+  // los tooltips, ver ngAfterViewInit.
+  @ViewChildren('turnoCell') turnoCells!: QueryList<ElementRef<HTMLElement>>;
+
   @Input() semanasDelMes: DiaSemana[][] = [];
   @Input() colaboradorSeleccionado: number = 0;
   @Input() turnosMensuales$!: Observable<Turno[]>;
@@ -29,12 +35,14 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
   feriados: Feriado[] = [];
   resumenMensual: ResumenMensual | undefined;
   private turnosSubscription?: Subscription;
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private turnoService: TurnoService,
     private feriadoService: FeriadoService,
     private calendarioService: CalendarioService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private tooltipService: TooltipService
   ) {}
 
   ngOnInit(): void {
@@ -48,12 +56,32 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
     }
   }
 
+  ngAfterViewInit(): void {
+    this.actualizarTooltips();
+    // turnoCells.changes emite cada vez que cambia el set de celdas
+    // renderizadas — reemplaza al polling manual que hacía el padre en
+    // ngAfterViewChecked con document.querySelectorAll.
+    this.turnoCells.changes.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.actualizarTooltips();
+    });
+  }
+
+  private actualizarTooltips(): void {
+    this.tooltipService.inicializar(this.turnoCells.toArray());
+  }
+
   ngOnDestroy(): void {
     this.turnosSubscription?.unsubscribe();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private subscribeToTurnos(): void {
     this.turnosSubscription?.unsubscribe();
+    if (!this.turnosMensuales$) {
+      this.turnos = [];
+      return;
+    }
     this.turnosSubscription = this.turnosMensuales$.subscribe(turnos => {
       this.turnos = turnos || [];
       this.cargarResumenMensual(); // Recargar resumen cada vez que cambian los turnos
@@ -61,14 +89,18 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
   }
 
   private cargarFeriados(): void {
-    this.feriadoService.getFeriados().subscribe(data => {
+    this.feriadoService.getFeriados().pipe(takeUntil(this.destroy$)).subscribe(data => {
       this.feriados = data;
+      // Async, fuera de cualquier click o cambio de @Input — con OnPush,
+      // Angular no la detecta sola sin este aviso.
+      this.cdr.markForCheck();
     });
   }
 
   private cargarResumenMensual(): void {
     if (this.colaboradorSeleccionado) {
       this.turnoService.getResumenMensual(this.mes, this.anio, [this.colaboradorSeleccionado])
+        .pipe(takeUntil(this.destroy$))
         .subscribe(resumenes => {
           this.resumenMensual = resumenes[0];
           this.cdr.detectChanges();
@@ -77,21 +109,6 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
       this.resumenMensual = undefined;
       this.cdr.detectChanges();
     }
-  }
-
-  obtenerTurno(turnos: Turno[], colaboradorId: number, fecha: string): Turno | undefined {
-    return turnos.find(t => t.colaboradorId === colaboradorId && t.fecha === fecha);
-  }
-
-  obtenerTurnos(turnos: Turno[], colaboradorId: number, fecha: string): Turno[] {
-    return turnos.filter(turno =>
-      turno.colaboradorId === colaboradorId && turno.fecha === fecha
-    ).sort((a, b) => {
-      // Ordenar por hora de entrada
-      const horaA = a.horaEntrada || '00:00';
-      const horaB = b.horaEntrada || '00:00';
-      return horaA.localeCompare(horaB);
-    });
   }
 
   formatearHorasDia(horasTrabajadas: number | undefined): string {
@@ -106,15 +123,22 @@ export class MonthlyViewComponent implements OnInit, OnDestroy {
   }
 
   esDiaActual(fecha: string): boolean {
-    const hoy = new Date();
-    const [year, month, day] = fecha.split('-').map(Number);
-    const fechaComparar = new Date(year, month - 1, day);
-    hoy.setHours(0, 0, 0, 0);
-    fechaComparar.setHours(0, 0, 0, 0);
-    return hoy.getTime() === fechaComparar.getTime();
+    return this.calendarioService.esDiaActual(fecha);
   }
 
   esFeriado(fecha: string): boolean {
     return this.turnoService.esFeriado(fecha, this.feriados);
+  }
+
+  trackByFecha(index: number, dia: DiaSemana): string {
+    return dia.fecha || `dia-${index}`;
+  }
+
+  trackBySemanaIndex(index: number): number {
+    return index;
+  }
+
+  trackByTurnoId(_index: number, turno: Turno): number {
+    return turno.id;
   }
 }

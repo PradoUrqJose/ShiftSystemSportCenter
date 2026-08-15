@@ -2,12 +2,16 @@ package com.sportcenter.shift_manager.controller;
 
 import com.sportcenter.shift_manager.dto.ResumenMensualDTO;
 import com.sportcenter.shift_manager.dto.TurnoDTO;
-import com.sportcenter.shift_manager.model.Turno;
+import com.sportcenter.shift_manager.dto.TurnoRequestDTO;
 import com.sportcenter.shift_manager.service.TurnoService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,7 +26,7 @@ public class TurnoController {
     }
 
     @PostMapping
-    public ResponseEntity<TurnoDTO> saveTurno(@Valid @RequestBody Turno turno) {
+    public ResponseEntity<TurnoDTO> saveTurno(@Valid @RequestBody TurnoRequestDTO turno) {
         TurnoDTO savedTurno = turnoService.saveTurno(turno);
         return ResponseEntity.ok(savedTurno);
     }
@@ -46,14 +50,15 @@ public class TurnoController {
     }
 
     @GetMapping("/mensual")
-    public ResponseEntity<List<TurnoDTO>> getTurnosMensuales(
+    public ResponseEntity<Page<TurnoDTO>> getTurnosMensuales(
             @RequestParam("mes") int mes,
-            @RequestParam("anio") int anio) {
-        return ResponseEntity.ok(turnoService.getTurnosMensuales(mes, anio));
+            @RequestParam("anio") int anio,
+            @PageableDefault(size = 30) Pageable pageable) {
+        return ResponseEntity.ok(turnoService.getTurnosMensuales(mes, anio, pageable));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TurnoDTO> updateTurno(@PathVariable Long id, @Valid @RequestBody Turno turno) {
+    public ResponseEntity<TurnoDTO> updateTurno(@PathVariable Long id, @Valid @RequestBody TurnoRequestDTO turno) {
         TurnoDTO updatedTurno = turnoService.updateTurno(id, turno);
         return ResponseEntity.ok(updatedTurno);
     }
@@ -64,6 +69,13 @@ public class TurnoController {
         return ResponseEntity.noContent().build();
     }
 
+    // Deprecados: el frontend todavía los usa (SemanaService/TurnoService),
+    // migrar en la Etapa 6 del plan de mantenibilidad a /semanal, que recibe
+    // el rango de fechas directo en vez de pedirle al backend que primero
+    // resuelva "qué semana es la número N del mes". Borrar estos dos junto
+    // con TurnoService.calcularSemanasDelMes/getTurnosPorSemanaEstricta una
+    // vez migrado.
+    @Deprecated
     @GetMapping("/semanas-del-mes")
     public ResponseEntity<List<List<String>>> getSemanasDelMes(
             @RequestParam("mes") int mes,
@@ -71,12 +83,23 @@ public class TurnoController {
         return ResponseEntity.ok(turnoService.calcularSemanasDelMes(mes, anio));
     }
 
+    @Deprecated
     @GetMapping("/semanal-estricto")
     public ResponseEntity<List<TurnoDTO>> getTurnosPorSemanaEstricta(
             @RequestParam("mes") int mes,
             @RequestParam("anio") int anio,
             @RequestParam("semana") int numeroSemana) {
         return ResponseEntity.ok(turnoService.getTurnosPorSemanaEstricta(mes, anio, numeroSemana));
+    }
+
+    // Reemplazo de /semanal-estricto: recibe el rango de fechas directo (el
+    // frontend ya lo calcula localmente con date-fns), sin que el backend
+    // tenga que resolver ningún índice de semana.
+    @GetMapping("/semanal")
+    public ResponseEntity<List<TurnoDTO>> getTurnosPorRangoFecha(
+            @RequestParam("inicio") String inicio,
+            @RequestParam("fin") String fin) {
+        return ResponseEntity.ok(turnoService.getTurnosPorRangoFecha(LocalDate.parse(inicio), LocalDate.parse(fin)));
     }
 
     @GetMapping("/colab-tienda-fecha")
@@ -96,17 +119,6 @@ public class TurnoController {
                 ? Arrays.stream(colaboradores.split(",")).map(Long::parseLong).toList()
                 : new ArrayList<>();
         return ResponseEntity.ok(turnoService.getHorasTrabajadasPorColaboradores(colaboradoresIds, fechaInicio, fechaFin));
-    }
-
-    @GetMapping("/reporte/feriados")
-    public ResponseEntity<List<TurnoDTO>> getTurnosEnFeriados(
-            @RequestParam("fechaInicio") String fechaInicio,
-            @RequestParam("fechaFin") String fechaFin,
-            @RequestParam(value = "colaboradores", required = false) String colaboradores) {
-        List<Long> colaboradoresIds = (colaboradores != null && !colaboradores.isEmpty())
-                ? Arrays.stream(colaboradores.split(",")).map(Long::parseLong).toList()
-                : new ArrayList<>();
-        return ResponseEntity.ok(turnoService.getTurnosEnFeriados(colaboradoresIds, fechaInicio, fechaFin));
     }
 
     @GetMapping("/resumen-mensual")

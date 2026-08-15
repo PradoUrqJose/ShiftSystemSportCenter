@@ -45,7 +45,10 @@ public class Colaborador {
     //@Column(length = 255)
     private String fotoUrl;  // Nuevo campo
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    // LAZY: antes era EAGER, lo que forzaba un JOIN en toda consulta de Colaborador
+    // aunque no se necesitara la empresa. Donde sí se necesita (listados/DTOs),
+    // los repositorios usan @EntityGraph para traerla en una sola query.
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "empresa_id", nullable = true)
     @JsonIgnoreProperties("colaboradores")
     private Empresa empresa;
@@ -56,7 +59,7 @@ public class Colaborador {
     @Column(nullable = true)
     private LocalDate fechaNacimiento;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "puesto_id")
     @JsonIgnoreProperties("colaboradores") // Si Puesto tiene relación inversa
     private Puesto puesto;

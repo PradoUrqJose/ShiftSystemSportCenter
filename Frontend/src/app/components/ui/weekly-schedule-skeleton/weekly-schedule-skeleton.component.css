@@ -1,0 +1,6 @@
+.table-wrapper {
+  width: 100%;
+  height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}

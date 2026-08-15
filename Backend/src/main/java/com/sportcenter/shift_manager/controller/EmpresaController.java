@@ -4,6 +4,9 @@ import com.sportcenter.shift_manager.dto.EmpresaDTO;
 import com.sportcenter.shift_manager.model.Empresa;
 import com.sportcenter.shift_manager.service.EmpresaService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,14 +22,14 @@ public class EmpresaController {
     }
 
     @PostMapping
-    public ResponseEntity<EmpresaDTO> saveEmpresa(@Valid @RequestBody Empresa empresa) {
-        Empresa savedEmpresa = empresaService.saveEmpresa(empresa);
+    public ResponseEntity<EmpresaDTO> saveEmpresa(@Valid @RequestBody EmpresaDTO empresaDTO) {
+        Empresa savedEmpresa = empresaService.saveEmpresa(empresaDTO);
         return ResponseEntity.ok(empresaService.convertToDTO(savedEmpresa));
     }
 
     @GetMapping
-    public ResponseEntity<List<EmpresaDTO>> getAllEmpresas() {
-        return ResponseEntity.ok(empresaService.getAllEmpresas());
+    public ResponseEntity<Page<EmpresaDTO>> getAllEmpresas(@PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(empresaService.getAllEmpresas(pageable));
     }
 
     @GetMapping("/{id}/numero-empleados")
@@ -40,8 +43,8 @@ public class EmpresaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EmpresaDTO> updateEmpresa(@PathVariable Long id, @Valid @RequestBody Empresa empresaDetails) {
-        Empresa updatedEmpresa = empresaService.updateEmpresa(id, empresaDetails);
+    public ResponseEntity<EmpresaDTO> updateEmpresa(@PathVariable Long id, @Valid @RequestBody EmpresaDTO empresaDTO) {
+        Empresa updatedEmpresa = empresaService.updateEmpresa(id, empresaDTO);
         return ResponseEntity.ok(empresaService.convertToDTO(updatedEmpresa));
     }
 

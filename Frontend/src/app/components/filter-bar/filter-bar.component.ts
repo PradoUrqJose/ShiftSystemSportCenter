@@ -1,14 +1,18 @@
-import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+
+import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Colaborador } from '../../services/colaborador.service';
 
+// Componente "dumb": todo su estado cambia por sus propios eventos (clicks,
+// HostListener), y sus @Input siempre llegan como referencias nuevas del
+// padre — candidato seguro para OnPush, primer paso de activarlo en el
+// resto del árbol de turnos/colaboradores.
 @Component({
-  selector: 'app-filter-bar',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './filter-bar.component.html',
-  styleUrls: ['./filter-bar.component.css']
+    selector: 'app-filter-bar',
+    imports: [FormsModule],
+    templateUrl: './filter-bar.component.html',
+    styleUrls: ['./filter-bar.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FilterBarComponent {
   @Input() companies: string[] = [];
@@ -49,17 +53,21 @@ export class FilterBarComponent {
   }
 
   getSelectedEmpresaName(): string {
-    if (!this.selectedCompany || this.selectedCompany === 'all') return 'Todas las empresas';
+    if (!this.selectedCompany || this.selectedCompany === 'all') return 'Empresa';
     return this.selectedCompany;
   }
 
   getSelectedColaboradorName(): string {
-    if (!this.selectedCollaboratorIds || this.selectedCollaboratorIds.length === 0) return 'Todos los colaboradores';
+    if (!this.selectedCollaboratorIds || this.selectedCollaboratorIds.length === 0) return 'Colaborador';
     if (this.selectedCollaboratorIds.length === 1) {
       const c = this.collaborators.find(x => x.id === this.selectedCollaboratorIds[0]);
       return c ? `${c.nombre} ${c.apellido}` : '1 seleccionado';
     }
-    return `${this.selectedCollaboratorIds.length} seleccionados`;
+    return `${this.selectedCollaboratorIds.length} colaboradores`;
+  }
+
+  iniciales(colaborador: Colaborador): string {
+    return `${colaborador.nombre?.[0] || ''}${colaborador.apellido?.[0] || ''}`.toUpperCase();
   }
 
   onToggleSort(): void {
@@ -109,6 +117,14 @@ export class FilterBarComponent {
   onDocumentClick(): void {
     this.showCompanyDropdown = false;
     this.showCollaboratorDropdown = false;
+  }
+
+  trackByCompany(_index: number, company: string): string {
+    return company;
+  }
+
+  trackByColaboradorId(_index: number, colaborador: Colaborador): number {
+    return colaborador.id;
   }
 }
 

@@ -13,8 +13,10 @@ Thumbs.db
 # --- BACKEND (Spring Boot) ---
 # Directorios generados por Maven
 target/
-.mvn/
 factorypath/
+# OJO: .mvn/ NO se ignora a propósito: ahí vive el Maven Wrapper (mvnw/mvnw.cmd
+# + .mvn/wrapper/maven-wrapper.properties), necesario para que el proyecto
+# compile con la misma versión de Maven en cualquier máquina sin instalarlo aparte.
 
 # Archivos de configuración específicos de Eclipse/IDE
 .classpath
@@ -29,11 +31,11 @@ HELP.md
 node_modules/
 .angular/
 dist/
-public/
 
 # Archivos de configuración temporales
-package-lock.json
 editorconfig
+# OJO: package-lock.json NO se ignora a propósito: fija las versiones exactas
+# de las dependencias para que "npm install" instale lo mismo en cualquier máquina.
 
 # --- Generales para proyectos ---
 # Archivos de entorno (si usas)
@@ -45,3 +47,6 @@ editorconfig
 # Archivos TypeScript generados automáticamente
 *.tsbuildinfo
 
+# Dumps de base de datos (pueden contener datos reales de producción)
+*.dump
+*.sql.gz

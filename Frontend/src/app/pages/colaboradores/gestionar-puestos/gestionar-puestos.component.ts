@@ -1,24 +1,46 @@
 import { Puesto, PuestoService } from './../../../services/puesto.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ColaboradorService } from '../../../services/colaborador.service';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { AgregarPuestoModalComponent } from '../agregar-puesto-modal/agregar-puesto-modal.component';
+import { Subject, takeUntil } from 'rxjs';
+import Notiflix from 'notiflix';
+import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
+import { TableShellComponent } from '../../../components/ui/table-shell/table-shell.component';
+import { SkeletonComponent } from '../../../components/ui/skeleton/skeleton.component';
+import { ButtonComponent } from '../../../components/ui/button/button.component';
+import { SortHeaderComponent } from '../../../components/ui/sort-header/sort-header.component';
+import { SortState, nextSortState, sortRows } from '../../../utils/table-sort.util';
+
+type PuestoSortField = 'nombre' | 'descripcion' | 'colaboradores';
 
 @Component({
-  selector: 'app-gestionar-puestos',
-  standalone: true,
-  imports: [CommonModule, AgregarPuestoModalComponent],
-  templateUrl: './gestionar-puestos.component.html',
-  styleUrls: ['./gestionar-puestos.component.css']
+    selector: 'app-gestionar-puestos',
+    imports: [AgregarPuestoModalComponent, TableShellComponent, SkeletonComponent, ButtonComponent, SortHeaderComponent],
+    templateUrl: './gestionar-puestos.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./gestionar-puestos.component.css']
 })
-export default class GestionarPuestosComponent implements OnInit {
+export default class GestionarPuestosComponent implements OnInit, OnDestroy {
   puestos: Puesto[] = [];
+  // "Colaboradores" es una columna calculada (conteoColaboradoresPorPuesto),
+  // por eso el selector de orden vive acá y no en un Record estático como
+  // en Empresas/Colaboradores — necesita leer ese mapa en cada comparación.
+  sort: SortState<PuestoSortField> = { field: 'nombre', direction: 'asc' };
   mostrarModalAgregarPuesto: boolean = false;
+  // Separado de mostrarModalAgregarPuesto (con un tick de retraso al abrir)
+  // para que la transición CSS del modal hijo tenga margen de animar — antes
+  // las dos banderas cambiaban juntas y el fade-in/out nunca se veía.
+  isModalAgregarPuestoVisible: boolean = false;
   puestoActual: Puesto = { nombre: '', descripcion: '' };
   conteoColaboradoresPorPuesto: { [key: number]: number } = {};
   errorMessage: string | null = null; // Añadir para mostrar errores
-  isLoading: boolean = false; // Añadir para indicar carga
+  // Ya se seteaba en cargarPuestos() pero el template nunca lo leía — la
+  // tabla se renderizaba vacía un instante en cada carga sin ningún feedback.
+  isLoading: boolean = false;
+  readonly skeletonRows = Array.from({ length: 5 });
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private puestoService: PuestoService,
@@ -31,11 +53,17 @@ export default class GestionarPuestosComponent implements OnInit {
     this.cargarConteoColaboradores();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   cargarPuestos(): void {
     this.isLoading = true;
-    this.puestoService.getPuestos().subscribe({
+    this.puestoService.getPuestos().pipe(takeUntil(this.destroy$)).subscribe({
       next: (puestos) => {
         this.puestos = puestos;
+        this.aplicarOrden();
         this.isLoading = false;
       },
       error: (err) => {
@@ -46,7 +74,7 @@ export default class GestionarPuestosComponent implements OnInit {
   }
 
   cargarConteoColaboradores(): void {
-    this.colaboradorService.getColaboradores().subscribe({
+    this.colaboradorService.getColaboradores().pipe(takeUntil(this.destroy$)).subscribe({
       next: (colaboradores) => {
         this.conteoColaboradoresPorPuesto = colaboradores.reduce((acc, colab) => {
           if (colab.puestoId) {
@@ -54,6 +82,11 @@ export default class GestionarPuestosComponent implements OnInit {
           }
           return acc;
         }, {} as { [key: number]: number });
+        // El conteo llega después que los puestos — si la columna activa es
+        // "Colaboradores" hay que reordenar con los valores recién cargados.
+        if (this.sort.field === 'colaboradores') {
+          this.aplicarOrden();
+        }
       },
       error: (err) => {
         this.errorMessage = 'Error al cargar el conteo de colaboradores.';
@@ -61,15 +94,36 @@ export default class GestionarPuestosComponent implements OnInit {
     });
   }
 
+  onSort(field: PuestoSortField): void {
+    this.sort = nextSortState(this.sort, field);
+    this.aplicarOrden();
+  }
+
+  private aplicarOrden(): void {
+    const selector = (p: Puesto): unknown => {
+      switch (this.sort.field) {
+        case 'descripcion':
+          return p.descripcion;
+        case 'colaboradores':
+          return this.conteoColaboradoresPorPuesto[p.id || 0] || 0;
+        default:
+          return p.nombre;
+      }
+    };
+    this.puestos = sortRows(this.puestos, selector, this.sort.direction);
+  }
+
   abrirModalAgregarPuesto(): void {
     this.puestoActual = { nombre: '', descripcion: '' };
     this.mostrarModalAgregarPuesto = true;
     this.errorMessage = null;
+    setTimeout(() => (this.isModalAgregarPuestoVisible = true), MODAL_OPEN_DELAY_MS);
   }
 
   cerrarModalAgregarPuesto(): void {
-    this.mostrarModalAgregarPuesto = false;
+    this.isModalAgregarPuestoVisible = false;
     this.errorMessage = null;
+    setTimeout(() => (this.mostrarModalAgregarPuesto = false), MODAL_CLOSE_DELAY_MS);
   }
 
   onPuestoAgregado(puesto: Puesto): void {
@@ -79,30 +133,46 @@ export default class GestionarPuestosComponent implements OnInit {
     } else {
       this.puestos.push(puesto); // Agrega si es nuevo
     }
+    this.aplicarOrden();
     this.cargarConteoColaboradores();
     this.cerrarModalAgregarPuesto();
   }
 
   eliminarPuesto(id: number | undefined): void {
     if (!id) return;
-    this.puestoService.deletePuesto(id).subscribe({
-      next: () => {
-        this.puestos = this.puestos.filter(p => p.id !== id);
-        this.cargarConteoColaboradores();
-      },
-      error: (err) => {
-        this.errorMessage = err.message || 'Error al eliminar el puesto.';
+    // Antes borraba directo sin confirmar, inconsistente con eliminarTienda/
+    // eliminarTurno que sí piden confirmación.
+    Notiflix.Confirm.show(
+      'Confirmar Eliminación',
+      '¿Estás seguro de que deseas eliminar este puesto?',
+      'Eliminar',
+      'Cancelar',
+      () => {
+        this.puestoService.deletePuesto(id).pipe(takeUntil(this.destroy$)).subscribe({
+          next: () => {
+            this.puestos = this.puestos.filter(p => p.id !== id);
+            this.cargarConteoColaboradores();
+          },
+          error: (err) => {
+            this.errorMessage = err.message || 'Error al eliminar el puesto.';
+          }
+        });
       }
-    });
+    );
   }
 
   editarPuesto(puesto: Puesto): void {
     this.puestoActual = { ...puesto };
     this.mostrarModalAgregarPuesto = true;
     this.errorMessage = null;
+    setTimeout(() => (this.isModalAgregarPuestoVisible = true), MODAL_OPEN_DELAY_MS);
   }
 
   goBack(): void {
     this.router.navigate(['/colaboradores']);
+  }
+
+  trackByPuestoId(_index: number, puesto: Puesto): number | undefined {
+    return puesto.id;
   }
 }

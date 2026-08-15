@@ -1,7 +1,3 @@
-:root {
-  --highlight-color: rgb(69, 133, 211);
-}
-
 .hover-photo {
   transition: transform 0.2s ease-in-out;
   transform: scale(100%);
@@ -48,4 +44,31 @@ thead {
 
 th {
   background-color: #eff6ff; /* Asegura que las celdas del encabezado tengan fondo */
+}
+
+/* Entrada sutil por fila de colaborador — mismo criterio que .app-table
+   (data-table.css) en las tablas CRUD/reportes. Esta vista no usa esa
+   clase (paleta y estructura son del dominio de Turnos, no del patrón de
+   tabla genérico), pero le faltaba la misma señal de "esto se acaba de
+   cargar". --row-i lo setea weekly-view.component.html con [style.--row-i]. */
+tbody tr {
+  animation: weekly-row-in var(--duration-modal) var(--ease-standard) backwards;
+  animation-delay: calc(var(--row-i, 0) * 30ms);
+}
+
+@keyframes weekly-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  tbody tr {
+    animation: none;
+  }
 }

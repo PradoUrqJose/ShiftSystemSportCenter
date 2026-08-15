@@ -1,0 +1,9 @@
+.time-picker:focus-within {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 1);
+  border-color: transparent;
+}
+
+.time-picker input::selection {
+  background: rgb(59 130 246 / 0.25);
+}

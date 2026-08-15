@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16
+    container_name: shiftsystem-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shiftmanager
+      POSTGRES_USER: shiftsystem
+      POSTGRES_PASSWORD: shiftsystem_dev_local
+    ports:
+      # 5434 en el host: evita chocar con un Postgres local en 5432/5433.
+      # Si igual te choca, cambiá este primer número y el mismo puerto en
+      # application-dev.properties (spring.datasource.url).
+      - "5434:5432"
+    volumes:
+      - shiftsystem_db_data:/var/lib/postgresql/data
+
+volumes:
+  shiftsystem_db_data:

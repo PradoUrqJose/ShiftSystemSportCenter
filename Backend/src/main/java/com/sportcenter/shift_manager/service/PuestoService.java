@@ -3,15 +3,18 @@ package com.sportcenter.shift_manager.service;
 import com.sportcenter.shift_manager.dto.PuestoDTO;
 import com.sportcenter.shift_manager.model.Puesto;
 import com.sportcenter.shift_manager.repository.PuestoRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.sportcenter.shift_manager.exception.ResourceNotFoundException;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 public class PuestoService {
+    private static final Logger log = LoggerFactory.getLogger(PuestoService.class);
+
     private final PuestoRepository puestoRepository;
 
     public PuestoService(PuestoRepository puestoRepository) {
@@ -32,20 +35,19 @@ public class PuestoService {
         puesto.setDescripcion(puestoDTO.getDescripcion());
 
         Puesto savedPuesto = puestoRepository.save(puesto);
+        log.info("Puesto creado: id={}, nombre={}", savedPuesto.getId(), savedPuesto.getNombre());
         return convertToDTO(savedPuesto);
     }
 
-    // Obtener todos los puestos
-    public List<PuestoDTO> getAllPuestos() {
-        return puestoRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    // Obtener todos los puestos, paginado
+    public Page<PuestoDTO> getAllPuestos(Pageable pageable) {
+        return puestoRepository.findAll(pageable).map(this::convertToDTO);
     }
 
     // Obtener un puesto por ID
     public PuestoDTO getPuestoById(Long id) {
         Puesto puesto = puestoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Puesto con ID " + id + " no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Puesto con ID " + id + " no encontrado"));
         return convertToDTO(puesto);
     }
 
@@ -66,6 +68,7 @@ public class PuestoService {
         puesto.setDescripcion(puestoDTO.getDescripcion());
 
         Puesto updatedPuesto = puestoRepository.save(puesto);
+        log.info("Puesto actualizado: id={}", id);
         return convertToDTO(updatedPuesto);
     }
 
@@ -73,8 +76,9 @@ public class PuestoService {
     @Transactional
     public void deletePuesto(Long id) {
         Puesto puesto = puestoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Puesto con ID " + id + " no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Puesto con ID " + id + " no encontrado"));
         puestoRepository.delete(puesto);
+        log.info("Puesto eliminado: id={}", id);
     }
 
     // Convertir Puesto a PuestoDTO

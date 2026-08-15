@@ -1,152 +1,146 @@
 # Shift System Sport Center
 
-Bienvenido al proyecto **Shift System Sport Center**, una aplicación para gestionar turnos en un centro deportivo. Este proyecto cuenta con un **backend en Spring Boot** y un **frontend en Angular**. Sigue estas instrucciones para configurarlo en tu máquina local.
+Sistema de gestión de turnos para un centro deportivo. **Backend** en Spring Boot 3 (Java 17) y **Frontend** en Angular 22. Esta guía deja el proyecto corriendo en tu máquina (Mac o Windows) contra una base de datos local en Docker, con la opción de traer datos reales de producción para probar con casos reales.
 
 ## Requisitos previos
-- **Node.js**: Versión 18 o superior.
-- **Angular CLI**: Versión 18.2.9 (`npm install -g @angular/cli@18.2.9`).
-- **PostgreSQL**: Versión 15 o superior recomendada.
-- **IntelliJ IDEA**: IDE recomendado para el backend (instalará Java automáticamente).
-- **Maven**: Para gestionar dependencias del backend.
 
-## Estructura del proyecto
-- **Backend**: Lógica del servidor con Spring Boot.
-- **Frontend**: Interfaz de usuario con Angular.
+Necesitás 3 cosas instaladas, iguales en Mac y Windows salvo el instalador:
 
-## Configuración del entorno
+| Herramienta | Para qué | macOS | Windows |
+|---|---|---|---|
+| **Docker Desktop** | Base de datos local en un contenedor | `brew install --cask docker` o [docker.com](https://www.docker.com/products/docker-desktop/) | [docker.com](https://www.docker.com/products/docker-desktop/) (requiere WSL2, el instalador lo guía) |
+| **JDK 17** (Temurin) | Compilar y correr el backend | `brew install openjdk@17` | `winget install EclipseAdoptium.Temurin.17.JDK` o [adoptium.net](https://adoptium.net/) |
+| **Node.js 24.15+** | Frontend | `brew install node@24` o [nodejs.org](https://nodejs.org/) | [nodejs.org](https://nodejs.org/) (línea 24 LTS) |
 
-### 1. Configuración general
+No hace falta instalar Maven ni Postgres por separado: el backend trae su propio **Maven Wrapper** (`mvnw`/`mvnw.cmd`) y la base de datos corre en Docker.
 
-#### Node.js y Angular:
-- Descarga e instala **Node.js (18+)** desde [nodejs.org](https://nodejs.org/).
-- Instala Angular CLI globalmente:
-  ```bash
-  npm install -g @angular/cli@18.2.9
-  ```
-- Verifica la instalación:
-  ```bash
-  node -v  # Debería mostrar v18.x.x
-  ng version  # Debería mostrar Angular CLI: 18.2.9
-  ```
+Verificá que todo esté instalado:
+```bash
+docker --version
+node -v          # v24.15 o superior dentro de la línea 24
+```
 
-#### PostgreSQL:
-- Instala **PostgreSQL** desde [postgresql.org](https://www.postgresql.org/).
-- Configura un usuario y contraseña local (guarda estos datos).
+## 1. Clonar el proyecto
 
-### 2. Configuración de la base de datos
+```bash
+git clone <url-del-repo>
+cd ShiftSystemSportCenter
+```
 
-- Abre PostgreSQL (usa **pgAdmin** o la terminal con **psql**).
-- Crea una base de datos llamada `shiftmanager`:
-  - **En pgAdmin**: Clic derecho en "Databases" > "Create" > "Database" > Nombre: `shiftmanager`.
-  - **En la terminal**:
-    ```bash
-    psql -U postgres
-    CREATE DATABASE shiftmanager;
-    \q
-    ```
+## 2. Levantar la base de datos (Docker)
 
-### 3. Configuración del Backend (Spring Boot)
+Desde la raíz del proyecto:
+```bash
+docker compose up -d
+```
 
-#### Abrir el proyecto en IntelliJ IDEA:
-- Descarga e instala **IntelliJ IDEA**.
-- Abre la carpeta **Backend** en IntelliJ.
-- El IDE detectará que falta **Java** y te pedirá instalarlo (**versión 17 recomendada, o 21 si prefieres**). Acepta y sigue las instrucciones.
+Esto crea un Postgres 16 en un contenedor, con la base `shiftmanager` ya creada, expuesto en el puerto **5434** de tu máquina (no el 5432 típico, para no chocar con un Postgres que ya tengas instalado). Los datos quedan en un volumen de Docker, así que sobreviven si reiniciás el contenedor.
 
-#### Instalar Lombok:
-- En IntelliJ: Ve a `File > Settings > Plugins`, busca **"Lombok"**, instálalo y reinicia el IDE.
-- Acepta todas las configuraciones automáticas sugeridas (**da "Sí" a todo**).
+> Si el puerto 5434 también está ocupado en tu máquina: editá el primer número del mapeo de puertos en `docker-compose.yml` (ej. `"5555:5432"`) y el puerto en `Backend/src/main/resources/application-dev.properties` (`spring.datasource.url`), para que coincidan.
 
-#### Configurar las credenciales de PostgreSQL:
-- Abre `Backend/src/main/resources/application.properties`.
-- Edita con tus datos locales:
-  ```properties
-  spring.datasource.url=jdbc:postgresql://localhost:5432/shiftmanager
-  spring.datasource.username=tu_usuario  # Ejemplo: postgres
-  spring.datasource.password=tu_contraseña  # Ejemplo: admin123
-  ```
+Confirmá que quedó sano:
+```bash
+docker compose ps
+```
 
-#### Construir el backend:
-- En la terminal, ve a la carpeta **Backend**:
-  ```bash
-  cd Backend
-  ```
-- Ejecuta:
-  ```bash
-  mvn clean install
-  ```
-- O si te aparece error usa la interfaz de IntelliJ para hacer el clean
-  ![image](https://github.com/user-attachments/assets/4eb4ae20-ebd6-4ec5-b6e8-5b2c8f29ac73)
-  Esto descarga dependencias y genera los archivos necesarios
-- Abre el pom.xml en Backend/pom.xml
-    - Busca un ícono de Maven y hazle click para instalar dependencias
-      ![image](https://github.com/user-attachments/assets/8b8e0e9d-c7c1-41b6-bf2b-7fa058ba6fc3)
+## 3. Configurar y correr el Backend
 
-#### Ejecutar el backend:
-- En IntelliJ, haz clic en el botón **"Run"** (▶️) en el archivo principal (**ej. ShiftManagerApplication.java**).
-- O en la terminal:
-  ```bash
-  mvn spring-boot:run
-  ```
-  Se iniciará en [http://localhost:8080](http://localhost:8080).
+### 3.1 Variables de entorno
+```bash
+cd Backend
+cp .env.example .env
+```
+El `.env.example` ya trae las credenciales que coinciden con `docker-compose.yml`, así que para desarrollo local no hace falta tocar nada salvo que quieras probar la subida de fotos (sección Cloudinary, opcional — sin esto el resto de la app funciona igual).
 
-### 4. Configuración del Frontend (Angular)
+`Backend/.env` nunca se sube al repo (está en `.gitignore`).
 
-#### Instalar dependencias:
-- En la terminal, ve a la carpeta **Frontend**:
-  ```bash
-  cd Frontend
-  ```
-- Ejecuta:
-  ```bash
-  npm install
-  ```
+### 3.2 Compilar y correr
 
-#### Ejecutar el frontend:
-- En la misma carpeta:
-  ```bash
-  ng serve -o
-  ```
-  `-o` abre el navegador automáticamente en [http://localhost:4200](http://localhost:4200).
+**macOS / Linux:**
+```bash
+JAVA_HOME=$(/usr/libexec/java_home -v 17) ./mvnw spring-boot:run
+```
 
-### 5. Variables de entorno
+**Windows (PowerShell):**
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-17.x.x-hotspot"
+.\mvnw.cmd spring-boot:run
+```
+(Ajustá la ruta de `JAVA_HOME` a donde haya quedado instalado el Temurin 17 — el instalador te la muestra al terminar.)
 
-#### Backend:
-- Abre el archivo `Backend/src/main/resources/application-dev-properties` y renombra las variables
-- Variables a renombrar por uso en local de `application-dev-properties`:
-  ```text
-  spring.datasource.url
-  spring.datasource.username
-  spring.datasource.password
-  ```
-- Ajusta los valores según tu configuración local.
+Si tenés otras versiones de Java instaladas como default (25, 21, etc.), el `JAVA_HOME` de arriba es lo que fuerza a usar la 17 **solo para este comando**, sin tocar tu configuración global.
 
-#### Frontend:
-- Si el proyecto usa variables de entorno (por ejemplo, para APIs), busca `Frontend/.env.example`, cópialo a `.env` y configura las claves necesarias (como la URL del backend).
+El backend queda en **http://localhost:8080**. Probá:
+```bash
+curl http://localhost:8080/api/colaboradores
+```
+Debería responder `[]` (base nueva y vacía) o `200 OK`.
 
-#### Archivo de ejemplo para variables sensibles
-- Crea un archivo **.env.example** en la raíz del proyecto para guiar a otros desarrolladores. Ejemplo:
-  ```text
-  # Backend
-  DB_USERNAME=your_postgres_username
-  DB_PASSWORD=your_postgres_password
-  DB_URL=jdbc:postgresql://localhost:5432/shiftmanager
-  
-  # Frontend (si aplica)
-  API_URL=http://localhost:8080/api
-  ```
-- Los desarrolladores deberán copiar este archivo a `.env` y ajustar los valores.
+## 4. Correr el Frontend
 
-## Resumen de ejecución
-- **Backend**: Usa el botón **"Run"** en IntelliJ o `mvn spring-boot:run` en **Backend**.
-- **Frontend**: Ejecuta `ng serve -o` en **Frontend**.
-- **Asegúrate de que PostgreSQL esté activo.**
+En otra terminal:
+```bash
+cd Frontend
+npm ci
+npm start
+```
+(`npm start` es `ng serve`; sumale `-- -o` si querés que abra el navegador solo: `npm start -- -o`.)
+
+Se abre en **http://localhost:4200** y ya habla con el backend en `localhost:8080/api` (configurado en `Frontend/src/environments/environment.ts`).
+
+## 5. Traer datos reales de producción a local (sin afectar producción)
+
+Opcional, para probar con datos reales en vez de una base vacía. Es una operación de **solo lectura** contra producción (`pg_dump` nunca escribe nada en el origen) — es segura de correr cuando quieras.
+
+### 5.1 Conseguir el connection string
+En el [dashboard de Supabase](https://supabase.com/dashboard) → tu proyecto → **Project Settings → Database → Connection string**, pestaña **URI**. Usá la conexión del **pooler** (la que tiene formato `postgres.<project-ref>@aws-...pooler.supabase.com:5432`), no la conexión directa `db.<project-ref>.supabase.co` (esa no resuelve para este proyecto).
+
+> Usá siempre las credenciales **vigentes** (rotadas), nunca una password vieja que haya estado en el historial de git.
+
+### 5.2 Exportar de producción (solo lectura)
+```bash
+PGPASSWORD='<tu-password>' pg_dump \
+  "postgresql://postgres.<project-ref>@aws-0-us-west-1.pooler.supabase.com:5432/postgres?sslmode=require" \
+  --schema=public --no-owner --no-privileges --no-acl \
+  -Fc -f shiftsystem_prod.dump
+```
+`--schema=public` es importante: sin eso, `pg_dump` también trae los esquemas internos de Supabase (`auth`, `storage`, `vault`, etc.), que no existen en un Postgres local vanilla y rompen el restore.
+
+### 5.3 Restaurar en tu base local
+```bash
+PGPASSWORD='shiftsystem_dev_local' pg_restore \
+  --clean --if-exists --no-owner --no-privileges \
+  -h 127.0.0.1 -p 5434 -U shiftsystem -d shiftmanager \
+  shiftsystem_prod.dump
+```
+Vas a ver un warning inofensivo sobre `transaction_timeout` (diferencia de versión entre el Postgres de origen y el local) — no afecta el resultado.
+
+### 5.4 Privacidad
+El dump trae datos reales de colaboradores (DNI, email, teléfono, foto). Tratalo como confidencial:
+- No lo commitees (`*.dump` ya está en `.gitignore`).
+- Borralo cuando termines de usarlo: `rm shiftsystem_prod.dump`.
+
+## Resumen rápido (una vez que ya lo configuraste la primera vez)
+
+```bash
+docker compose up -d                                              # base de datos
+cd Backend && JAVA_HOME=$(/usr/libexec/java_home -v 17) ./mvnw spring-boot:run   # backend
+cd Frontend && npm start                                          # frontend
+```
 
 ## Solución de problemas
 
-- **Error de Java**: Si IntelliJ no instala Java, descárgalo manualmente desde [Adoptium](https://adoptium.net/).
-- **Base de datos**: Verifica usuario/contraseña en `application.properties`.
-- **Puertos ocupados**: Cambia `server.port` en `application.properties` o usa `ng serve --port 4300`.
+- **Puerto 5434 ocupado**: ver la nota en el paso 2.
+- **Puerto 8080 ocupado**: cambiá `server.port` en `Backend/src/main/resources/application-dev.properties`.
+- **Puerto 4200 ocupado**: `ng serve --port 4300`.
+- **El backend no encuentra Java 17 / usa otra versión**: confirmá con `java -version` dentro del mismo comando que usás para correrlo; el `JAVA_HOME` debe apuntar a la carpeta `Contents/Home` (Mac) o la carpeta de instalación (Windows), no al ejecutable.
+- **`role "shiftsystem" does not exist` al conectar**: normalmente significa que el puerto 5434 en realidad está apuntando a *otro* Postgres tuyo (nativo), no al de Docker. Confirmá con `docker compose ps` que el contenedor está `Up`, y con `lsof -iTCP:5434` (Mac) que el proceso que escucha ahí es Docker.
+- **Falla la subida de fotos de colaboradores**: necesitás credenciales de Cloudinary en `Backend/.env` (ver paso 3.1). El resto de la app funciona sin esto.
+
+## Estructura del proyecto
+- **Backend/**: API REST en Spring Boot (Java 17, Maven).
+- **Frontend/**: interfaz en Angular 22.
+- **docker-compose.yml**: Postgres local para desarrollo.
 
 ## Contribuciones
-
-Abre un **issue** o envía un **pull request** en GitHub. ¡Toda ayuda es bienvenida! 🎉
+Abrí un issue o un pull request. Toda ayuda es bienvenida 🎉

@@ -1,0 +1,203 @@
+:host {
+  display: inline-block;
+}
+:host(.app-button--full) {
+  display: block;
+  width: 100%;
+}
+
+.app-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid transparent;
+  position: relative;
+  /* Mismo criterio que .pill en filter-bar.component.css: un botón nunca
+     debería partir su texto en dos líneas cuando el flex container aprieta
+     — que sea el layout el que decida achicar/wrapear otra cosa, no el
+     texto del botón. Sin esto, app-button era el único elemento sin esta
+     protección en la barra de Turnos, así que toda la presión de espacio
+     caía sobre "Copiar Semana"/"Turno Masivo" mientras el filtro (que sí
+     tenía nowrap) se quedaba con su ancho completo siempre. */
+  white-space: nowrap;
+  transition: transform var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+.app-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- primary: CTA principal (reemplaza .blue-button) ---------- */
+.app-btn--primary {
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-brand);
+  color: #ffffff;
+  font-size: 14px;
+}
+.app-btn--primary:hover:not(:disabled) {
+  background-color: var(--color-brand-hover);
+  box-shadow: var(--shadow-hover);
+}
+
+.app-btn--full {
+  width: 100%;
+}
+
+/* ---------- secondary: acción neutra (reemplaza .gray-button) ---------- */
+.app-btn--secondary {
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface);
+  border-color: var(--color-line);
+  color: var(--color-ink);
+  font-size: 13.5px;
+}
+.app-btn--secondary:hover:not(:disabled) {
+  border-color: #b0b0b0;
+  box-shadow: var(--shadow-hover);
+}
+
+/* secondary + hue: mismo acento por familia que .app-btn--icon, pero con
+   texto visible (ej. "Copiar Semana" / "Turno Masivo" en Turnos) — no cada
+   secondary lleva color, solo el que pasa [hue]. */
+.app-btn--secondary.hue-teal {
+  background-color: var(--hue-teal-soft);
+  color: var(--hue-teal);
+  border-color: var(--hue-teal-border);
+}
+.app-btn--secondary.hue-violet {
+  background-color: var(--hue-violet-soft);
+  color: var(--hue-violet);
+  border-color: var(--hue-violet-border);
+}
+.app-btn--secondary.hue-brand {
+  background-color: var(--color-brand-soft);
+  color: var(--color-brand-ink);
+  border-color: transparent;
+}
+
+/* ---------- icon: solo-ícono con acento por familia (generaliza .icon-action) ---------- */
+.app-btn--icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-paper);
+  color: var(--color-ink-soft);
+}
+.app-btn--icon:hover:not(:disabled) {
+  transform: scale(1.08);
+}
+.app-btn--icon.hue-teal {
+  background-color: var(--hue-teal-soft);
+  color: var(--hue-teal);
+  border-color: var(--hue-teal-border);
+}
+.app-btn--icon.hue-violet {
+  background-color: var(--hue-violet-soft);
+  color: var(--hue-violet);
+  border-color: var(--hue-violet-border);
+}
+.app-btn--icon.hue-brand {
+  background-color: var(--color-brand-soft);
+  color: var(--color-brand);
+}
+
+/* Tooltip CSS puro (mismo mecanismo que .icon-action original) — solo se
+   activa si el consumidor pasó [tooltip], vía el atributo data-tooltip. */
+.app-btn--icon[data-tooltip] {
+  position: relative;
+}
+.app-btn--icon[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  transform: translate(-50%, 4px);
+  background-color: #1b2436;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) ease, transform var(--duration-fast) ease;
+  z-index: 30;
+}
+.app-btn--icon[data-tooltip]::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1b2436;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) ease;
+}
+.app-btn--icon[data-tooltip]:hover::after,
+.app-btn--icon[data-tooltip]:hover::before,
+.app-btn--icon[data-tooltip]:focus-visible::after,
+.app-btn--icon[data-tooltip]:focus-visible::before {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ---------- loading ---------- */
+.app-btn__content {
+  /* El ícono y el texto proyectados (ng-content) caen acá adentro, no como
+     hijos directos de .app-btn — este span existe solo para poder
+     ocultarlos durante el loading sin desmontarlos. Sin display:flex acá,
+     quedaban en flujo inline normal y el navegador los apilaba en dos
+     líneas (ícono arriba, texto abajo) apenas faltaba un poco de ancho,
+     aunque .app-btn ya tuviera white-space:nowrap — ese nowrap protege el
+     texto en sí, no la relación ícono+texto. */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-btn__content--hidden {
+  visibility: hidden;
+}
+.app-btn__spinner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: app-btn-spin 0.8s linear infinite;
+}
+.app-btn--secondary .app-btn__spinner,
+.app-btn--icon .app-btn__spinner {
+  border-color: rgba(0, 0, 0, 0.15);
+  border-top-color: var(--color-ink-soft);
+}
+@keyframes app-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-btn {
+    transition: none;
+  }
+  .app-btn--icon:hover:not(:disabled) {
+    transform: none;
+  }
+  .app-btn--icon[data-tooltip]::after,
+  .app-btn--icon[data-tooltip]::before {
+    transition: none;
+  }
+}

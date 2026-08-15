@@ -9,7 +9,9 @@
 }
 
 .colaborador-nombre {
-  color: #4b4370;
+  /* Mismo tono que --shift-normal-accent (Fase 5: era un duplicado a mano
+     del mismo hex, la barra de acento de la pill ya lo usa vía token). */
+  color: var(--shift-normal-accent);
 }
 
 .plus_button {
@@ -24,16 +26,54 @@
   justify-content: center;
 }
 
+/* ---------- Pill de turno ----------
+   El fondo por variante sí se queda (Fase 2 del rediseño): antes el turno
+   partido pisaba el verde con bg-blue-100/bg-orange-100 sueltas en el html,
+   un choque de color real (.shift-split-1/2, .midHours abajo lo resuelven
+   con tokens en vez de utilities sueltas). La barra de acento lateral
+   (::after) en cambio SE REVIRTIÓ a su comportamiento original a pedido de
+   Jose: es el indicador de "almuerzo descontado" (turno.tomoAlmuerzo — el
+   turno cruza la ventana de almuerzo y se restan 45min, confirmado en
+   Turno.java) y solo eso, sin seguir la variante de color. Un primer intento
+   la hizo seguir la variante y sacó el almuerzo a un badge "-45m" aparte,
+   pero eso metía ruido visual que no se pidió — la simplicidad de un solo
+   color de acento era justamente lo que funcionaba antes. */
 .container-green {
-  background-color: #cbf9d8;
-  border: 2px solid #abd9c1;
-  color: #565b79;
+  background-color: var(--shift-normal-bg);
+  border: 2px solid var(--shift-normal-border);
+  color: var(--shift-normal-ink);
   border-radius: 10px;
   padding: 15px 5px;
   font-weight: bold;
   font-size: 14px;
   position: relative;
-  width: 96%;
+  /* 96% → 84%: prueba pedida por Jose. Deja un margen visible a los lados
+     de la pill (antes casi tocaba el borde de la celda) para que se note
+     el box-shadow de columna de .dia-actual/.feriado-semanal más abajo —
+     con 96% el margen era de ~2px, menos que el spread del shadow, así
+     que quedaba tapado por la pill misma. Solo afecta a la vista semanal:
+     .container-green.minum (mensual) sigue pisando esto con 100%. */
+  width: 84%;
+  /* Es un div de ancho < 100%: el text-center del <td> no lo centra a él
+     mismo (solo centraría contenido inline). margin auto sí. */
+  margin: 0 auto;
+}
+
+/* Hover lift (pedido por Jose junto con el centrado) — la clase Tailwind
+   `transition` que ya trae el html cubre transform/box-shadow, así que acá
+   solo hace falta el estado :hover en sí. */
+.container-green:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .container-green {
+    transition: none;
+  }
+  .container-green:hover {
+    transform: none;
+  }
 }
 
 .container-green.minum {
@@ -48,7 +88,7 @@
   width: 5px;
   height: 60%; /* Se ajusta dinámicamente */
   border-radius: 6px;
-  background-color: #4b4370;
+  background-color: var(--shift-normal-accent);
   position: absolute;
   left: -3px;
   top: 50%;
@@ -64,44 +104,41 @@
 }
 
 .container-green.almuerzo-tomado::after {
-  background-color: #ff5e60;
+  background-color: var(--shift-almuerzo-accent);
+}
+
+/* Turno partido: 2 turnos el mismo día, cada mitad es su propia variante de
+   fondo (no un overlay sobre el verde normal). i===0 → mañana, i===1 →
+   tarde, ver weekly-view/monthly-view. */
+.container-green.shift-split-1 {
+  background-color: var(--shift-split-1-bg);
+  border-color: var(--shift-split-1-border);
+}
+.container-green.shift-split-2 {
+  background-color: var(--shift-split-2-bg);
+  border-color: var(--shift-split-2-border);
 }
 
 .dayNumber {
   font-size: 0.8rem;
 }
 
+/* "Hoy" y "feriado" (más abajo) marcan la columna entera. Pasó por 2
+   versiones antes de esta (rayado diagonal → se veía cortado por fila;
+   box-shadow inset → a Jose dejó de gustarle el efecto). Versión actual,
+   la más simple de las 3: tinte de fondo plano + un borde muy clarito a los
+   lados. Se aplica igual al <td> y al <th> de esa columna — como comparten
+   ancho/posición horizontal, el borde de una celda calza pixel a pixel con
+   el de la de arriba/abajo, se ve como una sola línea seguida en vez de
+   una por celda. */
 .dia-actual {
-  position: relative;
-}
-
-.dia-actual>* {
-  position: relative;
-  z-index: 2;
-}
-
-.dia-actual::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: repeating-linear-gradient(60deg,
-      #fff,
-      #fff 7px,
-      #f1f1f17a,
-      #f1f1f187 20px);
-  pointer-events: none;
-  /* Permite que los eventos de clic pasen a través del pseudo-elemento */
-  z-index: 1;
-  border-radius: inherit;
-  /* Mantiene el borde redondeado si existe */
+  background-color: rgba(52, 69, 179, 0.05);
+  border-left: 1px solid rgba(52, 69, 179, 0.16);
+  border-right: 1px solid rgba(52, 69, 179, 0.16);
 }
 
 .dia-actual-encabezado {
-  background-color: rgb(52, 69, 179);
-
+  background-color: var(--shift-today-accent);
   color: rgb(255, 255, 255) !important;
 }
 
@@ -118,18 +155,16 @@
 /* FERIADO */
 
 .feriado-semanal-encabezado {
-  background-color: rgb(161, 66, 66);
+  background-color: var(--shift-holiday-accent);
   color: rgb(255, 255, 255) !important;
   opacity: 0.8;
   /* Mantiene el borde redondeado si existe */
 }
 
 .feriado-semanal {
-  background: repeating-linear-gradient(60deg,
-      #fff,
-      #fff 7px,
-      #f1f1f17a,
-      #f1f1f187 20px);
+  background-color: rgba(161, 66, 66, 0.05);
+  border-left: 1px solid rgba(161, 66, 66, 0.16);
+  border-right: 1px solid rgba(161, 66, 66, 0.16);
 }
 
 .dia-sobrante {
@@ -179,8 +214,8 @@ thead {
 }
 
 .midHours {
-  background-color: #f9f7cb;
-  border: 2px solid #d9d5ab;
+  background-color: var(--shift-overtime-bg);
+  border: 2px solid var(--shift-overtime-border);
 }
 
 /* Estilo para el borde rojo en turnos de feriados */
@@ -194,4 +229,19 @@ thead {
   overflow-y: auto;
   overflow-x: hidden;
   /* No establecemos max-height para que la tabla crezca según los colaboradores */
+}
+
+/* Acciones de turnos (copiar semana anterior / turnos masivos): separador
+   visual de la navegación de semana/mes. Los botones en sí son
+   <app-button variant="icon"> (Fase 5 del rediseño migró el .icon-action
+   que vivía acá — duplicaba var por var lo que ButtonComponent ya
+   generaliza, tooltip CSS puro incluido). Solo-ícono es a propósito (no
+   solo en pantallas chicas): son acciones secundarias de uso frecuente, y
+   así la fila entera entra en una laptop de 14" sin que nada salte de
+   línea. */
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background-color: #e1e5ee;
+  flex-shrink: 0;
 }

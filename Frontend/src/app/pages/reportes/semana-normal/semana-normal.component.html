@@ -2,7 +2,7 @@
 <div class="flex flex-wrap items-center justify-between mb-6 gap-5">
   <!-- Título -->
   <div class="flex flex-wrap items-center justify-start gap-5">
-    <h2 class="text-xl font-bold text-gray-800 sm:mb-0 sm:mr-4 border-b-2 border-blue-400 pb-1">
+    <h2 class="text-xl font-bold text-ink sm:mb-0 sm:mr-4 border-b-2 border-brand pb-1">
       Semana Habitual
     </h2>
 
@@ -13,37 +13,29 @@
 
   <!-- Button para Turnos Estritos -->
   <a routerLink="/turnos"
-    class="cursor-pointer buttonStyle blue-button font-bold py-2 px-3 rounded-md transition transform hover:scale-105">
+    class="inline-flex items-center h-10 px-5 rounded-pill bg-brand text-white font-extrabold text-sm transition hover:bg-brand-hover hover:shadow-hover">
     Semana Estricta
   </a>
 </div>
 
 
-<div class="h-[86vh] overflow-y-auto">
-  <!-- Spinner de carga  -->
-  <div *ngIf="isLoading$ | async" class="sk-circle">
-    <div class="sk-circle1 sk-child"></div>
-    <div class="sk-circle2 sk-child"></div>
-    <div class="sk-circle3 sk-child"></div>
-    <div class="sk-circle4 sk-child"></div>
-    <div class="sk-circle5 sk-child"></div>
-    <div class="sk-circle6 sk-child"></div>
-    <div class="sk-circle7 sk-child"></div>
-    <div class="sk-circle8 sk-child"></div>
-    <div class="sk-circle9 sk-child"></div>
-    <div class="sk-circle10 sk-child"></div>
-    <div class="sk-circle11 sk-child"></div>
-    <div class="sk-circle12 sk-child"></div>
-  </div>
+<div class="h-[86vh] overflow-y-auto scrollbar-hidden">
+  <!-- Skeleton de carga (misma grilla-fantasma que turnos.component.html) -->
+  @if (isLoading$ | async) {
+    <app-weekly-schedule-skeleton></app-weekly-schedule-skeleton>
+  }
 
   <!-- Tabla de turnos semanal -->
-  <div *ngIf="!(isLoading$ | async)">
-    <app-weekly-view *ngIf="!(isLoading$ | async)" [diasSemana]="(diasSemana$ | async) || []"
-      [colaboradores]="colaboradores" [turnos]="(turnos$ | async) || []" (abrirModal)="abrirModal($event)"
-      (abrirModalEdicion)="abrirModalEdicion($event)" [hideTotal]=false>
-    </app-weekly-view>
-
-  </div>
+  @if (!(isLoading$ | async)) {
+    <div>
+      @if (!(isLoading$ | async)) {
+        <app-weekly-view [diasSemana]="(diasSemana$ | async) || []"
+          [colaboradores]="colaboradores" [turnos]="(turnos$ | async) || []" (abrirModal)="abrirModal($event)"
+          (abrirModalEdicion)="abrirModalEdicion($event)" [hideTotal]=false>
+        </app-weekly-view>
+      }
+    </div>
+  }
 
   <!-- Modal de turnos -->
   <app-turno-modal [mostrarModal]="(mostrarModal$ | async) === true"

@@ -1,82 +1,93 @@
-<div class="monthly-view -mt-10">
+<div class="monthly-view -mt-8">
   <table class="w-full bg-transparent rounded-lg overflow-hidden">
     <thead>
       <tr class="text-gray-500">
-        <th class="text-right p-2 capitalize nunito font-extralight" *ngFor="let dia of diasSemana">
-          <span class="text-lg font-bold">{{ dia.nombre }}</span>
-        </th>
+        @for (dia of diasSemana; track trackByFecha($index, dia)) {
+          <th class="text-right pt-3 pb-2 px-2 capitalize nunito font-extralight">
+            <span class="text-lg font-bold">{{ dia.nombre }}</span>
+          </th>
+        }
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let semana of semanasDelMes">
-        <td *ngFor="let dia of semana" class="text-center w-[8rem] h-[8rem] bg-transparent 2xl:w-[10rem] 2xl:h-[10rem]"
-          [ngClass]="{ 'dia-sobrante': dia.esSobrante}">
-          <ng-container *ngIf="obtenerTurnos(turnos, colaboradorSeleccionado, dia.fecha) as turnosDelDia">
-            <div
-              class="w-[95%] h-[95%] m-auto bg-white rounded-lg py-2 px-1 relative flex flex-col items-center"
+      @for (semana of semanasDelMes; track trackBySemanaIndex($index); let i = $index) {
+        <tr [style.--row-i]="i">
+          @for (dia of semana; track trackByFecha($index, dia)) {
+            <td class="text-center w-[8rem] h-[6.5rem] bg-transparent 2xl:w-[10rem] 2xl:h-[8rem]"
+              [ngClass]="{ 'dia-sobrante': dia.esSobrante}">
+              @if (turnos | turnosDelDia:colaboradorSeleccionado:dia.fecha; as turnosDelDia) {
+                <div
+                  class="w-[95%] h-[95%] m-auto bg-white rounded-lg py-2 px-1 relative flex flex-col items-center"
               [ngClass]="{
                 'feriado-semanal': esFeriado(dia.fecha),
                 'justify-end': turnosDelDia.length > 0,
                 'justify-center': turnosDelDia.length === 0
               }"
-            >
-
-            <!-- Número del día (siempre visible) -->
-            <span class="z-10 absolute top-2.5 right-3 nunito text-sm font-semibold month"
-              [ngClass]="{ 'dia-actual-encabezado': esDiaActual(dia.fecha), 'feriado-semanal-encabezado': esFeriado(dia.fecha), 'dia-sobrante-texto': dia.esSobrante }">
-              {{ dia.dayNumber }}
-            </span>
-
-            <ng-container *ngIf="obtenerTurnos(turnos, colaboradorSeleccionado, dia.fecha) as turnosDelDia">
-              <!-- Múltiples turnos del día -->
-              <div *ngIf="turnosDelDia.length > 0; else agregarBoton" class="w-full space-y-1">
-                <div *ngFor="let turno of turnosDelDia; let i = index"
-                  class="container-green minum border-2 border-solid border-[#abd9c1] rounded cursor-pointer transition hover:shadow text-xs"
-                  [ngClass]="{
-                    'almuerzo-tomado': turno.tomoAlmuerzo,
-                    'border-2 border-red-500': turno.esFeriado,
-                    'midHours border-[#d9d5ab]': (turno.horasTrabajadas ?? 0) > 8,
-                    'bg-blue-100 border-blue-300': turnosDelDia.length > 1 && i === 0,
-                    'bg-orange-100 border-orange-300': turnosDelDia.length > 1 && i === 1
-                  }" [attr.data-horas-trabajadas]="formatearHorasDia(turno.horasTrabajadas)"
-                  [attr.data-tienda]="turno.nombreTienda" (click)="abrirModalEdicion.emit(turno)"
-                  [title]="'Turno ' + (i + 1) + (turnosDelDia.length > 1 ? ' de ' + turnosDelDia.length : '')">
-                  <div class="flex items-center justify-center space-x-1 p-1">
-                    <span>{{ formatearHora(turno.horaEntrada) }}</span>
-                    <i class="fa-solid fa-caret-right text-xs"></i>
-                    <span>{{ formatearHora(turno.horaSalida) }}</span>
-                  </div>
+                  >
+                  <!-- Número del día (siempre visible) -->
+                  <span class="z-10 absolute top-2.5 right-3 nunito text-sm font-semibold month"
+                    [ngClass]="{ 'dia-actual-encabezado': esDiaActual(dia.fecha), 'feriado-semanal-encabezado': esFeriado(dia.fecha), 'dia-sobrante-texto': dia.esSobrante }">
+                    {{ dia.dayNumber }}
+                  </span>
+                  <!-- Múltiples turnos del día -->
+                  @if (turnosDelDia.length > 0) {
+                    <div class="w-full space-y-1">
+                      @for (turno of turnosDelDia; track trackByTurnoId(i, turno); let i = $index) {
+                        <div
+                          #turnoCell
+                          class="container-green minum rounded cursor-pointer transition hover:shadow text-xs"
+                [ngClass]="{
+                  'almuerzo-tomado': turno.tomoAlmuerzo,
+                  'border-2 border-red-500': turno.esFeriado,
+                  'midHours': (turno.horasTrabajadas ?? 0) > 8,
+                  'shift-split-1': turnosDelDia.length > 1 && i === 0,
+                  'shift-split-2': turnosDelDia.length > 1 && i === 1
+                }" [attr.data-horas-trabajadas]="formatearHorasDia(turno.horasTrabajadas)"
+                          [attr.data-tienda]="turno.nombreTienda"
+                          [attr.data-almuerzo]="turno.tomoAlmuerzo ? 'true' : null"
+                          (click)="abrirModalEdicion.emit(turno)"
+                          [title]="'Turno ' + (i + 1) + (turnosDelDia.length > 1 ? ' de ' + turnosDelDia.length : '')">
+                          <div class="flex items-center justify-center space-x-1 p-1">
+                            <span>{{ formatearHora(turno.horaEntrada) }}</span>
+                            <i class="fa-solid fa-caret-right text-xs"></i>
+                            <span>{{ formatearHora(turno.horaSalida) }}</span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <div class="w-full flex justify-center items-center">
+                      @if (colaboradorSeleccionado !== 0) {
+                        <button
+                          class="p-2 text-gray-400 text-xs hover:text-blue-800 hover:scale-125 transition rounded-lg"
+                          (click)="abrirModal.emit({colaboradorId: colaboradorSeleccionado, fecha: dia.fecha})"
+                          title="Agregar Turno">
+                          <i class="fa-solid fa-plus"></i>
+                        </button>
+                      }
+                    </div>
+                  }
+                  <!-- Botón para agregar turno -->
                 </div>
-              </div>
-
-              <!-- Botón para agregar turno -->
-              <ng-template #agregarBoton>
-                <div class="w-full flex justify-center items-center">
-                  <button *ngIf="colaboradorSeleccionado !== 0"
-                    class="p-2 text-gray-400 text-xs hover:text-blue-800 hover:scale-125 transition rounded-lg"
-                    (click)="abrirModal.emit({colaboradorId: colaboradorSeleccionado, fecha: dia.fecha})"
-                    title="Agregar Turno">
-                    <i class="fa-solid fa-plus"></i>
-                  </button>
-                </div>
-              </ng-template>
-            </ng-container>
-          </div>
-        </ng-container>
-        </td>
-      </tr>
+              }
+            </td>
+          }
+        </tr>
+      }
     </tbody>
   </table>
 
-  <div class="quicksand mt-4 p-4 bg-gray-100 rounded-lg shadow flex justify-between items-center text-gray-700"
-    *ngIf="resumenMensual">
-    <p class="text-lg font-semibold">Total horas mensuales: <span class="text-blue-600">{{
-        formatearHora(resumenMensual.totalHorasMes.toString(), true) }}</span></p>
-    <ng-container *ngIf="resumenMensual.diasFeriadosTrabajados >= 0">
-      <p class="text-lg">Días feriados trabajados: <span class="text-red-500">{{ resumenMensual.diasFeriadosTrabajados
-          }}</span></p>
-      <p class="text-lg">Horas en feriados: <span class="text-red-500">{{
-          formatearHora(resumenMensual.horasEnFeriados.toString(), true) }}</span></p>
-    </ng-container>
-  </div>
+  @if (resumenMensual) {
+    <div class="quicksand mt-4 p-4 bg-gray-100 rounded-lg shadow flex justify-between items-center text-gray-700"
+      >
+      <p class="text-lg font-semibold">Total horas mensuales: <span class="text-blue-600">{{
+      formatearHora(resumenMensual.totalHorasMes.toString(), true) }}</span></p>
+      @if (resumenMensual.diasFeriadosTrabajados >= 0) {
+        <p class="text-lg">Días feriados trabajados: <span class="text-red-500">{{ resumenMensual.diasFeriadosTrabajados
+        }}</span></p>
+        <p class="text-lg">Horas en feriados: <span class="text-red-500">{{
+        formatearHora(resumenMensual.horasEnFeriados.toString(), true) }}</span></p>
+      }
+    </div>
+  }
 </div>

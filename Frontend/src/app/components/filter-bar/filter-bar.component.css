@@ -1,30 +1,219 @@
-.dropdown-enter {
-  opacity: 0;
-  transform: translateY(-4px);
-}
-.dropdown-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 120ms ease, transform 120ms ease;
-}
-
-.filter-button {
-  background-color: #f8fafc; /* gray-50 */
-  color: #374151; /* gray-700 */
-}
-.filter-button:hover {
-  background-color: #eef2ff; /* indigo-50-ish */
-}
-
 .filter-container {
   width: 100%;
+}
+
+/* ---------- pills (Empresa / Colaboradores / Ordenar) ----------
+   Convención Airbnb: forma píldora, borde neutro fino, la selección eleva
+   con sombra en vez de solo cambiar el fondo, y el estado "con filtro
+   aplicado" es un relleno sólido — así el filtro comunica su propio estado
+   sin necesitar un badge "Activos" aparte. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-line);
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13.5px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.pill:hover {
+  border-color: #b0b0b0;
+  box-shadow: var(--shadow-hover);
+}
+.pill-icon {
+  color: var(--color-ink-soft);
+  transition: color 0.15s ease;
+}
+.pill-chevron {
+  font-size: 10px;
+  color: #a3a3a3;
+  transition: transform 0.15s ease;
+}
+
+.pill.is-active {
+  background-color: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #ffffff;
+}
+.pill.is-active:hover {
+  box-shadow: 0 2px 10px rgba(29, 78, 216, 0.35);
+}
+.pill.is-active .pill-icon,
+.pill.is-active .pill-chevron {
+  color: #ffffff;
+}
+
+.link-clear {
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  color: #6b7280;
+  padding: 9px 6px;
+  cursor: pointer;
+}
+.link-clear:hover {
+  color: #111827;
+  text-decoration: underline;
+}
+
+/* ---------- dropdown panel ---------- */
+.panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  background-color: var(--color-surface);
+  border: 1px solid #ebebeb;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 8px;
+  overflow: hidden;
+}
+/* La de colaboradores suele ser la píldora más a la derecha del toolbar —
+   anclarla a la izquierda la corta contra el borde de la ventana en
+   pantallas angostas (ver zoom con Chrome DevTools). Se abre hacia la
+   izquierda en cambio. */
+.panel-right {
+  left: auto;
+  right: 0;
+}
+.panel-title {
+  margin: 4px 8px 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+.panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.panel-body-scroll {
+  max-height: 15rem;
+  overflow-y: auto;
+}
+.panel-divider {
+  height: 1px;
+  background-color: var(--color-line-soft);
+  margin: 6px 4px;
+}
+.panel-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border: 1px solid #e2e2e2;
+  border-radius: var(--radius-md);
+  color: var(--color-ink-faint);
+}
+.panel-search input {
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--color-ink);
+  width: 100%;
+  background: transparent;
+}
+.panel-empty {
+  padding: 20px 10px;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--color-ink-faint);
+}
+
+/* ---------- option rows ---------- */
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.option-row:hover {
+  background-color: var(--color-paper);
+}
+.option-row.selected {
+  background-color: #eaf0fd;
+}
+.option-label {
+  flex: 1;
+  min-width: 0;
+}
+.option-check {
+  font-size: 11px;
+  color: var(--color-brand);
+  visibility: hidden;
+  flex-shrink: 0;
+}
+.option-row.selected .option-check {
+  visibility: visible;
+}
+
+.option-row-person {
+  padding: 7px 10px;
+}
+.option-avatar {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--color-avatar-bg);
+  color: var(--color-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+}
+.option-label-person {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.option-name {
+  font-weight: 700;
+  color: var(--color-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.option-sub {
+  font-weight: 600;
+  font-size: 11.5px;
+  color: var(--color-ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Dropdown animation */
 .dropdown-anim {
   opacity: 0;
   transform: translateY(-4px) scale(0.98);
-  animation: dropdownFadeIn 160ms ease forwards;
+  animation: dropdownFadeIn var(--duration-base) ease forwards;
 }
 
 @keyframes dropdownFadeIn {
@@ -34,4 +223,8 @@
   }
 }
 
-
+@media (prefers-reduced-motion: reduce) {
+  .dropdown-anim {
+    animation-duration: 0.01ms;
+  }
+}

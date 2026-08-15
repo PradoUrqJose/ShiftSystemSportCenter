@@ -1,0 +1,42 @@
+<div class="relative">
+  <button type="button"
+    class="w-full flex items-center justify-between gap-2 p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-left bg-white"
+    (click)="toggle($event)">
+    <span [ngClass]="seleccionada ? 'text-gray-800 font-medium' : 'text-gray-400'">
+      {{ seleccionada ? seleccionada.nombre : placeholder }}
+    </span>
+    <i class="fa-solid fa-chevron-down text-xs text-gray-400 transition-transform" [class.rotate-180]="open"></i>
+  </button>
+
+  @if (open) {
+    <div
+      class="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+      (click)="$event.stopPropagation()">
+      <div class="p-2">
+        <input type="text" [(ngModel)]="search" placeholder="Buscar tienda…"
+          class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <ul class="max-h-52 overflow-y-auto px-2 pb-2">
+        @for (tienda of filtradas; track trackByTiendaId($index, tienda)) {
+          <li
+            class="px-3 py-2 text-sm rounded-lg cursor-pointer hover:bg-blue-50"
+            [class.bg-blue-100]="tienda.id === value"
+            (click)="seleccionar(tienda)">
+            {{ tienda.nombre }}
+          </li>
+        }
+        @if (filtradas.length === 0) {
+          <li class="px-3 py-4 text-sm text-gray-400 text-center">
+            No se encontraron tiendas
+          </li>
+        }
+      </ul>
+      <div class="border-t border-gray-100 p-2">
+        <button type="button" class="w-full text-left px-3 py-2 text-sm text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition font-medium"
+          (click)="onAgregarTienda()">
+          + Agregar tienda
+        </button>
+      </div>
+    </div>
+  }
+</div>

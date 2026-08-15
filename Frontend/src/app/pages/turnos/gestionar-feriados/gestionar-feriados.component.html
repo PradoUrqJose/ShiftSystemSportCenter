@@ -1,0 +1,76 @@
+<div class="p-6 rounded-lg min-h-screen w-11/12 mx-auto">
+  <!-- Contenedor principal -->
+  <div class="flex flex-wrap items-center justify-between mb-6">
+    <h2 class="text-xl font-bold text-gray-800 sm:mr-6 border-b-2 border-blue-400 pb-1">Gestión de Feriados</h2>
+    <div class="flex space-x-4">
+      <app-button (click)="abrirModalAgregarFeriado()">Agregar</app-button>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  @if (errorMessage) {
+    <div class="bg-red-100 text-red-700 p-3 rounded-lg mb-4 border border-red-400 ">
+      {{ errorMessage }}
+    </div>
+  }
+  <div class="mt-6">
+    <app-table-shell>
+      <table class="app-table">
+        <thead>
+          <tr>
+            <th class="text-left">
+              <app-sort-header [active]="sort.field === 'descripcion'" [direction]="sort.direction" (sort)="onSort('descripcion')">Descripción</app-sort-header>
+            </th>
+            <th class="text-left">
+              <app-sort-header [active]="sort.field === 'fecha'" [direction]="sort.direction" (sort)="onSort('fecha')">Fecha</app-sort-header>
+            </th>
+            <th class="text-center"><i class="fa-solid fa-gear"></i></th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (!isLoading) {
+            @for (feriado of feriados; track trackByFeriadoId(i, feriado); let i = $index) {
+              <tr [style.--row-i]="i">
+                <td class="p-4">{{ feriado.descripcion || 'Sin descripción' }}</td>
+                <td class="p-4">{{ formatearFecha(feriado.fecha) }}</td>
+                <td class="p-4 flex justify-center items-center space-x-2">
+                  <button (click)="editarFeriado(feriado)" class="text-blue-600 hover:text-blue-800 transition">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button (click)="eliminarFeriado(feriado.id)" class="text-red-600 hover:text-red-800 transition">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+            @if (feriados.length === 0) {
+              <tr>
+                <td colspan="3" class="p-4 text-center text-ink-faint">No hay feriados registrados.</td>
+              </tr>
+            }
+          } @else {
+            @for (_ of skeletonRows; track $index) {
+              <tr>
+                <td class="p-4"><app-skeleton width="70%"></app-skeleton></td>
+                <td class="p-4"><app-skeleton width="40%"></app-skeleton></td>
+                <td class="p-4 flex justify-center gap-2">
+                  <app-skeleton width="18px" height="18px" shape="circle"></app-skeleton>
+                  <app-skeleton width="18px" height="18px" shape="circle"></app-skeleton>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </app-table-shell>
+  </div>
+
+  <!-- Modal de agregar/editar feriado -->
+  <app-agregar-feriado-modal
+    [mostrarModal]="mostrarModalAgregarFeriado"
+    [isModalVisible]="isModalAgregarFeriadoVisible"
+    [feriadoActual]="feriadoActual"
+    (cerrarModalEvent)="cerrarModalAgregarFeriado()"
+    (feriadoGuardado)="onFeriadoGuardado($event)">
+  </app-agregar-feriado-modal>
+</div>

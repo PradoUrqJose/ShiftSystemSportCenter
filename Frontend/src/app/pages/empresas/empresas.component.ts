@@ -1,5 +1,5 @@
 import { ModalService } from './../../services/modal.service';
-import { Component, NgModule, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -10,16 +10,30 @@ import {
 import { EmpresaService, Empresa } from '../../services/empresa.service';
 import { CommonModule } from '@angular/common';
 import Notiflix from 'notiflix';
-import { Observable } from 'rxjs';
+import { Observable, Subject, takeUntil } from 'rxjs';
+import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../utils/modal-timing';
+import { TableShellComponent } from '../../components/ui/table-shell/table-shell.component';
+import { SkeletonComponent } from '../../components/ui/skeleton/skeleton.component';
+import { ButtonComponent } from '../../components/ui/button/button.component';
+import { SortHeaderComponent } from '../../components/ui/sort-header/sort-header.component';
+import { SortState, nextSortState, sortRows } from '../../utils/table-sort.util';
+
+type EmpresaSortField = 'id' | 'nombre' | 'ruc';
+
+const EMPRESA_SORT_SELECTORS: Record<EmpresaSortField, (e: Empresa) => unknown> = {
+  id: (e) => e.id,
+  nombre: (e) => e.nombre,
+  ruc: (e) => e.ruc,
+};
 
 @Component({
-  selector: 'app-empresas',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './empresas.component.html',
-  styleUrls: ['./empresas.component.css'],
+    selector: 'app-empresas',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, TableShellComponent, SkeletonComponent, ButtonComponent, SortHeaderComponent],
+    templateUrl: './empresas.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./empresas.component.css']
 })
-export default class EmpresasComponent implements OnInit {
+export default class EmpresasComponent implements OnInit, OnDestroy {
   empresas: Empresa[] = [];
   empresaForm!: FormGroup;
   isEditing: boolean = false;
@@ -27,6 +41,10 @@ export default class EmpresasComponent implements OnInit {
   empresasHabilitadas: Empresa[] = [];
   empresasDeshabilitadas: Empresa[] = [];
   mostrarDeshabilitadas: boolean = false; // Controla si se muestran las deshabilitadas
+  // Esta tabla no tenía ningún estado de carga (a diferencia de Colaboradores,
+  // que sí traía el spinner .sk-circle viejo) — se agrega junto al skeleton.
+  isLoading: boolean = true;
+  readonly skeletonRows = Array.from({ length: 5 });
 
   // MODAL CONTROL
   mostrarModal$!: Observable<boolean>;  // Controla si el modal está abierto o cerrado
@@ -34,9 +52,9 @@ export default class EmpresasComponent implements OnInit {
   errorMessage: string | null = null; // Almacena mensajes de error
 
 
-  // Propiedades para controlar el ordenamiento
-  sortColumn: string = 'id';  // Columna por la que se ordenará
-  sortDirection: 'asc' | 'desc' = 'asc';  // Dirección de orden (ascendente o descendente)
+  // Propiedades para controlar el ordenamiento (ver table-sort.util.ts)
+  sort: SortState<EmpresaSortField> = { field: 'id', direction: 'asc' };
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private fb: FormBuilder,
@@ -58,39 +76,21 @@ export default class EmpresasComponent implements OnInit {
     this.getEmpresas(); // Esto cargará y ordenará las empresas
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   // Método para ordenar las empresas
   ordenarEmpresas() {
-    const compare = (a: Empresa, b: Empresa) => {
-      let valueA = a[this.sortColumn as keyof Empresa];
-      let valueB = b[this.sortColumn as keyof Empresa];
-
-      // Convertir a número si es 'id' o 'numeroEmpleados'
-      if (this.sortColumn === 'id' || this.sortColumn === 'numeroEmpleados') {
-        valueA = Number(valueA);
-        valueB = Number(valueB);
-      }
-
-      if (this.sortDirection === 'asc') {
-        return valueA > valueB ? 1 : (valueA < valueB ? -1 : 0);
-      } else {
-        return valueA < valueB ? 1 : (valueA > valueB ? -1 : 0);
-      }
-    };
-
-    this.empresasHabilitadas.sort(compare);
-    this.empresasDeshabilitadas.sort(compare);
+    const selector = EMPRESA_SORT_SELECTORS[this.sort.field];
+    this.empresasHabilitadas = sortRows(this.empresasHabilitadas, selector, this.sort.direction);
+    this.empresasDeshabilitadas = sortRows(this.empresasDeshabilitadas, selector, this.sort.direction);
   }
 
   // Cambiar la columna por la que se ordena y la dirección
-  sortTable(column: string) {
-    if (this.sortColumn === column) {
-      // Si ya está ordenado por esa columna, cambia la dirección
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      // Si se hace clic en una columna diferente, ordena ascendente por esa columna
-      this.sortColumn = column;
-      this.sortDirection = 'asc';
-    }
+  sortTable(column: EmpresaSortField) {
+    this.sort = nextSortState(this.sort, column);
     this.ordenarEmpresas();
   }
 
@@ -105,11 +105,19 @@ export default class EmpresasComponent implements OnInit {
 
   // Obtener empresas
   getEmpresas(): void {
-    this.empresaService.getEmpresas().subscribe((data) => {
-      this.empresas = data;
-      this.empresasHabilitadas = this.empresas.filter((e) => e.habilitada);
-      this.empresasDeshabilitadas = this.empresas.filter((e) => !e.habilitada);
-      this.ordenarEmpresas(); // Reaplica el ordenamiento después de cargar los datos
+    this.isLoading = true;
+    this.empresaService.getEmpresas().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (data) => {
+        this.empresas = data;
+        this.empresasHabilitadas = this.empresas.filter((e) => e.habilitada);
+        this.empresasDeshabilitadas = this.empresas.filter((e) => !e.habilitada);
+        this.ordenarEmpresas(); // Reaplica el ordenamiento después de cargar los datos
+        this.isLoading = false;
+      },
+      error: () => {
+        this.errorMessage = 'Error al obtener las empresas.';
+        this.isLoading = false;
+      },
     });
   }
 
@@ -121,13 +129,13 @@ export default class EmpresasComponent implements OnInit {
   addEmpresa(): void {
     if (this.empresaForm.valid) {
       const empresaData = this.empresaForm.value;
-      this.empresaService.addEmpresa(empresaData).subscribe({
+      this.empresaService.addEmpresa(empresaData).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.getEmpresas();
           this.closeModal();
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || 'Error al agregar la empresa.';
+          this.errorMessage = err.message || 'Error al agregar la empresa.';
         }
       });
     } else {
@@ -153,14 +161,14 @@ export default class EmpresasComponent implements OnInit {
   updateEmpresa(): void {
     if (this.empresaForm.valid && this.selectedEmpresaId) {
       const empresaData = this.empresaForm.value;
-      this.empresaService.updateEmpresa(this.selectedEmpresaId, empresaData).subscribe({
+      this.empresaService.updateEmpresa(this.selectedEmpresaId, empresaData).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.getEmpresas();
           this.closeModal();
           Notiflix.Notify.success('Empresa actualizada con éxito', { position: 'right-bottom', cssAnimationStyle: 'from-right' });
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || 'Error al actualizar la empresa.';
+          this.errorMessage = err.message || 'Error al actualizar la empresa.';
         }
       });
     } else {
@@ -181,13 +189,6 @@ export default class EmpresasComponent implements OnInit {
     }
   }
 
-  // Eliminar empresa
-  deleteEmpresa(id: number): void {
-    this.empresaService.deleteEmpresa(id).subscribe(() => {
-      this.getEmpresas();
-    });
-  }
-
   // Abrir modal
   openModal(): void {
     this.errorMessage = null; // Limpiar mensaje de error
@@ -198,7 +199,7 @@ export default class EmpresasComponent implements OnInit {
       this.empresaForm.reset({ habilitada: true }); // Establece habilitada en true
     }
 
-    this.modalService.abrirModal(50);
+    this.modalService.abrirModal(MODAL_OPEN_DELAY_MS);
   }
 
   // Cerrar el modal con animación
@@ -207,7 +208,9 @@ export default class EmpresasComponent implements OnInit {
     if (this.isEditing) {
       this.cancelEditCleanup();
     }
-    this.modalService.cerrarModal(100);
+    // Antes cerraba a los 100ms, cortando de golpe la transición CSS de
+    // salida (dura 300ms, ver empresas.component.html).
+    this.modalService.cerrarModal(MODAL_CLOSE_DELAY_MS);
   }
 
   // Método para limpiar edición después del cierre del modal
@@ -215,5 +218,9 @@ export default class EmpresasComponent implements OnInit {
     this.isEditing = false; // Desactiva el modo edición
     this.selectedEmpresaId = null; // Restablece el ID seleccionado
     this.empresaForm.reset(); // Limpia el formulario
+  }
+
+  trackByEmpresaId(_index: number, empresa: Empresa): number {
+    return empresa.id;
   }
 }

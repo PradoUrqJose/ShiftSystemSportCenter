@@ -1,230 +1,115 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Chart, ChartConfiguration, ChartOptions, registerables } from 'chart.js';
-import { BaseChartDirective } from 'ng2-charts';
-import { CountUpModule } from 'ngx-countup';
 import { ColaboradorService, Colaborador } from '../../../services/colaborador.service';
 import { ReporteService } from '../../../services/reporte.service';
 import { CalendarioService } from '../../../services/calendario.service';
-import { eachDayOfInterval, endOfWeek, format, isToday, parseISO, startOfWeek } from 'date-fns';
-import { es } from 'date-fns/locale'; // Importar localización en español
-import { forkJoin } from 'rxjs';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { Turno, TurnoService } from '../../../services/turno.service';
+import { format, parseISO } from 'date-fns';
+import { Subject, Subscription, takeUntil } from 'rxjs';
+import { Turno } from '../../../services/turno.service';
+import { ButtonComponent } from '../../../components/ui/button/button.component';
+import { EmptyStateComponent } from '../../../components/ui/empty-state/empty-state.component';
+import { BadgeComponent } from '../../../components/ui/badge/badge.component';
+import { SkeletonComponent } from '../../../components/ui/skeleton/skeleton.component';
+import {
+  calcularComposicion,
+  calcularDistribucionTiendas,
+  calcularExcepciones,
+  calcularResumenSemanal,
+  DistribucionTiendaVista,
+  ExcepcionDia,
+  formatearFechaLocal,
+  SemanaCarga,
+} from './colaborador-analytics.util';
 
-Chart.register(...registerables, ChartDataLabels);
+const UMBRAL_HORAS_DIARIAS_DEFAULT = 8;
 
 @Component({
-  selector: 'app-colaborador-profile',
-  standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective, CountUpModule],
-  templateUrl: './colaborador-profile.component.html',
-  styleUrls: ['./colaborador-profile.component.css']
+    selector: 'app-colaborador-profile',
+    imports: [
+        CommonModule,
+        FormsModule,
+        ButtonComponent,
+        EmptyStateComponent,
+        BadgeComponent,
+        SkeletonComponent,
+    ],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    templateUrl: './colaborador-profile.component.html'
 })
-export class ColaboradorProfileComponent implements OnInit {
+export class ColaboradorProfileComponent implements OnInit, OnDestroy {
+  readonly skeletonRows = Array.from({ length: 4 });
+
   colaborador: Colaborador | null = null;
+  cargandoStats = false;
+  errorMessage: string | null = null;
   fechaInicio: string = this.getDefaultFechaInicio();
   fechaFin: string = this.getDefaultFechaFin();
-  totalTurnos: number = 0;
-  totalTurnosFeriados: number = 0;
+  umbralHorasDiarias = UMBRAL_HORAS_DIARIAS_DEFAULT;
+  empresaIdContexto: number | null = null;
+  nombreEmpresaContexto: string | null = null;
+
   turnosRecientes: Turno[] = [];
-  horasPorMes: number[] = [];
+  tiendasTrabajadas: DistribucionTiendaVista[] = [];
+
+  // Composición normal/feriado y estadísticas semanales del rango
+  // seleccionado (ver calcularComposicionHoras y calcularEstadisticasSemanales).
+  totalTurnosFeriados: number = 0;
+  horasNormales: number = 0;
   horasFeriados: number = 0;
-  turnosFeriados: any[] = [];
-  tiendasTrabajadas: { nombre: string, horas: number }[] = [];
-  totalHorasSemanaActual: number = 0;
+  porcentajeHorasNormales: number = 0;
+  porcentajeHorasFeriados: number = 0;
+  promedioSemanal: number = 0;
+  semanasConActividad: number = 0;
+  semanasMayorCarga: SemanaCarga[] = [];
+  excepciones: ExcepcionDia[] = [];
+
   @ViewChild('fechaInicioInput') fechaInicioInput!: ElementRef<HTMLInputElement>;
   @ViewChild('fechaFinInput') fechaFinInput!: ElementRef<HTMLInputElement>;
-
-
-  barChartData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
-  barChartOptions: ChartOptions<'bar'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-
-      },
-      y: {
-        beginAtZero: true,
-        title: { display: true, text: 'Horas' }
-      }
-    },
-    plugins: {
-
-      legend: { display: false },
-      datalabels: {
-        display: (context) => {
-          const value = context.dataset.data[context.dataIndex] as number; // Obtener el valor sin formatear
-          return value > 0; // Solo mostrar la etiqueta si el valor es mayor a 0
-        },
-        anchor: 'end',
-        align: 'end',
-        color: '#fff',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        padding: 6,
-        borderRadius: 10,
-        font: { size: 10, weight: 'bold' },
-        formatter: (value) => `${parseFloat(value).toFixed(0)} h`
-      }, // Desactivar etiquetas en las barras
-      tooltip: {
-        mode: 'nearest',
-        intersect: false,
-        callbacks: {
-          label: (tooltipItem) => {
-            const value = tooltipItem.raw;
-            if (typeof value === 'number') {
-              return `${this.formatearHorasDia(value, true)} h`;
-            }
-            return ''; // En caso de que no sea un número, evitar errores
-          }
-        }
-      },
-    },
-    elements: {
-      bar: {
-        borderRadius: 10
-      },
-    },
-  };
-
-  horizontalBarChartData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
-  horizontalBarChartOptions: ChartOptions<'bar'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    indexAxis: 'y',
-    scales: {
-      x: { beginAtZero: true, title: { display: false, text: 'Horas' } },
-    },
-    plugins: {
-      legend: { display: false },
-      datalabels: {
-        display: true,
-        anchor: 'end',
-        align: 'end',
-        color: '#fff',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        padding: 6,
-        borderRadius: 10,
-        font: { size: 10, weight: 'bold' },
-        formatter: (value) => `${this.formatearHorasDia(value, true)} h`
-      }, // Desactivar etiquetas en las barras
-      tooltip: { enabled: false }
-    },
-    elements: {
-      bar: {
-        borderRadius: 20,
-      }
-    },
-    layout: {
-      padding: {
-        right: 34,
-      }
-    },
-    animation: { duration: 1500, easing: 'easeOutBounce' }
-  };
-
-  barChartSemanaActualData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
-  barChartSemanaActualOptions: ChartOptions<'bar'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        display: true,
-        grid: { display: false },
-        ticks: { color: '#6b7280', font: { size: 12 } }
-      },
-      y: {
-        display: false,
-        beginAtZero: true, // Comienza en 0
-        max: 16 // Límite máximo para reducir la altura de las barras (ajústalo según necesites)
-      }
-    },
-    plugins: {
-      legend: { display: false },
-      title: { display: false },
-      tooltip: {
-        mode: 'nearest',
-        intersect: false,
-        callbacks: {
-          label: (tooltipItem) => {
-            const value = tooltipItem.raw;
-            if (typeof value === 'number') {
-              return `${this.formatearHorasDia(value, true)} h`;
-            }
-            return ''; // En caso de que no sea un número, evitar errores
-          }
-        }
-      },
-      datalabels: {
-        display: (context) => isToday(new Date()) && context.dataIndex === new Date().getDay() - 1,
-        anchor: 'end',
-        align: 'top',
-        color: '#fff',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        padding: 6,
-        borderRadius: 10,
-        font: { size: 10, weight: 'bold' },
-        formatter: (value) => {
-          return `${this.formatearHorasDia(value, true)} h`
-        }
-      }
-    },
-    elements: {
-      bar: {
-        borderRadius: 20
-      }
-    }
-  };
-
-  private coloresEmpresas: string[] = [
-    '#fff3cc', // Amarillo pastel
-    '#cce5ff', // Azul pastel
-    '#f0e5de', // Beige claro (ya existente)
-    '#b3e0ff', // Celeste pastel
-    '#d4f4dd', // Verde menta suave
-    '#ffccd9', // Rosa empolvado
-    '#e6ccff', // Lila suave
-    '#ffddcc', // Melocotón pastel
-  ];
-
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private colaboradorService: ColaboradorService,
     private reporteService: ReporteService,
-    private calendarioService: CalendarioService,
-    private turnoService: TurnoService
+    private calendarioService: CalendarioService
   ) { }
 
+  private readonly destroy$ = new Subject<void>();
+  private colaboradorId: number | null = null;
+  private statsRequest?: Subscription;
+
   ngOnInit(): void {
-    const colaboradorId = this.route.snapshot.paramMap.get('id');
-    if (colaboradorId) {
-      this.loadProfile(+colaboradorId);
-      this.loadStatistics(+colaboradorId);
+    const idParam = Number(this.route.snapshot.paramMap.get('id'));
+    if (!Number.isInteger(idParam) || idParam <= 0) {
+      this.errorMessage = 'El colaborador solicitado no es válido.';
+      return;
     }
+
+    this.colaboradorId = idParam;
+    this.aplicarParametrosDeNavegacion();
+    this.loadProfile(idParam);
+    this.loadStatistics();
   }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.statsRequest?.unsubscribe();
+  }
+
   getDefaultFechaInicio(): string {
-    const date = new Date();
-    date.setMonth(0); // Enero
-    date.setDate(1); // Primer día del mes
-    return date.toISOString().split('T')[0];
+    return formatearFechaLocal(new Date(new Date().getFullYear(), 0, 1));
   }
 
   getDefaultFechaFin(): string {
-    const date = new Date();
-    date.setMonth(11); // Diciembre
-    date.setDate(31); // Último día del mes
-    return date.toISOString().split('T')[0];
+    return formatearFechaLocal(new Date(new Date().getFullYear(), 11, 31));
   }
 
   loadProfile(colaboradorId: number): void {
-    this.colaboradorService.getColaboradorById(colaboradorId).subscribe({
-      next: (data: Colaborador) => this.colaborador = data,
-      error: () => console.error('Error al cargar perfil del colaborador')
+    this.colaboradorService.getColaboradorById(colaboradorId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (data: Colaborador) => this.colaborador = data
     });
   }
 
@@ -232,94 +117,55 @@ export class ColaboradorProfileComponent implements OnInit {
     return turnos.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
   }
 
-  loadStatistics(colaboradorId: number): void {
-    const colaboradores = [colaboradorId];
-    forkJoin({
-      turnos: this.turnoService.getTurnosByColaboradorId(colaboradorId),
-      horasTrabajadas: this.reporteService.getHorasTrabajadas(this.fechaInicio, this.fechaFin, colaboradores),
-      turnosFeriados: this.reporteService.getTurnosFeriados(this.fechaInicio, this.fechaFin, colaboradores)
-    }).subscribe({
-      next: ({ turnos, horasTrabajadas, turnosFeriados }) => {
-        const turnosOrdenados = this.ordenarTurnosPorFecha(turnos);
-        this.turnosRecientes = turnosOrdenados.slice(0, 5);
-        this.horasPorMes = this.calcularHorasPorMes(horasTrabajadas);
+  loadStatistics(): void {
+    if (!this.colaboradorId) return;
+    this.statsRequest?.unsubscribe();
+    if (!this.rangoValido()) {
+      this.limpiarEstadisticas();
+      this.cargandoStats = false;
+      return;
+    }
 
-        // Determinar el mes actual (febrero en este contexto: índice 1)
-        const mesActual = 1; // Febrero (0-based: Ene=0, Feb=1, etc.)
-        const empresaColor = this.getEmpresaColor(this.colaborador?.empresaNombre);
+    this.cargandoStats = true;
+    this.errorMessage = null;
+    // Un solo pedido de turnos para todo el rango. turnosFeriados es un
+    // subconjunto exacto (Turno.esFeriado ya viene en el DTO) — antes esto
+    // era una segunda llamada HTTP a /turnos/reporte/feriados que traía de
+    // nuevo los mismos turnos.
+    this.statsRequest = this.reporteService.getHorasTrabajadas(this.fechaInicio, this.fechaFin, [this.colaboradorId])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (horasTrabajadas) => {
+          const turnosDelContexto = this.empresaIdContexto == null
+            ? horasTrabajadas
+            : horasTrabajadas.filter(turno => turno.empresaId === this.empresaIdContexto);
+          this.nombreEmpresaContexto = turnosDelContexto[0]?.nombreEmpresa ?? null;
 
-        // Asignar colores: empresa para el mes actual, gris oscuro para los demás
-        const backgroundColors = this.horasPorMes.map((_, index) =>
-          index === mesActual ? this.lightenDarkenColor(empresaColor, -100) : 'rgba(0, 0, 0, 0.7)'
-        );
-        this.barChartData = {
-          labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-          datasets: [{
-            data: this.horasPorMes,
-            backgroundColor: backgroundColors,
-            hoverBackgroundColor: backgroundColors.map(color =>
-              color === this.lightenDarkenColor(empresaColor, -100) ? this.lightenDarkenColor(empresaColor, -70) : 'rgba(0, 0, 0, 0.9)'
-            )
-          }]
-        };
+          const turnosOrdenados = this.ordenarTurnosPorFecha([...turnosDelContexto]);
+          this.turnosRecientes = turnosOrdenados.slice(0, 5);
 
-        this.totalTurnosFeriados = turnosFeriados.length;
-        this.loadTiendasTrabajadas(horasTrabajadas);
-        this.loadSemanaActual(horasTrabajadas);
-      },
-      error: (err) => console.error('Error al cargar estadísticas:', err)
-    });
-  }
+          const composicion = calcularComposicion(turnosDelContexto);
+          this.totalTurnosFeriados = composicion.totalTurnosFeriados;
+          this.horasNormales = composicion.horasNormales;
+          this.horasFeriados = composicion.horasFeriados;
+          this.porcentajeHorasNormales = composicion.porcentajeHorasNormales;
+          this.porcentajeHorasFeriados = composicion.porcentajeHorasFeriados;
 
-  // Nueva función para aclarar u oscurecer un color (para hover)
-  private lightenDarkenColor(color: string, percent: number): string {
-    const rgb = this.hexToRgb(color);
-    const factor = percent / 100;
-    const r = Math.min(255, Math.max(0, rgb.r + (255 - rgb.r) * factor));
-    const g = Math.min(255, Math.max(0, rgb.g + (255 - rgb.g) * factor));
-    const b = Math.min(255, Math.max(0, rgb.b + (255 - rgb.b) * factor));
-    return this.rgbToHex(r, g, b);
-  }
+          const resumenSemanal = calcularResumenSemanal(turnosDelContexto, this.fechaInicio, this.fechaFin);
+          this.promedioSemanal = resumenSemanal.promedioSemanal;
+          this.semanasConActividad = resumenSemanal.semanasConActividad;
+          this.semanasMayorCarga = resumenSemanal.semanasMayorCarga;
 
-  loadSemanaActual(horasTrabajadas: any[]): void {
-    const today = new Date();
-    const start = startOfWeek(today, { weekStartsOn: 1 }); // Lunes 17 de febrero
-    const end = endOfWeek(today, { weekStartsOn: 1 }); // Domingo 23 de febrero
-    const daysOfWeek = eachDayOfInterval({ start, end });
-
-    // Usar localización en español para los días de la semana
-    const labels = daysOfWeek.map(day => format(day, 'EEE', { locale: es })); // "Lun", "Mar", "Mié", etc.
-    const data = daysOfWeek.map(day => {
-      const dayString = format(day, 'yyyy-MM-dd');
-      const horasDia = horasTrabajadas
-        .filter(turno => turno.fecha === dayString)
-        .reduce((sum, turno) => sum + (turno.horasTrabajadas || 0), 0);
-      return horasDia;
-    });
-
-    this.totalHorasSemanaActual = data.reduce((sum, horas) => sum + horas, 0);
-    const empresaColor = this.getEmpresaColor(this.colaborador?.empresaNombre);
-    const backgroundColors = daysOfWeek.map(day => isToday(day) ? empresaColor : 'rgba(0, 0, 0, 0.7)');
-
-    this.barChartSemanaActualData = {
-      labels, // Ahora en español: "Lun", "Mar", "Mié", etc.
-      datasets: [{
-        data,
-        backgroundColor: backgroundColors,
-        borderWidth: 0,
-        barThickness: 18 // Mover barThickness aquí para hacer las barras más delgadas
-      }]
-    };
-  }
-
-  calcularHorasPorMes(turnos: any[]): number[] {
-    const horasPorMes = new Array(12).fill(0);
-    turnos.forEach(turno => {
-      const fecha = parseISO(turno.fecha);
-      const mes = fecha.getMonth();
-      horasPorMes[mes] += turno.horasTrabajadas || 0;
-    });
-    return horasPorMes;
+          this.excepciones = calcularExcepciones(turnosDelContexto, this.umbralHorasDiarias);
+          this.tiendasTrabajadas = calcularDistribucionTiendas(turnosDelContexto);
+          this.cargandoStats = false;
+        },
+        error: () => {
+          this.limpiarEstadisticas();
+          this.errorMessage = 'No se pudo cargar el análisis para el rango seleccionado.';
+          this.cargandoStats = false;
+        }
+      });
   }
 
   formatearHora(hora: string | undefined): string {
@@ -340,100 +186,67 @@ export class ColaboradorProfileComponent implements OnInit {
     return this.calendarioService.formatearHoras(horasTrabajadas ?? 0, type);
   }
 
-  loadTiendasTrabajadas(turnos: any[]): void {
-    const tiendasMap = new Map<string, number>();
-
-    turnos.forEach(turno => {
-      const tienda = turno.nombreTienda || 'Sin Tienda';
-      tiendasMap.set(tienda, (tiendasMap.get(tienda) || 0) + (turno.horasTrabajadas || 0));
-    });
-
-    // Ordenar tiendas por horas trabajadas y tomar solo las 5 más altas
-    this.tiendasTrabajadas = Array.from(tiendasMap, ([nombre, horas]) => ({ nombre, horas }))
-      .sort((a, b) => b.horas - a.horas)
-      .slice(0, 6); // Limitar a las 5 más trabajadas
-
-    const empresaColor = this.getEmpresaColor(this.colaborador?.empresaNombre);
-    const backgroundColors = this.lightenDarkenColor(empresaColor, -100);
-
-    this.horizontalBarChartData = {
-      labels: this.tiendasTrabajadas.map(t => t.nombre),
-      datasets: [{
-        data: this.tiendasTrabajadas.map(t => t.horas),
-        backgroundColor: backgroundColors,
-        borderWidth: 0,
-        barThickness: 19, // Mantener barras delgadas
-      }]
-    };
+  formatearFecha(fecha: string): string {
+    return format(parseISO(fecha), 'dd/MM/yyyy');
   }
+
   goBack(): void {
     this.router.navigate(['/colaboradores']);
   }
 
-  getEmpresaColor(empresaNombre: string | undefined): string {
-    if (!empresaNombre || empresaNombre === 'N/A') {
-      return '#e5e7eb'; // Color gris claro por defecto
-    }
-    let hash = 0;
-    for (let i = 0; i < empresaNombre.length; i++) {
-      hash = empresaNombre.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const index = Math.abs(hash % this.coloresEmpresas.length);
-    return this.coloresEmpresas[index];
-  }
-
-  getWallpStyles(empresaNombre: string | undefined, patternBool: boolean): any {
-    if (!empresaNombre || empresaNombre === 'N/A') {
-      return { 'background-color': '#e5e7eb' };
-    }
-    let hash = 0;
-    for (let i = 0; i < empresaNombre.length; i++) {
-      hash = empresaNombre.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const index = Math.abs(hash % this.coloresEmpresas.length);
-    const backgroundColor = this.coloresEmpresas[index];
-    const rgb = this.hexToRgb(backgroundColor);
-    const darkerColor = this.darkenColor(rgb.r, rgb.g, rgb.b, 0.09);
-    const darkerHex = this.rgbToHex(darkerColor.r, darkerColor.g, darkerColor.b);
-    if( patternBool === true) {
-      const pattern = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='20'><text x='5' y='12' font-size='14' fill='%23${darkerHex.slice(1)}' font-weight='bold' font-family='Quicksand, sans-serif'>${encodeURIComponent(empresaNombre)}</text></svg>")`;
-      return {
-        'background-color': backgroundColor,
-        'background-image': pattern,
-        'background-repeat': 'repeat',
-        'background-size': '170px 20px'
-      };
-    }else {
-      return {
-        'background-color': backgroundColor,
-        'color': this.lightenDarkenColor(darkerHex, -300),
-        'font-weight:': 800,
-      };
-    }
-  }
-
-  private hexToRgb(hex: string): { r: number, g: number, b: number } {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : { r: 0, g: 0, b: 0 };
-  }
-
-  private darkenColor(r: number, g: number, b: number, factor: number): { r: number, g: number, b: number } {
-    return {
-      r: Math.max(0, Math.floor(r * (1 - factor))),
-      g: Math.max(0, Math.floor(g * (1 - factor))),
-      b: Math.max(0, Math.floor(b * (1 - factor)))
-    };
-  }
-
-  private rgbToHex(r: number, g: number, b: number): string {
-    return `#${Math.round(r).toString(16).padStart(2, '0')}${Math.round(g).toString(16).padStart(2, '0')}${Math.round(b).toString(16).padStart(2, '0')}`;
-  }
-
-  abrirCalendario(state: string): void {
+  abrirCalendario(state: 'inicio' | 'fin'): void {
     state === 'inicio' ? this.fechaInicioInput.nativeElement.showPicker() : this.fechaFinInput.nativeElement.showPicker();
+  }
+
+  private aplicarParametrosDeNavegacion(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const desde = params.get('desde');
+    const hasta = params.get('hasta');
+    const empresaId = Number(params.get('empresaId'));
+    const umbral = Number(params.get('umbralHorasDiarias'));
+
+    if (desde && this.esFechaIsoValida(desde)) this.fechaInicio = desde;
+    if (hasta && this.esFechaIsoValida(hasta)) this.fechaFin = hasta;
+    if (Number.isInteger(empresaId) && empresaId > 0) this.empresaIdContexto = empresaId;
+    if (Number.isFinite(umbral) && umbral > 0) this.umbralHorasDiarias = umbral;
+  }
+
+  private rangoValido(): boolean {
+    if (!this.esFechaIsoValida(this.fechaInicio) || !this.esFechaIsoValida(this.fechaFin)) {
+      this.errorMessage = 'Selecciona ambas fechas del período.';
+      return false;
+    }
+    if (this.fechaInicio > this.fechaFin) {
+      this.errorMessage = 'La fecha inicial no puede ser posterior a la fecha final.';
+      return false;
+    }
+    return true;
+  }
+
+  private esFechaIsoValida(fecha: string): boolean {
+    return /^\d{4}-\d{2}-\d{2}$/.test(fecha) && !Number.isNaN(parseISO(fecha).getTime());
+  }
+
+  private limpiarEstadisticas(): void {
+    this.turnosRecientes = [];
+    this.tiendasTrabajadas = [];
+    this.totalTurnosFeriados = 0;
+    this.horasNormales = 0;
+    this.horasFeriados = 0;
+    this.porcentajeHorasNormales = 0;
+    this.porcentajeHorasFeriados = 0;
+    this.promedioSemanal = 0;
+    this.semanasConActividad = 0;
+    this.semanasMayorCarga = [];
+    this.excepciones = [];
+    this.nombreEmpresaContexto = null;
+  }
+
+  trackByTurnoId(_index: number, turno: Turno): number {
+    return turno.id;
+  }
+
+  trackByExcepcion(_index: number, excepcion: ExcepcionDia): string {
+    return excepcion.fecha;
   }
 }

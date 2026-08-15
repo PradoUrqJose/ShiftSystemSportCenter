@@ -1,12 +1,11 @@
 import { Feriado } from './feriado.service';
-import { DiaSemana } from './calendario.service';
 // turno.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { catchError, map, Observable, tap, throwError, forkJoin } from 'rxjs';
+import { map, Observable, forkJoin } from 'rxjs';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { environment } from '../../environments/environment';
+import { PageResponse, PAGE_SIZE_ALL } from '../models/page-response.model';
 
 
 export interface Turno {
@@ -27,20 +26,44 @@ export interface Turno {
   horasTotalesSemana?: number;
 }
 
+// Turno "vacío" para inicializar el formulario de alta. Antes cada
+// componente que abre el modal de turno (turnos, turno-modal, semana-normal)
+// tenía su propia copia idéntica de este objeto literal.
+export function crearTurnoVacio(): Turno {
+  return {
+    id: 0,
+    nombreColaborador: '',
+    dniColaborador: '',
+    nombreEmpresa: '',
+    fecha: '',
+    horaEntrada: '',
+    horaSalida: '',
+    horasTrabajadas: 0,
+    tiendaId: null,
+  };
+}
+
+// Forma plana: coincide con TurnoRequestDTO del backend (colaboradorId/
+// tiendaId, sin empresaId — el backend resuelve la empresa a partir del
+// colaborador, ver TurnoService.aplicarDatosTurno). Antes este payload
+// mandaba objetos anidados {colaborador: {id}, tienda: {id}, empresa: {id}}
+// — esa forma quedó desincronizada del backend en el refactor de la Etapa 2
+// (TurnoRequestDTO se aplanó, el frontend nunca se actualizó) y rompía en
+// silencio cualquier alta/edición de turno con "Los datos enviados no son
+// válidos" (colaboradorId/tiendaId llegaban null). Encontrado probando
+// Turnos Masivos de punta a punta, no es específico de esa función.
 export interface TurnoPayload {
-  colaborador: { id: number | undefined };
+  colaboradorId: number;
   fecha: string;
   horaEntrada: string;
   horaSalida: string;
-  empresa: { id: number };
-  tienda: { id: number };
+  tiendaId: number;
 }
 
 export interface TurnoPartidoPayload {
-  colaborador: { id: number | undefined };
+  colaboradorId: number;
   fecha: string;
-  empresa: { id: number };
-  tienda: { id: number };
+  tiendaId: number;
   turnoManana: {
     horaEntrada: string;
     horaSalida: string;
@@ -68,15 +91,13 @@ export class TurnoService {
 
   constructor(private http: HttpClient) { }
 
+  // Los errores HTTP ya llegan normalizados con un mensaje amigable desde
+  // errorInterceptor (ver interceptors/error.interceptor.ts) — no hace
+  // falta un catchError propio por método acá.
+
   getTurnosPorSemana(fecha: Date): Observable<Turno[]> {
     const formattedDate = format(fecha, 'yyyy-MM-dd');
-    return this.http.get<Turno[]>(`${this.apiUrl}?fecha=${formattedDate}`).pipe(
-      tap((turnos) => console.log('🔄 Turnos recibidos del backend por Semana:', turnos)), // Debugging
-      catchError((error) => {
-        console.error('❌ Error al obtener turnos:', error);
-        return throwError(() => new Error('No se pudieron cargar los turnos. Intente más tarde.'));
-      })
-    );
+    return this.http.get<Turno[]>(`${this.apiUrl}?fecha=${formattedDate}`);
   }
 
   /**
@@ -101,17 +122,7 @@ export class TurnoService {
             ...turno,
             horasTrabajadas: turno.horasTrabajadas ?? 0,
           }))
-        ),
-        catchError((error) => {
-          console.error(
-            'Error al obtener turnos mensuales por colaborador:',
-            error
-          );
-          return throwError(
-            () =>
-              new Error('No se pudieron cargar los turnos. Intente más tarde.')
-          );
-        })
+        )
       );
   }
 
@@ -121,77 +132,56 @@ export class TurnoService {
    * @param anio Año (ejemplo: 2025).
    * @returns Observable con la lista de turnos.
    */
+  // GET /api/turnos/mensual devuelve paginado (Page<TurnoDTO>) desde la
+  // Etapa 2 del backend. Pedimos una página grande para no truncar la lista
+  // mientras no haya paginación real en la UI (ver PAGE_SIZE_ALL).
   getTurnosMensuales(mes: number, anio: number): Observable<Turno[]> {
     return this.http
-      .get<Turno[]>(`${this.apiUrl}/mensual?mes=${mes}&anio=${anio}`)
+      .get<PageResponse<Turno>>(
+        `${this.apiUrl}/mensual?mes=${mes}&anio=${anio}`,
+        { params: { size: PAGE_SIZE_ALL } }
+      )
       .pipe(
-        map((turnos) =>
-          turnos.map((turno) => ({
+        map((page) =>
+          page.content.map((turno) => ({
             ...turno,
             horasTrabajadas: turno.horasTrabajadas ?? 0,
           }))
-        ),
-        catchError((error) => {
-          console.error('Error al obtener turnos mensuales:', error);
-          return throwError(
-            () =>
-              new Error('No se pudieron cargar los turnos. Intente más tarde.')
-          );
-        })
+        )
       );
   }
 
   updateTurno(id: number, turno: TurnoPayload): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${id}`, turno).pipe(
-      catchError((error) => {
-        // Reenviar el error para que el componente lo gestione
-        return throwError(
-          () => new Error(error.error.message || 'Error desconocido')
-        );
-      })
-    );
+    return this.http.put(`${this.apiUrl}/${id}`, turno);
   }
 
   addTurno(turno: TurnoPayload): Observable<any> {
-    return this.http.post(this.apiUrl, turno).pipe(
-      catchError((error) => {
-        // Reenviar el error para que el componente lo gestione
-        return throwError(
-          () => new Error(error.error.message || 'Error desconocido')
-        );
-      })
-    );
+    return this.http.post(this.apiUrl, turno);
   }
 
   addTurnoPartido(turnoPartido: TurnoPartidoPayload): Observable<any> {
     // Crear dos turnos separados para el turno partido
     const turnoManana: TurnoPayload = {
-      colaborador: turnoPartido.colaborador,
+      colaboradorId: turnoPartido.colaboradorId,
       fecha: turnoPartido.fecha,
       horaEntrada: turnoPartido.turnoManana.horaEntrada,
       horaSalida: turnoPartido.turnoManana.horaSalida,
-      empresa: turnoPartido.empresa,
-      tienda: turnoPartido.tienda
+      tiendaId: turnoPartido.tiendaId,
     };
 
     const turnoTarde: TurnoPayload = {
-      colaborador: turnoPartido.colaborador,
+      colaboradorId: turnoPartido.colaboradorId,
       fecha: turnoPartido.fecha,
       horaEntrada: turnoPartido.turnoTarde.horaEntrada,
       horaSalida: turnoPartido.turnoTarde.horaSalida,
-      empresa: turnoPartido.empresa,
-      tienda: turnoPartido.tienda
+      tiendaId: turnoPartido.tiendaId,
     };
 
     // Crear ambos turnos en paralelo usando forkJoin
     return forkJoin({
       turnoManana: this.addTurno(turnoManana),
       turnoTarde: this.addTurno(turnoTarde)
-    }).pipe(
-      catchError((error) => {
-        return throwError(() => new Error('Error al crear turno partido: ' + error.message));
-      })
-    );
+    });
   }
 
   deleteTurno(id: number): Observable<void> {
@@ -199,55 +189,15 @@ export class TurnoService {
   }
 
   // ---- AGREGADOS PARA LA OPTIMIZACIÓN --------
-  getSemanasDelMes(mes: number, anio: number): Observable<DiaSemana[][]> {
-    return this.http
-      .get<string[][]>(`${this.apiUrl}/semanas-del-mes?mes=${mes}&anio=${anio}`)
-      .pipe(
-        tap((semanas) => console.log('Semanas obtenidas:', semanas)),
-        map((semanas) =>
-          semanas.map((semana) =>
-            semana.map((fechaStr) => {
-              const fecha = new Date(fechaStr + 'T00:00:00'); // Corregir la conversión de zona horaria
-              const diaSemana: DiaSemana = {
-                fecha: format(fecha, 'yyyy-MM-dd'),
-                nombre: format(fecha, 'EEE', { locale: es }), // Aquí estaba el error
-                dayNumber: format(fecha, 'd'), // Se estaba asignando el día de la fecha anterior
-                monthNombre: format(fecha, 'MMMM', { locale: es }),
-                yearName: format(fecha, 'yyyy'),
-              };
-              return diaSemana;
-            })
-          )
-        ),
-        catchError((error) => {
-          console.error('Error al obtener semanas del mes:', error);
-          return throwError(() => new Error('Error al obtener las semanas.'));
-        })
-      );
-  }
-
-  // ✅ Método para obtener turnos semanales según las semanas del mes
-  getTurnosPorSemanaEstricta(mes: number, anio: number, semana: number): Observable<Turno[]> {
-    return this.http.get<Turno[]>(`${this.apiUrl}/semanal-estricto?mes=${mes}&anio=${anio}&semana=${semana}`).pipe(
-      tap((turnos) => console.log('🔄 Turnos recibidos del backend por Semana Estricta:', turnos)), // Debugging
-      catchError((error) => {
-        console.error('❌ Error al obtener turnos por semana estricta:', error);
-        return throwError(() => new Error('No se pudieron cargar los turnos. Intente más tarde.'));
-      })
-    );
-  }
-
-  /**
- * Filtra los turnos de un colaborador específico en una fecha específica.
- * @param turnos Lista de turnos.
- * @param colaboradorId ID del colaborador.
- * @param fecha Fecha a buscar.
- * @returns Turno correspondiente o `null` si no existe.
- */
-  obtenerTurno(turnos: Turno[], colaboradorId: number, fecha: string): Turno | null {
-    return turnos.find(
-      (turno) => turno.colaboradorId === colaboradorId && turno.fecha === fecha
-    ) || null;
+  // Reemplaza a los viejos getSemanasDelMes()/getTurnosPorSemanaEstricta():
+  // esos le pedían al backend que recalculara "las semanas del mes" (aritmética
+  // de fechas pura) solo para volver a preguntarle "cuál es la semana número N"
+  // — el mismo cálculo que CalendarioService ya hace en el navegador para
+  // dibujar la grilla. Ahora el componente le manda el rango de fechas que ya
+  // tiene calculado localmente. Los endpoints viejos siguen respondiendo
+  // (backend los dejó @Deprecated) por si queda algún caller suelto.
+  getTurnosPorRangoFecha(inicio: string, fin: string): Observable<Turno[]> {
+    return this.http.get<Turno[]>(`${this.apiUrl}/semanal`, { params: { inicio, fin } });
   }
 
   /**
@@ -276,17 +226,10 @@ export class TurnoService {
       url += `&colaboradores=${colaboradoresParam}`;
     }
 
-    return this.http.get<ResumenMensual[]>(url).pipe(
-      tap((resumenes) => console.log('📊 Resumen mensual recibido:', resumenes)),
-      catchError((error) => {
-        console.error('❌ Error al obtener el resumen mensual:', error);
-        return throwError(() => new Error('No se pudo cargar el resumen mensual. Intente más tarde.'));
-      })
-    );
+    return this.http.get<ResumenMensual[]>(url);
   }
 
-    // Método existente que ya tienes
-    getTurnosByColaboradorId(id: number): Observable<any[]> {
-      return this.http.get<any[]>(`${this.apiUrl}/${id}`);
+    getTurnosByColaboradorId(id: number): Observable<Turno[]> {
+      return this.http.get<Turno[]>(`${this.apiUrl}/${id}`);
     }
 }

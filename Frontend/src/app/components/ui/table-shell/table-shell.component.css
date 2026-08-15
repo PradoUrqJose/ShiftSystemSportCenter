@@ -1,0 +1,36 @@
+.app-table-shell {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-hover);
+  overflow: hidden;
+}
+
+.app-table-shell__toolbar {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-line-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.app-table-shell__toolbar:empty {
+  display: none;
+}
+
+.app-table-shell__scroll {
+  overflow-x: auto;
+}
+
+.app-table-shell__footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-line-soft);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.app-table-shell__footer:empty {
+  display: none;
+}

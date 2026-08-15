@@ -1,25 +1,39 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TurnoService, Turno, TurnoPayload, TurnoPartidoPayload } from '../../../services/turno.service';
+import { TurnoService, Turno, TurnoPayload, TurnoPartidoPayload, crearTurnoVacio } from '../../../services/turno.service';
 import { TiendaService, Tienda } from '../../../services/tienda.service';
-import { ModalService } from '../../../services/modal.service';
-import { Observable, map } from 'rxjs';
+import { TurnoPredeterminado, TurnoPredeterminadoService } from '../../../services/turno-predeterminado.service';
+import { Observable, Subject, map, takeUntil } from 'rxjs';
 import Notiflix from 'notiflix';
 import { AgregarTiendaModalComponent } from '../agregar-tienda-modal/agregar-tienda-modal.component';
 import { GestionarTiendasModalComponent } from '../gestionar-tiendas-modal/gestionar-tiendas-modal.component';
+import { GestionarTurnosPredeterminadosModalComponent } from '../gestionar-turnos-predeterminados-modal/gestionar-turnos-predeterminados-modal.component';
+import { TimePickerComponent } from '../../../components/time-picker/time-picker.component';
+import { TiendaSelectComponent } from '../../../components/tienda-select/tienda-select.component';
+import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
+import { ButtonComponent } from '../../../components/ui/button/button.component';
 
 @Component({
-  selector: 'app-turno-modal',
-  standalone: true,
-  imports: [CommonModule, FormsModule, AgregarTiendaModalComponent, GestionarTiendasModalComponent],
-  templateUrl: './turno-modal.component.html',
-  styleUrls: ['./turno-modal.component.css']
+    selector: 'app-turno-modal',
+    imports: [
+        CommonModule,
+        FormsModule,
+        AgregarTiendaModalComponent,
+        GestionarTiendasModalComponent,
+        GestionarTurnosPredeterminadosModalComponent,
+        TimePickerComponent,
+        TiendaSelectComponent,
+        ButtonComponent,
+    ],
+    templateUrl: './turno-modal.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./turno-modal.component.css']
 })
-export class TurnoModalComponent {
+export class TurnoModalComponent implements OnInit, OnDestroy {
   @Input() mostrarModal: boolean = false;
   @Input() isModalVisible: boolean = false;
-  @Input() turnoActual: Turno = this.resetTurno();
+  @Input() turnoActual: Turno = crearTurnoVacio();
   @Input() turnoOriginal: Turno | null = null;
   @Input() tiendas$: Observable<Tienda[]> = new Observable<Tienda[]>();
   @Input() tiendasInput$: Observable<Tienda[]> = new Observable<Tienda[]>();
@@ -31,6 +45,7 @@ export class TurnoModalComponent {
   isSubmitting: boolean = false;
   errorHoraEntrada: string | null = null;
   errorHoraSalida: string | null = null;
+  errorTienda: string | null = null;
 
   // Variables para turnos partidos
   esTurnoPartido: boolean = false;
@@ -52,11 +67,18 @@ export class TurnoModalComponent {
   isModalGestionarTiendasVisible: boolean = false;
   tiendaActual: Tienda = { id: undefined, nombre: '', direccion: '' };
 
+  // Plantillas rápidas (ver TurnoPredeterminadoService) — sin relación con
+  // tienda ni con el turno creado, son solo un atajo de UI.
+  plantillas: TurnoPredeterminado[] = [];
+  mostrarModalGestionarPlantillas: boolean = false;
+  isModalGestionarPlantillasVisible: boolean = false;
+
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private turnoService: TurnoService,
-    private modalService: ModalService,
-    private tiendaService: TiendaService
+    private tiendaService: TiendaService,
+    private turnoPredeterminadoService: TurnoPredeterminadoService
   ) {
     // Aplicar el ordenamiento a tiendas$ internamente
     this.tiendas$ = this.tiendasInput$.pipe(
@@ -64,18 +86,13 @@ export class TurnoModalComponent {
     );
   }
 
-  resetTurno(): Turno {
-    return {
-      id: 0,
-      nombreColaborador: '',
-      dniColaborador: '',
-      nombreEmpresa: '',
-      fecha: '',
-      horaEntrada: '',
-      horaSalida: '',
-      horasTrabajadas: 0,
-      tiendaId: null,
-    };
+  ngOnInit(): void {
+    this.cargarPlantillas();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   cerrarModal(): void {
@@ -86,7 +103,7 @@ export class TurnoModalComponent {
       this.errorHoraEntrada = null;
       this.errorHoraSalida = null;
       this.resetTurnoPartido();
-    }, 300);
+    }, MODAL_CLOSE_DELAY_MS);
   }
 
   resetTurnoPartido(): void {
@@ -110,9 +127,11 @@ export class TurnoModalComponent {
     this.errorHoraSalidaManana = null;
     this.errorHoraEntradaTarde = null;
     this.errorHoraSalidaTarde = null;
+    this.errorTienda = null;
 
     if (!this.turnoActual.tiendaId) {
       this.isSubmitting = false;
+      this.errorTienda = 'La selección de tienda es obligatoria';
       Notiflix.Notify.failure('Debes seleccionar una tienda', {
         position: 'right-bottom',
         cssAnimationStyle: 'from-right',
@@ -146,19 +165,18 @@ export class TurnoModalComponent {
     }
 
     const turnoParaGuardar: TurnoPayload = {
-      colaborador: { id: this.turnoActual.colaboradorId },
+      colaboradorId: this.turnoActual.colaboradorId!,
       fecha: this.turnoActual.fecha,
       horaEntrada: this.turnoActual.horaEntrada,
       horaSalida: this.turnoActual.horaSalida,
-      empresa: { id: this.turnoActual.empresaId! },
-      tienda: { id: Number(this.turnoActual.tiendaId) },
+      tiendaId: Number(this.turnoActual.tiendaId),
     };
 
     const operacion = this.turnoActual.id
       ? this.turnoService.updateTurno(this.turnoActual.id, turnoParaGuardar)
       : this.turnoService.addTurno(turnoParaGuardar);
 
-    operacion.subscribe({
+    operacion.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.turnoGuardado.emit();
         this.cerrarModal();
@@ -187,10 +205,9 @@ export class TurnoModalComponent {
     }
 
     const turnoPartido: TurnoPartidoPayload = {
-      colaborador: { id: this.turnoActual.colaboradorId },
+      colaboradorId: this.turnoActual.colaboradorId!,
       fecha: this.turnoActual.fecha,
-      empresa: { id: this.turnoActual.empresaId! },
-      tienda: { id: Number(this.turnoActual.tiendaId) },
+      tiendaId: Number(this.turnoActual.tiendaId),
       turnoManana: {
         horaEntrada: this.turnoManana.horaEntrada,
         horaSalida: this.turnoManana.horaSalida
@@ -201,7 +218,7 @@ export class TurnoModalComponent {
       }
     };
 
-    this.turnoService.addTurnoPartido(turnoPartido).subscribe({
+    this.turnoService.addTurnoPartido(turnoPartido).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.turnoGuardado.emit();
         this.cerrarModal();
@@ -229,7 +246,7 @@ export class TurnoModalComponent {
       'Eliminar',
       'Cancelar',
       () => {
-        this.turnoService.deleteTurno(this.turnoActual.id!).subscribe({
+        this.turnoService.deleteTurno(this.turnoActual.id!).pipe(takeUntil(this.destroy$)).subscribe({
           next: () => {
             this.turnoEliminado.emit();
             this.cerrarModal();
@@ -238,7 +255,7 @@ export class TurnoModalComponent {
               cssAnimationStyle: 'from-right',
             });
           },
-          error: (error) => {
+          error: () => {
             Notiflix.Notify.failure('Error al eliminar el turno', {
               position: 'right-bottom',
               cssAnimationStyle: 'from-right',
@@ -246,25 +263,78 @@ export class TurnoModalComponent {
           }
         });
       },
-      () => console.log('Eliminación cancelada')
+      () => {}
     );
   }
 
+  // Antes cada validarHorarioX repetía el mismo cuerpo (obligatoriedad +
+  // rango horas/minutos), solo cambiando los límites y el mensaje — este
+  // helper compacta las 5 que comparten exactamente la misma forma
+  // (`horas < min || horas > max || (horas === max && minutos > 0)`).
+  // validarHorarioSalida (turno simple) queda aparte porque su regla es
+  // distinta (permite cruzar medianoche) y no encaja en este patrón.
+  private validarRangoHora(
+    hora: string | undefined,
+    minHora: number,
+    maxHora: number,
+    mensajeObligatoria: string,
+    mensajeRango: string
+  ): string | null {
+    if (!hora) return mensajeObligatoria;
+
+    const horaFormateada = this.formatearHora(hora);
+    const [horas, minutos] = horaFormateada.split(':').map(Number);
+
+    if (horas < minHora || horas > maxHora || (horas === maxHora && minutos > 0)) {
+      return mensajeRango;
+    }
+    return null;
+  }
+
+  // Handlers de los TimePicker/TiendaSelect: el (valueChange) de esos
+  // componentes reemplaza al [(ngModel)] + (change) que tenían los inputs
+  // nativos — misma validación de siempre, solo cambia quién dispara el evento.
+  onHoraEntradaChange(valor: string): void {
+    this.turnoActual.horaEntrada = valor;
+    this.validarHorarioEntrada();
+  }
+
+  onHoraSalidaChange(valor: string): void {
+    this.turnoActual.horaSalida = valor;
+    this.validarHorarioSalida();
+  }
+
+  onHoraEntradaMananaChange(valor: string): void {
+    this.turnoManana.horaEntrada = valor;
+    this.validarHorarioEntradaManana();
+  }
+
+  onHoraSalidaMananaChange(valor: string): void {
+    this.turnoManana.horaSalida = valor;
+    this.validarHorarioSalidaManana();
+  }
+
+  onHoraEntradaTardeChange(valor: string): void {
+    this.turnoTarde.horaEntrada = valor;
+    this.validarHorarioEntradaTarde();
+  }
+
+  onHoraSalidaTardeChange(valor: string): void {
+    this.turnoTarde.horaSalida = valor;
+    this.validarHorarioSalidaTarde();
+  }
+
+  onTiendaChange(id: number): void {
+    this.turnoActual.tiendaId = id;
+    this.errorTienda = null;
+  }
+
   validarHorarioEntrada(): void {
-    let hora = this.turnoActual.horaEntrada;
-    if (!hora) {
-      this.errorHoraEntrada = 'La hora de entrada es obligatoria.';
-      return;
-    }
-
-    hora = this.formatearHora(hora);
-    const [horas, minutos] = hora.split(':').map(Number);
-
-    if (horas < 5 || horas > 22 || (horas === 22 && minutos > 0)) {
-      this.errorHoraEntrada = 'La hora de entrada debe ser entre las 5:00 AM y las 10:00 PM.';
-    } else {
-      this.errorHoraEntrada = null;
-    }
+    this.errorHoraEntrada = this.validarRangoHora(
+      this.turnoActual.horaEntrada, 5, 22,
+      'La hora de entrada es obligatoria.',
+      'La hora de entrada debe ser entre las 5:00 AM y las 10:00 PM.'
+    );
   }
 
   validarHorarioSalida(): void {
@@ -301,71 +371,35 @@ export class TurnoModalComponent {
   }
 
   validarHorarioEntradaManana(): void {
-    let hora = this.turnoManana.horaEntrada;
-    if (!hora) {
-      this.errorHoraEntradaManana = 'La hora de entrada de mañana es obligatoria.';
-      return;
-    }
-
-    hora = this.formatearHora(hora);
-    const [horas, minutos] = hora.split(':').map(Number);
-
-    if (horas < 5 || horas > 12 || (horas === 12 && minutos > 0)) {
-      this.errorHoraEntradaManana = 'La hora de entrada de mañana debe ser entre las 5:00 AM y las 12:00 PM.';
-    } else {
-      this.errorHoraEntradaManana = null;
-    }
+    this.errorHoraEntradaManana = this.validarRangoHora(
+      this.turnoManana.horaEntrada, 5, 12,
+      'La hora de entrada de mañana es obligatoria.',
+      'La hora de entrada de mañana debe ser entre las 5:00 AM y las 12:00 PM.'
+    );
   }
 
   validarHorarioSalidaManana(): void {
-    let hora = this.turnoManana.horaSalida;
-    if (!hora) {
-      this.errorHoraSalidaManana = 'La hora de salida de mañana es obligatoria.';
-      return;
-    }
-
-    hora = this.formatearHora(hora);
-    const [horas, minutos] = hora.split(':').map(Number);
-
-    if (horas < 8 || horas > 14 || (horas === 14 && minutos > 0)) {
-      this.errorHoraSalidaManana = 'La hora de salida de mañana debe ser entre las 8:00 AM y las 2:00 PM.';
-    } else {
-      this.errorHoraSalidaManana = null;
-    }
+    this.errorHoraSalidaManana = this.validarRangoHora(
+      this.turnoManana.horaSalida, 8, 14,
+      'La hora de salida de mañana es obligatoria.',
+      'La hora de salida de mañana debe ser entre las 8:00 AM y las 2:00 PM.'
+    );
   }
 
   validarHorarioEntradaTarde(): void {
-    let hora = this.turnoTarde.horaEntrada;
-    if (!hora) {
-      this.errorHoraEntradaTarde = 'La hora de entrada de tarde es obligatoria.';
-      return;
-    }
-
-    hora = this.formatearHora(hora);
-    const [horas, minutos] = hora.split(':').map(Number);
-
-    if (horas < 13 || horas > 18 || (horas === 18 && minutos > 0)) {
-      this.errorHoraEntradaTarde = 'La hora de entrada de tarde debe ser entre las 1:00 PM y las 6:00 PM.';
-    } else {
-      this.errorHoraEntradaTarde = null;
-    }
+    this.errorHoraEntradaTarde = this.validarRangoHora(
+      this.turnoTarde.horaEntrada, 13, 18,
+      'La hora de entrada de tarde es obligatoria.',
+      'La hora de entrada de tarde debe ser entre las 1:00 PM y las 6:00 PM.'
+    );
   }
 
   validarHorarioSalidaTarde(): void {
-    let hora = this.turnoTarde.horaSalida;
-    if (!hora) {
-      this.errorHoraSalidaTarde = 'La hora de salida de tarde es obligatoria.';
-      return;
-    }
-
-    hora = this.formatearHora(hora);
-    const [horas, minutos] = hora.split(':').map(Number);
-
-    if (horas < 16 || horas > 22 || (horas === 22 && minutos > 0)) {
-      this.errorHoraSalidaTarde = 'La hora de salida de tarde debe ser entre las 4:00 PM y las 10:00 PM.';
-    } else {
-      this.errorHoraSalidaTarde = null;
-    }
+    this.errorHoraSalidaTarde = this.validarRangoHora(
+      this.turnoTarde.horaSalida, 16, 22,
+      'La hora de salida de tarde es obligatoria.',
+      'La hora de salida de tarde debe ser entre las 4:00 PM y las 10:00 PM.'
+    );
   }
 
   validarSolapamientoHorarios(): void {
@@ -409,22 +443,24 @@ export class TurnoModalComponent {
   // Agregar Tienda
   abrirModalAgregarTienda(): void {
     this.mostrarModalAgregarTienda = true;
-    setTimeout(() => this.isModalAgregarTiendaVisible = true, 50);
+    setTimeout(() => this.isModalAgregarTiendaVisible = true, MODAL_OPEN_DELAY_MS);
   }
 
   cerrarModalAgregarTienda(): void {
     this.isModalAgregarTiendaVisible = false;
-    setTimeout(() => this.mostrarModalAgregarTienda = false, 50);
+    // Antes desmontaba a los 50ms, cortando de golpe la transición CSS de
+    // salida (dura 300ms, ver agregar-tienda-modal.component.html).
+    setTimeout(() => this.mostrarModalAgregarTienda = false, MODAL_CLOSE_DELAY_MS);
   }
 
   abrirModalGestionarTiendas(): void {
     this.mostrarModalGestionarTiendas = true;
-    setTimeout(() => this.isModalGestionarTiendasVisible = true, 50);
+    setTimeout(() => this.isModalGestionarTiendasVisible = true, MODAL_OPEN_DELAY_MS);
   }
 
   cerrarModalGestionarTiendas(): void {
     this.isModalGestionarTiendasVisible = false;
-    setTimeout(() => this.mostrarModalGestionarTiendas = false, 50);
+    setTimeout(() => this.mostrarModalGestionarTiendas = false, MODAL_CLOSE_DELAY_MS);
   }
 
   manejarTiendaGuardada(): void {
@@ -440,6 +476,57 @@ export class TurnoModalComponent {
   manejarEditarTienda(tienda: Tienda): void {
     this.tiendaActual = { ...tienda };
     this.abrirModalAgregarTienda();
+  }
+
+  trackByTiendaId(_index: number, tienda: Tienda): number | undefined {
+    return tienda.id;
+  }
+
+  // Plantillas rápidas
+  cargarPlantillas(): void {
+    this.turnoPredeterminadoService.getTurnosPredeterminados().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (data) => (this.plantillas = data),
+      error: () => (this.plantillas = []),
+    });
+  }
+
+  seleccionarPlantilla(plantilla: TurnoPredeterminado): void {
+    this.turnoActual.horaEntrada = plantilla.horaEntrada;
+    this.turnoActual.horaSalida = plantilla.horaSalida;
+    this.validarHorarioEntrada();
+    this.validarHorarioSalida();
+  }
+
+  // El chip se ve "seleccionado" si sus horarios coinciden con lo cargado
+  // en el form — no hace falta trackear un estado de selección aparte: si
+  // el operador edita el input a mano, deja de matchear solo.
+  esPlantillaSeleccionada(plantilla: TurnoPredeterminado): boolean {
+    return (
+      this.formatearHora(this.turnoActual.horaEntrada) === this.formatearHora(plantilla.horaEntrada) &&
+      this.formatearHora(this.turnoActual.horaSalida) === this.formatearHora(plantilla.horaSalida)
+    );
+  }
+
+  trackByPlantillaId(_index: number, plantilla: TurnoPredeterminado): number | undefined {
+    return plantilla.id;
+  }
+
+  abrirModalGestionarPlantillas(): void {
+    this.mostrarModalGestionarPlantillas = true;
+    setTimeout(() => (this.isModalGestionarPlantillasVisible = true), MODAL_OPEN_DELAY_MS);
+  }
+
+  cerrarModalGestionarPlantillas(): void {
+    this.isModalGestionarPlantillasVisible = false;
+    setTimeout(() => (this.mostrarModalGestionarPlantillas = false), MODAL_CLOSE_DELAY_MS);
+  }
+
+  manejarPlantillaGuardada(): void {
+    this.cargarPlantillas();
+  }
+
+  manejarPlantillaEliminada(): void {
+    this.cargarPlantillas();
   }
 
   private customSort(a: Tienda, b: Tienda): number {

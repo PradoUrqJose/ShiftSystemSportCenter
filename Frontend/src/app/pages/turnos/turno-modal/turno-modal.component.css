@@ -1,0 +1,18 @@
+/* Tarjetas de Turno Partido (Mañana/Tarde) — Fase 2 del rediseño: antes eran
+   bg-blue-50/bg-orange-50 sueltos, sin relación con el color real que la
+   pill del calendario termina mostrando para ese mismo turno partido
+   (.shift-split-1/2 en turnos.component.css). Ahora comparten los mismos
+   tokens, así el modal y el calendario hablan el mismo idioma de color. */
+.split-card--manana {
+  background-color: var(--shift-split-1-bg);
+}
+.split-card--manana .split-card-title {
+  color: var(--shift-split-1-accent);
+}
+
+.split-card--tarde {
+  background-color: var(--shift-split-2-bg);
+}
+.split-card--tarde .split-card-title {
+  color: var(--shift-split-2-accent);
+}

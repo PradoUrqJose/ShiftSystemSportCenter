@@ -12,6 +12,9 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FeriadoDTO {
+    // Null al crear (el cliente no lo manda); presente en las respuestas
+    // para que el frontend pueda referenciar cuál editar/borrar.
+    private Long id;
     @NotNull(message = "La fecha es obligatoria")
     private LocalDate fecha;
     @Size(max = 255, message = "La descripción no puede exceder 255 caracteres")

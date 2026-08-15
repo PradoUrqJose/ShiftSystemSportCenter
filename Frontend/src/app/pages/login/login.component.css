@@ -1,0 +1,320 @@
+/* Login — la única pantalla de la app donde el motion es deliberadamente
+ * más "de marca" que funcional (DESIGN.md principio 4 pide motion con
+ * propósito en el resto de la app; acá el propósito es la primera
+ * impresión del producto, a pedido explícito). El resto de la app sigue
+ * sin tocar este criterio.
+ *
+ * Reglas heredadas del resto del sistema:
+ * - Duraciones/easing salen de tokens.css (--duration-*, --ease-standard),
+ *   nunca un ms hardcodeado suelto.
+ * - Stagger de entrada vía `--i` seteado en el *ngFor/elemento (mismo
+ *   mecanismo que --row-i en data-table.css), no JS.
+ * - Todo respeta prefers-reduced-motion (bloque al final).
+ * - Ningún par de keyframes en el MISMO elemento anima la MISMA propiedad
+ *   (transform vs. transform chocaría) — donde hace falta entrada +
+ *   loop en un mismo nodo, se separan en opacity (entrada) vs. transform
+ *   (loop) para que ambas animaciones convivan sin pisarse.
+ */
+
+/* ---------- Tarjeta contenedora ---------- */
+
+.login-card {
+  animation: login-card-in var(--duration-modal) var(--ease-standard) backwards;
+}
+
+@keyframes login-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Credenciales inválidas: la tarjeta "niega con la cabeza" — refuerzo
+ * visual del toast de Notiflix (auth.service ya rechazó el login), no
+ * reemplaza el mensaje de error. Se dispara vía [class.login-card--shake]
+ * en el .ts y se apaga sola en (animationend). */
+.login-card--shake {
+  animation: login-shake 480ms var(--ease-standard);
+}
+
+@keyframes login-shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(3px); }
+  30%, 50%, 70% { transform: translateX(-6px); }
+  40%, 60% { transform: translateX(6px); }
+}
+
+/* ---------- Columna izquierda: entrada en cascada ---------- */
+
+.login-intro,
+.login-field,
+.login-submit {
+  animation: login-fade-up var(--duration-modal) var(--ease-standard) backwards;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+
+@keyframes login-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Columna derecha: showcase del producto ---------- */
+
+.login-showcase {
+  background: linear-gradient(165deg, var(--color-brand-soft) 0%, #eef4ff 45%, var(--hue-violet-soft) 100%);
+}
+
+.login-showcase__glow {
+  position: absolute;
+  inset: -25%;
+  background:
+    radial-gradient(circle at 28% 22%, rgba(29, 64, 175, 0.35), transparent 55%),
+    radial-gradient(circle at 76% 74%, rgba(91, 61, 240, 0.28), transparent 55%),
+    radial-gradient(circle at 50% 100%, rgba(13, 143, 128, 0.18), transparent 60%);
+  filter: blur(48px);
+  animation: login-glow-shift 18s ease-in-out infinite;
+}
+
+@keyframes login-glow-shift {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(-3%, 2%) rotate(5deg); }
+}
+
+/* Motas de luz flotando de fondo — eco de la plantilla original, en
+ * miniatura y con las curvas de motion propias del sistema en vez de
+ * valores sueltos. */
+.login-showcase__orb {
+  position: absolute;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.6);
+  filter: blur(1px);
+  animation: login-orb-float 7s var(--ease-standard) infinite;
+}
+.login-showcase__orb--1 { width: 6px; height: 54px; top: 16%; left: 22%; }
+.login-showcase__orb--2 { width: 5px; height: 40px; top: 64%; right: 16%; animation-duration: 9s; animation-delay: 1.2s; }
+.login-showcase__orb--3 { width: 4px; height: 30px; bottom: 12%; left: 42%; animation-duration: 8s; animation-delay: 0.6s; }
+
+@keyframes login-orb-float {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(-16px); opacity: 0.9; }
+}
+
+/* Parallax: --mx/--my los setea (mousemove) en el .ts (getBoundingClientRect
+ * + posición relativa del cursor), acá solo se consumen. Sin JS no hay
+ * fallback — por eso queda en 0 con prefers-reduced-motion (ver .ts) y la
+ * transition de abajo amortigua el regreso a 0 en mouseleave. */
+.login-showcase__stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(var(--mx, 0px), var(--my, 0px));
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+
+/* Envoltorio del tamaño real de la tarjeta (no del panel entero) — los
+ * chips se posicionan en % contra ESTE ancho, así "asoman" apenas fuera
+ * del borde de la tarjeta en vez de flotar sueltos en medio del panel. */
+.login-showcase__cluster {
+  position: relative;
+}
+
+.login-showcase__caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 48px;
+  z-index: 1;
+  text-align: center;
+  padding: 0 48px;
+  animation: login-fade-up var(--duration-modal) var(--ease-standard) 480ms backwards;
+}
+.login-showcase__caption h2 {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--color-brand-ink);
+  margin-bottom: 4px;
+}
+.login-showcase__caption p {
+  font-size: 13px;
+  color: var(--color-ink-soft);
+}
+
+/* ---------- Mockup de planilla semanal ---------- */
+/* No es una captura real: es una miniatura hecha con los mismos tokens de
+ * --shift-* que usa la vista de Turnos real, para que quien recién ve el
+ * login ya reconozca el producto cuando entre. */
+
+.schedule-card {
+  width: 300px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 20px;
+  transform: rotate(-2deg);
+  animation: login-card-pop-in var(--duration-modal) var(--ease-standard) 160ms backwards;
+}
+
+@keyframes login-card-pop-in {
+  from {
+    opacity: 0;
+    transform: rotate(-2deg) translateY(16px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-2deg) translateY(0) scale(1);
+  }
+}
+
+.schedule-card__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.schedule-card__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-brand-soft);
+  color: var(--color-brand);
+}
+.schedule-card__title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.schedule-card__subtitle {
+  font-size: 12px;
+  color: var(--color-ink-faint);
+}
+
+.schedule-card__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.schedule-card__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.schedule-card__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+}
+.schedule-card__track {
+  position: relative;
+  flex-grow: 1;
+  height: 10px;
+  background: var(--color-paper);
+  border-radius: var(--radius-pill);
+}
+.schedule-card__pill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  border: 1px solid;
+  transform-origin: left center;
+  animation: login-pill-grow var(--duration-modal) var(--ease-standard) backwards;
+  animation-delay: calc(420ms + var(--i, 0) * 90ms);
+}
+
+@keyframes login-pill-grow {
+  from { transform: scaleX(0); opacity: 0; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+
+/* ---------- Chips flotantes ---------- */
+/* Entrada (opacity, una vez) y flotación (transform, en loop) se separan a
+ * propósito en dos animaciones de propiedades distintas — así conviven en
+ * el mismo elemento sin que una pise a la otra. */
+
+.floating-chip {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-surface);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-soft);
+  padding: 8px 14px 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-ink);
+  animation:
+    login-fade-up var(--duration-modal) var(--ease-standard) 620ms backwards,
+    login-chip-float 5s var(--ease-standard) 1.1s infinite;
+}
+.floating-chip--clock {
+  top: 6%;
+  right: -6%;
+  color: var(--hue-teal);
+}
+.floating-chip--check {
+  bottom: -6%;
+  left: -8%;
+  animation-delay: 760ms, 1.6s;
+}
+.floating-chip__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hue-teal);
+  animation: login-dot-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes login-chip-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes login-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.75); }
+}
+
+/* ---------- Accesibilidad ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .login-card,
+  .login-card--shake,
+  .login-intro,
+  .login-field,
+  .login-submit,
+  .login-showcase__glow,
+  .login-showcase__orb,
+  .login-showcase__stage,
+  .login-showcase__caption,
+  .schedule-card,
+  .schedule-card__pill,
+  .floating-chip,
+  .floating-chip__dot {
+    animation: none;
+    transition: none;
+  }
+}

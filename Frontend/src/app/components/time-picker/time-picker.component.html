@@ -1,0 +1,19 @@
+<div class="time-picker w-full flex items-center justify-center gap-1 p-3 border border-gray-200 rounded-xl bg-white transition">
+  <input #horasInput type="text" inputmode="numeric" maxlength="2" [id]="id" placeholder="00"
+    class="w-7 text-center bg-transparent outline-none font-mono font-semibold text-base text-gray-800 placeholder:text-gray-300 placeholder:font-normal"
+    [value]="horasTexto"
+    aria-label="Hora"
+    (focus)="onFocus(horasInput)"
+    (input)="onInputHoras(horasInput.value)"
+    (blur)="onBlurHoras(horasInput.value)"
+    (keydown)="onKeydown($event, 'h')" />
+  <span class="font-bold text-gray-400 select-none">:</span>
+  <input #minutosInput type="text" inputmode="numeric" maxlength="2" placeholder="00"
+    class="w-7 text-center bg-transparent outline-none font-mono font-semibold text-base text-gray-800 placeholder:text-gray-300 placeholder:font-normal"
+    [value]="minutosTexto"
+    aria-label="Minutos"
+    (focus)="onFocus(minutosInput)"
+    (input)="onInputMinutos(minutosInput.value)"
+    (blur)="onBlurMinutos(minutosInput.value)"
+    (keydown)="onKeydown($event, 'm')" />
+</div>

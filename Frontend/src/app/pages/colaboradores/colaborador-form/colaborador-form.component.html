@@ -1,0 +1,140 @@
+@if (mostrarModal) {
+  <div
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="cerrarModal()">
+    <div
+      class="min-w-[40rem] bg-white rounded-2xl shadow-xl transform transition-all duration-300 w-full max-w-lg relative overflow-hidden border-4 border-white"
+    [ngClass]="{
+      'opacity-0 -translate-y-10': !isModalVisible,
+      'opacity-100 translate-y-0': isModalVisible
+    }" (click)="$event.stopPropagation()">
+      <!-- Encabezado -->
+      <div class="text-center bg-[#f1f1f1] w-full h-20"></div>
+      <!-- Formulario -->
+      <form [formGroup]="colaboradorForm" (ngSubmit)="guardar()" class="px-6 pb-6">
+        <!-- Contenedor de dos columnas -->
+        <div class="flex items-center mb-4 -mt-12">
+          <!-- Columna izquierda -->
+          <div class="flex justify-center items-center gap-4">
+            <div class="relative">
+              <!-- Spinner -->
+              @if (isPhotoLoading) {
+                <div
+                  class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-full w-24 h-24">
+                  <div class="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              }
+              <!-- Imagen -->
+              <img [src]="fotoPreview" alt="Foto del colaborador"
+                class="w-24 h-24 rounded-full object-cover cursor-pointer"
+                [ngClass]="{'border-4 border-white outline outline-1 outline-gray-300': isEditing,} "
+                [class.opacity-50]="isPhotoLoading" (click)="triggerFileInput()" />
+            </div>
+            <!-- Mostrar nombre y email del usuario en modo edición -->
+            @if (isEditing) {
+              <div class="text-lg font-semibold text-gray-800 flex flex-col justify-between gap-1">
+                <p class="text-left">{{ colaboradorForm.get('nombre')?.value }} {{ colaboradorForm.get('apellido')?.value
+                }}</p>
+                <p class="text-left font-light text-xs text-gray-500">{{ colaboradorForm.get('email')?.value }}</p>
+              </div>
+            }
+          </div>
+          <!-- Columna derecha -->
+          @if (isEditing) {
+            <div class="ml-auto">
+              <button type="button" (click)="onVerPerfil()"
+                class="inline-flex items-center justify-center border align-middle select-none font-sans font-medium text-center duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus:shadow-none text-sm py-2 px-4 shadow-sm hover:shadow-md bg-stone-200 hover:bg-stone-100 relative bg-gradient-to-b from-white to-white border-stone-200 text-stone-700 rounded-lg hover:bg-gradient-to-b hover:from-stone-50 hover:to-stone-50 hover:border-stone-200 after:absolute after:inset-0 after:rounded-[inherit] after:box-shadow after:shadow-[inset_0_1px_0px_rgba(255,255,255,0.35),inset_0_-1px_0px_rgba(0,0,0,0.20)] after:pointer-events-none transition antialiased">
+                Ver Perfil
+              </button>
+            </div>
+          }
+        </div>
+        <!-- Input de archivo oculto -->
+        <input #fileInput id="foto" type="file" (change)="onFileSelected($event)" class="hidden" />
+        <!-- Mensaje de error -->
+        @if (errorMessage) {
+          <div class="bg-red-50 text-red-600 text-sm mt-4 p-2 rounded-lg mb-3">
+            {{ errorMessage }}
+          </div>
+        }
+        <!-- Resto del formulario -->
+        <div class="py-4 grid grid-cols-3 gap-4 bg-gray-50 px-4 rounded-lg mb-4">
+          <div>
+            <input id="nombre" type="text" formControlName="nombre" placeholder="Nombre"
+              class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+          <div>
+            <input id="apellido" type="text" formControlName="apellido" placeholder="Apellido"
+              class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+          <div>
+            <input id="telefono" type="text" formControlName="telefono" placeholder="Teléfono"
+              class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+          <div>
+            <input id="fechaNacimiento" type="date" formControlName="fechaNacimiento" placeholder="Fecha de Nacimiento"
+              class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+          <div>
+            <select formControlName="puestoId"
+              class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 h-full">
+              <option [ngValue]="null" selected>Sin Puesto</option>
+              @for (puesto of puestos; track trackByPuestoId($index, puesto)) {
+                <option [value]="puesto.id">{{ puesto.nombre }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <input id="dni" type="text" formControlName="dni" placeholder="DNI"
+              class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+          <div class="grid grid-cols-2 col-span-3 gap-4">
+            <div class="flex items-center">
+              <select (change)="onEmpresaSelected($event)" formControlName="empresaId"
+                class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 h-full">
+                <option [ngValue]="null" disabled selected>Seleccione una Empresa</option>
+                @for (empresa of empresas; track trackByEmpresaId($index, empresa)) {
+                  <option [value]="empresa.id">
+                    {{ empresa.nombre }}
+                  </option>
+                }
+              </select>
+            </div>
+            <div class="flex items-center">
+              <input id="email" type="email" formControlName="email" placeholder="Email"
+                class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 h-full" />
+            </div>
+          </div>
+        </div>
+        <!-- Línea divisora -->
+        <hr class="border-gray-200 my-4">
+        <div class="py-4 bg-gray-50 px-4 rounded-lg mb-4">
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" formControlName="habilitado"
+              class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+            <span class="text-sm font-medium text-gray-700">Colaborador habilitado</span>
+          </label>
+        </div>
+        <!-- Botones -->
+        <div class="flex justify-end space-x-4 mt-4">
+          <button type="button" (click)="cerrarModal()"
+            class="bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition">
+            Cancelar
+          </button>
+          <!-- Botón de agregar con spinner de carga -->
+          <button type="submit" [disabled]="isLoading"
+            class="bg-gradient-to-r py-2 px-4 rounded-lg transition flex items-center justify-center"
+            [ngClass]="{'bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800 transition': !isLoading, 'button-disabled': isLoading}">
+            @if (!isLoading) {
+              <span>{{ isEditing ? 'Actualizar' : 'Agregar' }}</span>
+            }
+            @if (isLoading) {
+              <span>
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Cargando...
+              </span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

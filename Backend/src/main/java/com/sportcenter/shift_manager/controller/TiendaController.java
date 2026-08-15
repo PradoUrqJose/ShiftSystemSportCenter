@@ -3,10 +3,11 @@ package com.sportcenter.shift_manager.controller;
 import com.sportcenter.shift_manager.dto.TiendaDTO;
 import com.sportcenter.shift_manager.service.TiendaService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/tiendas")
@@ -24,9 +25,8 @@ public class TiendaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TiendaDTO>> getAllTiendas() {
-        List<TiendaDTO> tiendas = tiendaService.getAllTiendas();
-        return ResponseEntity.ok(tiendas);
+    public ResponseEntity<Page<TiendaDTO>> getAllTiendas(@PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(tiendaService.getAllTiendas(pageable));
     }
 
     @GetMapping("/{id}")

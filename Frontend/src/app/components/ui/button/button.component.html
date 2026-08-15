@@ -1,0 +1,21 @@
+<button
+  [type]="type"
+  class="app-btn"
+  [class.app-btn--primary]="variant === 'primary'"
+  [class.app-btn--secondary]="variant === 'secondary'"
+  [class.app-btn--icon]="variant === 'icon'"
+  [class.app-btn--full]="fullWidth && variant !== 'icon'"
+  [class.hue-teal]="(variant === 'icon' || variant === 'secondary') && hue === 'teal'"
+  [class.hue-violet]="(variant === 'icon' || variant === 'secondary') && hue === 'violet'"
+  [class.hue-brand]="(variant === 'icon' || variant === 'secondary') && hue === 'brand'"
+  [disabled]="disabled || isLoading"
+  [attr.data-tooltip]="variant === 'icon' ? tooltip : null"
+  [attr.aria-label]="ariaLabel || tooltip"
+  >
+  @if (isLoading) {
+    <span class="app-btn__spinner" aria-hidden="true"></span>
+  }
+  <span class="app-btn__content" [class.app-btn__content--hidden]="isLoading">
+    <ng-content></ng-content>
+  </span>
+</button>

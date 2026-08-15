@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { PageResponse, PAGE_SIZE_ALL } from '../models/page-response.model';
 
 export interface Colaborador {
   id: number;
@@ -27,8 +28,15 @@ export class ColaboradorService {
 
   constructor(private http: HttpClient) {}
 
+  // GET /api/colaboradores devuelve paginado (Page<ColaboradorDTO>) desde la
+  // Etapa 2 del backend. Pedimos una página grande para no truncar la lista
+  // mientras no haya paginación real en la UI (ver PAGE_SIZE_ALL).
   getColaboradores(): Observable<Colaborador[]> {
-    return this.http.get<Colaborador[]>(this.apiUrl);
+    return this.http
+      .get<PageResponse<Colaborador>>(this.apiUrl, {
+        params: { size: PAGE_SIZE_ALL },
+      })
+      .pipe(map((page) => page.content));
   }
 
   getColaboradoresByEmpresa(empresaId: number): Observable<Colaborador[]> {
@@ -64,10 +72,6 @@ export class ColaboradorService {
       formData.append('file', file); // Añade el archivo si está presente
     }
     return this.http.put<Colaborador>(`${this.apiUrl}/${id}`, formData);
-  }
-
-  deleteColaborador(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
   toggleHabilitacion(id: number, habilitado: boolean): Observable<Colaborador> {

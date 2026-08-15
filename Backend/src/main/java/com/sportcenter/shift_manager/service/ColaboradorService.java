@@ -8,16 +8,21 @@ import com.sportcenter.shift_manager.model.Puesto;
 import com.sportcenter.shift_manager.repository.ColaboradorRepository;
 import com.sportcenter.shift_manager.repository.EmpresaRepository;
 import com.sportcenter.shift_manager.repository.PuestoRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ColaboradorService {
+    private static final Logger log = LoggerFactory.getLogger(ColaboradorService.class);
+
     private final ColaboradorRepository colaboradorRepository;
     private final EmpresaRepository empresaRepository;
     private final CloudinaryService cloudinaryService;
@@ -63,7 +68,7 @@ public class ColaboradorService {
         // Asignar puesto si se proporciona puestoId
         if (colaboradorDTO.getPuestoId() != null) {
             Puesto puesto = puestoRepository.findById(colaboradorDTO.getPuestoId())
-                    .orElseThrow(() -> new RuntimeException("Puesto con ID " + colaboradorDTO.getPuestoId() + " no encontrado"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Puesto con ID " + colaboradorDTO.getPuestoId() + " no encontrado"));
             colaborador.setPuesto(puesto);
         }
 
@@ -74,13 +79,15 @@ public class ColaboradorService {
             colaborador.setFotoUrl(imageUrl);
         }
 
-        return colaboradorRepository.save(colaborador);
+        Colaborador guardado = colaboradorRepository.save(colaborador);
+        log.info("Colaborador creado: id={}, dni={}, empresaId={}", guardado.getId(), guardado.getDni(), empresa.getId());
+        return guardado;
     }
 
     // Método para validar la imagen (sin cambios)
     private void validarImagen(MultipartFile file) {
         if (file.getSize() > 1048576) { // 1 MB
-            throw new RuntimeException("La foto debe ser menor a 1 MB");
+            throw new IllegalArgumentException("La foto debe ser menor a 1 MB");
         }
 
         String contentType = file.getContentType();
@@ -89,11 +96,9 @@ public class ColaboradorService {
         }
     }
 
-    // Obtener todos los colaboradores (sin cambios en la lógica, solo en el DTO)
-    public List<ColaboradorDTO> getAllColaboradores() {
-        return colaboradorRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    // Obtener todos los colaboradores, paginado
+    public Page<ColaboradorDTO> getAllColaboradores(Pageable pageable) {
+        return colaboradorRepository.findAll(pageable).map(this::convertToDTO);
     }
 
     // Obtener colaboradores por empresa (sin cambios en la lógica, solo en el DTO)
@@ -105,7 +110,7 @@ public class ColaboradorService {
 
     public Colaborador getColaboradorById(Long id) {
         return colaboradorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Colaborador con ID " + id + " no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Colaborador con ID " + id + " no encontrado"));
     }
 
     // Actualizar un colaborador
@@ -117,7 +122,7 @@ public class ColaboradorService {
 
         // Validar existencia de empresa
         Empresa nuevaEmpresa = empresaRepository.findById(colaboradorDTO.getEmpresaId())
-                .orElseThrow(() -> new RuntimeException("Empresa con ID " + colaboradorDTO.getEmpresaId() + " no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa con ID " + colaboradorDTO.getEmpresaId() + " no encontrada"));
 
         // Validar duplicados (excepto si es el mismo usuario)
         colaboradorRepository.findByEmail(colaboradorDTO.getEmail())
@@ -153,7 +158,7 @@ public class ColaboradorService {
         // Actualizar puesto si se proporciona puestoId
         if (colaboradorDTO.getPuestoId() != null) {
             Puesto puesto = puestoRepository.findById(colaboradorDTO.getPuestoId())
-                    .orElseThrow(() -> new RuntimeException("Puesto con ID " + colaboradorDTO.getPuestoId() + " no encontrado"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Puesto con ID " + colaboradorDTO.getPuestoId() + " no encontrado"));
             colaborador.setPuesto(puesto);
         } else {
             colaborador.setPuesto(null); // Permitir quitar el puesto si puestoId es null
@@ -174,7 +179,9 @@ public class ColaboradorService {
             colaborador.setFotoUrl(imageUrl);
         }
 
-        return colaboradorRepository.save(colaborador);
+        Colaborador actualizado = colaboradorRepository.save(colaborador);
+        log.info("Colaborador actualizado: id={}", actualizado.getId());
+        return actualizado;
     }
 
     // Extrae el public_id de la URL de Cloudinary (sin cambios)
@@ -182,11 +189,20 @@ public class ColaboradorService {
         return imageUrl.substring(imageUrl.lastIndexOf("/") + 1, imageUrl.lastIndexOf("."));
     }
 
-    // Eliminar un colaborador (sin cambios)
-    public void deleteColaborador(Long id) {
+    // Eliminar un colaborador
+    public void deleteColaborador(Long id) throws IOException {
         Colaborador colaborador = colaboradorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Colaborador con ID " + id + " no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Colaborador con ID " + id + " no encontrado"));
+
+        // Antes esto nunca se llamaba: cada colaborador borrado dejaba su foto
+        // huérfana en Cloudinary para siempre (mismo patrón que updateColaborador
+        // ya usa al reemplazar una foto, ver más arriba).
+        if (colaborador.getFotoUrl() != null) {
+            cloudinaryService.deleteImage(getPublicIdFromUrl(colaborador.getFotoUrl()));
+        }
+
         colaboradorRepository.delete(colaborador);
+        log.info("Colaborador eliminado: id={}", id);
     }
 
     // Cambiar estado de habilitación (sin cambios)
@@ -195,6 +211,7 @@ public class ColaboradorService {
         Colaborador colaborador = colaboradorRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Colaborador con ID " + id + " no encontrado"));
         colaborador.setHabilitado(habilitado);
+        log.info("Colaborador id={} habilitado={}", id, habilitado);
         return colaboradorRepository.save(colaborador);
     }
 
