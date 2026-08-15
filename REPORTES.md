@@ -118,13 +118,25 @@ aprobado como conceptos separados) — no se mete sueldo directo en
 - [ ] **Fase 5 — Excepciones y calidad de datos.** EN DEFINICIÓN (auditoría
       de BD realizada el 15 ago 2026). El primer corte propone estas reglas:
       horario incompleto o inválido, solapamiento, turno exacto duplicado,
-      marca de feriado inconsistente, turno futuro de un colaborador
-      deshabilitado, jornada extensa, turno partido y programación fuera del
-      horizonte. La jornada extensa debe usar 12 h por defecto (configurable):
-      8 h no discrimina anomalías en esta operación, porque 3971 jornadas la
-      superan y 9.75 h es la duración más frecuente. El umbral de 8 h sigue
-      siendo válido como dato contable de "horas extra candidatas", no como
-      alarma de calidad. "Turno sin puesto histórico" queda fuera: `Turno`
+      marca de feriado inconsistente, turno futuro de un colaborador,
+      posible falta de descanso semanal, jornada extensa, turno partido y
+      programación fuera del horizonte. La revisión posterior al primer corte
+      obliga a separar dos
+      señales que no son equivalentes: más de 8 h diarias o 48 h semanales es
+      un **riesgo de cumplimiento laboral por conciliar** con asistencia,
+      régimen de jornada, voluntariedad y pago/compensación del sobretiempo;
+      más de 12 h es además una **anomalía operativa extrema**. El primer
+      indicador no se puede descartar por ser frecuente: precisamente hay
+      3971 jornadas programadas por encima de 8 h y 303 semanas completas por
+      encima de 48 h. No existe en la regla general un tope independiente de
+      220 h mensuales: en una muestra de los siete meses completos de 2026,
+      solo 2 de 103 casos persona-mes superan 220 h, pero 56 contienen al menos
+      una semana superior a 48 h; 54 de esos 56 quedan por debajo de 220 h.
+      Por ello, un control mensual ocultaría casi todos los casos relevantes.
+      Tampoco permite declarar por sí solo una infracción,
+      porque `Turno` registra programación, no asistencia real ni pago de
+      horas extra, y una semana calendario puede no coincidir con el ciclo de
+      una jornada atípica. "Turno sin puesto histórico" queda fuera: `Turno`
       no almacena puesto y el puesto actual del colaborador no permite
       reconstruir el pasado con rigor. Empresa y tienda ya son obligatorias
       por esquema y claves foráneas, pero se conservarán como controles
@@ -133,14 +145,20 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       Línea base de 6157 turnos (2025-02-01 a 2026-09-10): 0 horarios
       incompletos/inválidos, 0 solapamientos, 0 duplicados exactos, 0
       inconsistencias de feriado, 0 turnos futuros de deshabilitados y 0
-      turnos a más de 90 días; sí existen 50 días con turno partido y 7
-      jornadas por encima de 12 h. Hay 27 colaboradores deshabilitados; 23
+      turnos a más de 90 días; sí existen 50 días con turno partido, 7
+      jornadas por encima de 12 h y 303 semanas completas por encima de 48 h
+      (máximo programado: 79.75 h). Entre enero y julio de 2026 aparecen 35
+      secuencias programadas, correspondientes a 16 personas, sin una brecha
+      de 24 h consecutivas entre turnos; la mayor abarca 20 días trabajados.
+      Es una señal de posible falta de descanso semanal, no una conclusión
+      sobre asistencia real. Hay 27 colaboradores deshabilitados; 23
       tienen historial de turnos válido. Ese historial no se marcará como
       error, porque no existe fecha de baja en el modelo. Propuesta de
       severidad pendiente de aprobación: errores para
-      integridad/solapamiento/duplicado/feriado; advertencias para
-      deshabilitado futuro, jornada extensa y horizonte; información para
-      turno partido.
+      integridad/solapamiento/duplicado/feriado; riesgo laboral alto —no
+      veredicto automático— para límites diarios/semanales y ausencia aparente
+      de descanso semanal; advertencias para deshabilitado futuro, jornada
+      extrema y horizonte; información para turno partido.
 
 - [ ] **Fase 6 — Portada-resumen compacta.** PENDIENTE. No es un dashboard
       grande: horas programadas del periodo, horas en feriado, colaboradores
@@ -201,9 +219,10 @@ aprobado como conceptos separados) — no se mete sueldo directo en
 
 ## Próximo paso sugerido
 
-Aprobar las reglas y severidades de la Fase 5 descritas arriba. Después,
-implementar primero la consulta y sus pruebas; la pantalla se diseña con
-los resultados reales, no antes.
+Conciliar con contabilidad/asesoría laboral una muestra de las jornadas de
+más de 8 h y semanas de más de 48 h contra asistencia, boletas, acuerdos y
+descansos. Después aprobar las reglas y severidades de la Fase 5 e implementar
+primero la consulta y sus pruebas; la pantalla se diseña con resultados reales.
 
 ## Protocolo obligatorio de avance y revisión
 
