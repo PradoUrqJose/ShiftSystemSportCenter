@@ -8,7 +8,6 @@ import { CalendarioService } from '../../../services/calendario.service';
 import { format, parseISO } from 'date-fns';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { Turno } from '../../../services/turno.service';
-import { getEmpresaColor } from '../../../utils/color.util';
 import { ButtonComponent } from '../../../components/ui/button/button.component';
 import { EmptyStateComponent } from '../../../components/ui/empty-state/empty-state.component';
 import { BadgeComponent } from '../../../components/ui/badge/badge.component';
@@ -37,8 +36,7 @@ const UMBRAL_HORAS_DIARIAS_DEFAULT = 8;
     BadgeComponent,
     SkeletonComponent,
   ],
-  templateUrl: './colaborador-profile.component.html',
-  styleUrls: ['./colaborador-profile.component.css']
+  templateUrl: './colaborador-profile.component.html'
 })
 export class ColaboradorProfileComponent implements OnInit, OnDestroy {
   readonly skeletonRows = Array.from({ length: 4 });
@@ -194,13 +192,6 @@ export class ColaboradorProfileComponent implements OnInit, OnDestroy {
 
   goBack(): void {
     this.router.navigate(['/colaboradores']);
-  }
-
-  // Delega a utils/color.util.ts — el template lo llama directo (no puede
-  // llamar funciones sueltas), es un wrapper fino. Se usa solo como acento
-  // puntual (ej. borde/badge), no como fondo de página.
-  getEmpresaColor(empresaNombre: string | undefined): string {
-    return getEmpresaColor(empresaNombre);
   }
 
   abrirCalendario(state: 'inicio' | 'fin'): void {

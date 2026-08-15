@@ -177,6 +177,16 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       exportación y navegación a la ficha fue aprobada por el usuario; el
       navegador automatizado no estuvo disponible en esta sesión.
 
+      Checkpoint visual adicional aprobado el 15 ago: se eliminó de Reportes
+      el patrón de bordes de acento (línea superior en indicadores, línea
+      lateral en hallazgos y barra deslizante del navbar). La selección y las
+      severidades ahora se expresan con superficies suaves, chips y puntos de
+      estado. También se reorganizó `/reportes/colaborador-profile/:id` con
+      una jerarquía de identidad, período, resumen y bloques analíticos. No se
+      modificaron reglas ni datos. El build de producción y 8 pruebas
+      focalizadas de excepciones/ficha/utilidades finalizaron correctamente;
+      la revisión visual final fue aprobada por el usuario.
+
 - [ ] **Fase 6 — Portada-resumen compacta.** PENDIENTE. No es un dashboard
       grande: horas programadas del periodo, horas en feriado, colaboradores
       con carga excepcional, incidencias de calidad pendientes, una
@@ -214,12 +224,15 @@ aprobado como conceptos separados) — no se mete sueldo directo en
   el mismo colaborador. No hay relación "turno partido" explícita en el
   modelo (deuda ya documentada como fuera de alcance en el plan de
   mantenibilidad previo).
-- **Diseño visual de los reportes nuevos: libertad completa.** No replicar
-  la composición de `horas-trabajadas`/`turnos-feriados` (toolbar elevado +
-  `<table>`). Sí usar los tokens del design system (`tokens.css`,
-  `DESIGN.md`) y los átomos genéricos (`app-button`, `app-badge`,
-  `app-empty-state`, `app-skeleton`) donde encajen. Ver memoria
-  `preferencia-libertad-disenio-reportes-nuevos`.
+- **Diseño visual de los reportes nuevos: herramienta operativa sobria.** No
+  replicar la composición de `horas-trabajadas`/`turnos-feriados` (toolbar
+  elevado + `<table>`) ni usar bordes superiores/laterales de color como
+  recurso de estado o selección. La jerarquía se construye con tipografía,
+  espaciado y superficies; el color queda restringido a chips, puntos de
+  estado, iconos y fondos suaves. Sí usar los tokens del design system
+  (`tokens.css`, `DESIGN.md`) y los átomos genéricos (`app-button`,
+  `app-badge`, `app-empty-state`, `app-skeleton`) donde encajen. Criterio
+  aprobado por el usuario el 15 ago 2026 y aplicable a la Fase 6.
 - **Estructura de navegación objetivo** (migración gradual, no de una):
   ```
   Reportes

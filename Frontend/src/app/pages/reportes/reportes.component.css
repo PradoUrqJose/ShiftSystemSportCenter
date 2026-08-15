@@ -1,5 +1,9 @@
 
 
+.reports-shell {
+  min-height: 100vh;
+}
+
 ::ng-deep .ng-select.custom-ng-select .ng-select-container {
   min-height: 2.5rem !important;
   height: 2.5rem !important;

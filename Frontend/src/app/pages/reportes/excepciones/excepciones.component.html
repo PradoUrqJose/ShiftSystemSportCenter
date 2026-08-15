@@ -1,6 +1,6 @@
 <section class="exceptions">
   <header class="exceptions__header">
-    <div>
+    <div class="exceptions__intro">
       <span class="exceptions__eyebrow">Control preventivo</span>
       <h1>Excepciones y calidad</h1>
       <p>
@@ -9,8 +9,14 @@
       </p>
     </div>
     <div class="exceptions__scope">
-      <strong>8 h / 48 h</strong>
-      <span>se revisan por día y semana, no mediante un límite mensual.</span>
+      <span class="exceptions__scope-icon" aria-hidden="true">
+        <i class="fa-solid fa-scale-balanced"></i>
+      </span>
+      <div>
+        <span>Marco de revisión</span>
+        <strong>8 h al día · 48 h a la semana</strong>
+        <small>No se utiliza un límite mensual.</small>
+      </div>
     </div>
   </header>
 
@@ -65,22 +71,27 @@
   <ng-container *ngIf="!cargando && reporte">
     <div class="exceptions-stats" aria-label="Resumen de excepciones">
       <div class="exceptions-stat exceptions-stat--total">
+        <span class="exceptions-stat__status" aria-hidden="true"></span>
         <strong>{{ totalHallazgos }}</strong>
         <span>Hallazgos</span>
       </div>
       <div class="exceptions-stat exceptions-stat--error">
+        <span class="exceptions-stat__status" aria-hidden="true"></span>
         <strong>{{ reporte.errores }}</strong>
         <span>Errores de datos</span>
       </div>
       <div class="exceptions-stat exceptions-stat--risk">
+        <span class="exceptions-stat__status" aria-hidden="true"></span>
         <strong>{{ reporte.riesgos }}</strong>
         <span>Por conciliar</span>
       </div>
       <div class="exceptions-stat exceptions-stat--warning">
+        <span class="exceptions-stat__status" aria-hidden="true"></span>
         <strong>{{ reporte.advertencias }}</strong>
         <span>Advertencias</span>
       </div>
       <div class="exceptions-stat exceptions-stat--info">
+        <span class="exceptions-stat__status" aria-hidden="true"></span>
         <strong>{{ reporte.informativos }}</strong>
         <span>Informativos</span>
       </div>
@@ -113,7 +124,10 @@
         [attr.data-severity]="excepcion.severidad"
       >
         <div class="exception-card__signal">
-          <span>{{ etiquetaSeveridad(excepcion.severidad) }}</span>
+          <span class="exception-card__severity">
+            <i class="exception-card__dot" aria-hidden="true"></i>
+            {{ etiquetaSeveridad(excepcion.severidad) }}
+          </span>
           <strong>{{ excepcion.titulo }}</strong>
         </div>
 

@@ -2,9 +2,7 @@
  * tokens.css, nunca un ms suelto), pero calibrado distinto a propósito:
  * el login es una portada que se ve una vez, esto es el chrome que
  * Jose va a tener enfrente toda la jornada. Por eso acá NO hay nada en
- * loop infinito (nada de glow/orbes) — la única pieza "viva" es el
- * indicador que desliza al navegar, que es señal de estado, no
- * decoración pura (ver DESIGN.md principio 4). Todo lo demás es una
+ * loop infinito (nada de glow/orbes). Todo lo demás es una
  * animación de entrada que corre una sola vez cuando el sidebar se
  * monta (login → primera pantalla protegida).
  */
@@ -25,14 +23,6 @@
 }
 
 /* ---------- Items de navegación: entrada en cascada ---------- */
-/* OJO: la animación va en .nav-link (el <a>/<button> que mide
- * updateIndicator()), NO en .nav-item (el <li> que lo contiene). Un
- * ancestro con `transform` activo (aunque sea `position: static`) pasa a
- * ser el offsetParent del descendiente mientras la animación corre — el
- * indicador medía offsetTop relativo al <li> en vez del <ul>, siempre 0.
- * El transform del propio elemento medido no afecta a su propio offsetTop,
- * así que acá es seguro. --i se declara en el <li> (ver html) y se lee acá
- * por herencia normal de custom properties. */
 .nav-link {
   font-weight: 600;
   animation: nav-item-in var(--duration-modal) var(--ease-standard) backwards;
@@ -50,31 +40,6 @@
     opacity: 1;
     transform: translateX(0);
   }
-}
-
-/* ---------- Indicador deslizante ---------- */
-/* Un solo elemento absoluto que el .ts mueve/redimensiona (top/height en
- * px, medidos del <a>/<button> real vía #navLink) en vez de que cada link
- * pinte su propio "estoy activo" por separado — así al navegar se ve
- * como una sola pieza deslizando de un item a otro, no un parpadeo. */
-.nav-indicator {
-  position: absolute;
-  left: 0;
-  right: 0;
-  border-radius: var(--radius-md);
-  background: var(--color-brand-soft);
-  box-shadow: inset 3px 0 0 var(--color-brand);
-  opacity: 0;
-  transform: scaleY(0.85);
-  transition: top var(--duration-modal) var(--ease-standard),
-    height var(--duration-modal) var(--ease-standard),
-    opacity var(--duration-base) var(--ease-standard),
-    transform var(--duration-base) var(--ease-standard);
-  pointer-events: none;
-}
-.nav-indicator--visible {
-  opacity: 1;
-  transform: none;
 }
 
 /* ---------- Icono en chip ---------- */
@@ -109,11 +74,12 @@
 .nav-link.active {
   color: var(--color-brand-ink);
   font-weight: 800;
+  background: var(--color-brand-soft);
 }
 .nav-link.active .nav-icon {
-  background: var(--color-brand);
-  color: #ffffff;
-  box-shadow: var(--shadow-hover);
+  background: var(--color-surface);
+  color: var(--color-brand);
+  box-shadow: none;
 }
 
 .nav-chevron {
@@ -170,7 +136,6 @@
 @media (prefers-reduced-motion: reduce) {
   .app-sidebar,
   .nav-link,
-  .nav-indicator,
   .nav-chevron,
   .nav-submenu {
     animation: none;

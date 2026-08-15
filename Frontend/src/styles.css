@@ -4,6 +4,11 @@
 @import './app/styles/tokens.css';
 @import './app/styles/turno-tooltip.css';
 @import './app/styles/data-table.css';
+/* Las vistas analíticas usan nombres BEM propios y comparten el mismo
+   lenguaje visual. Se cargan como estilos globales para no duplicar los
+   selectores encapsulados de Angular en cada bloque del reporte. */
+@import './app/pages/reportes/excepciones/excepciones.component.css';
+@import './app/pages/reportes/colaborador-profile/colaborador-profile.component.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

@@ -1,152 +1,224 @@
-<section class="colab-perfil">
-  <header class="colab-perfil__header">
-    <app-button variant="secondary" (click)="goBack()">
-      <i class="fa-solid fa-arrow-left"></i> Volver
-    </app-button>
+<section class="profile">
+  <div class="profile__back">
+    <button type="button" (click)="goBack()">
+      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+      Colaboradores
+    </button>
+  </div>
 
+  <header class="profile-hero">
     <ng-container *ngIf="colaborador; else headerSkeleton">
-      <div class="colab-perfil__identidad" [style.--empresa-color]="getEmpresaColor(colaborador.empresaNombre)">
-        <img [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'" alt="Foto de perfil"
-          class="colab-perfil__foto">
-        <div class="colab-perfil__datos">
-          <div class="colab-perfil__nombre-row">
+      <div class="profile-identity">
+        <img
+          [src]="colaborador.fotoUrl || 'assets/user-circle-svgrepo-com.svg'"
+          [alt]="'Foto de ' + colaborador.nombre + ' ' + colaborador.apellido"
+          class="profile-identity__photo"
+        >
+        <div class="profile-identity__content">
+          <div class="profile-identity__title">
             <h1>{{ colaborador.nombre }} {{ colaborador.apellido }}</h1>
             <app-badge [tone]="colaborador.habilitado ? 'neutral' : 'warning'">
               {{ colaborador.habilitado ? 'Habilitado' : 'Deshabilitado' }}
             </app-badge>
           </div>
-          <p class="colab-perfil__meta">
-            <ng-container *ngIf="empresaIdContexto; else empresaActual">
-              Empresa del período: {{ nombreEmpresaContexto || 'sin turnos en el rango' }}
-            </ng-container>
-            <ng-template #empresaActual>Empresa actual: {{ colaborador.empresaNombre }}</ng-template>
-            · Puesto actual: {{ colaborador.puestoNombre || 'Sin puesto' }} · DNI {{ colaborador.dni || 'N/A' }}
-          </p>
+          <p>Análisis de carga programada y distribución de turnos</p>
+          <dl class="profile-identity__details">
+            <div>
+              <dt>Empresa</dt>
+              <dd *ngIf="empresaIdContexto; else empresaActual">
+                {{ nombreEmpresaContexto || 'Sin turnos en el período' }}
+              </dd>
+              <ng-template #empresaActual><dd>{{ colaborador.empresaNombre }}</dd></ng-template>
+            </div>
+            <div>
+              <dt>Puesto actual</dt>
+              <dd>{{ colaborador.puestoNombre || 'Sin puesto' }}</dd>
+            </div>
+            <div>
+              <dt>DNI</dt>
+              <dd>{{ colaborador.dni || 'No registrado' }}</dd>
+            </div>
+          </dl>
         </div>
       </div>
     </ng-container>
+
     <ng-template #headerSkeleton>
-      <div class="colab-perfil__identidad">
-        <app-skeleton width="56px" height="56px" shape="circle"></app-skeleton>
-        <div class="colab-perfil__datos">
-          <app-skeleton width="220px" height="20px"></app-skeleton>
-          <app-skeleton width="160px" height="14px"></app-skeleton>
+      <div class="profile-identity">
+        <app-skeleton width="72px" height="72px" shape="circle"></app-skeleton>
+        <div class="profile-identity__content">
+          <app-skeleton width="240px" height="24px"></app-skeleton>
+          <app-skeleton width="310px" height="14px"></app-skeleton>
         </div>
       </div>
     </ng-template>
 
-    <form class="colab-perfil-filtros" (ngSubmit)="loadStatistics()">
-      <label class="colab-perfil-filtros__field">
-        <span>Desde</span>
-        <input #fechaInicioInput type="date" [(ngModel)]="fechaInicio" name="fechaInicio"
-          (click)="abrirCalendario('inicio')">
-      </label>
-      <label class="colab-perfil-filtros__field">
-        <span>Hasta</span>
-        <input #fechaFinInput type="date" [(ngModel)]="fechaFin" name="fechaFin"
-          (click)="abrirCalendario('fin')">
-      </label>
-      <app-button type="submit" variant="primary" [isLoading]="cargandoStats">Aplicar</app-button>
+    <form class="profile-period" (ngSubmit)="loadStatistics()">
+      <div class="profile-period__heading">
+        <span>Período analizado</span>
+        <small>Las cifras corresponden a horas programadas</small>
+      </div>
+      <div class="profile-period__fields">
+        <label>
+          <span>Desde</span>
+          <input #fechaInicioInput type="date" [(ngModel)]="fechaInicio" name="fechaInicio"
+            (click)="abrirCalendario('inicio')">
+        </label>
+        <label>
+          <span>Hasta</span>
+          <input #fechaFinInput type="date" [(ngModel)]="fechaFin" name="fechaFin"
+            (click)="abrirCalendario('fin')">
+        </label>
+        <app-button type="submit" variant="primary" [isLoading]="cargandoStats">Actualizar</app-button>
+      </div>
     </form>
   </header>
 
-  <p class="colab-perfil-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <p class="profile-error" *ngIf="errorMessage">{{ errorMessage }}</p>
 
-  <div class="colab-perfil-skeleton" *ngIf="cargandoStats">
-    <app-skeleton *ngFor="let _ of skeletonRows" height="72px" radius="12px"></app-skeleton>
+  <div class="profile-skeleton" *ngIf="cargandoStats">
+    <app-skeleton *ngFor="let _ of skeletonRows" height="92px" radius="12px"></app-skeleton>
   </div>
 
   <ng-container *ngIf="!cargandoStats">
-    <div class="colab-perfil-stats">
-      <div class="colab-perfil-stat">
-        <span class="colab-perfil-stat__valor">{{ formatearHorasDia(horasNormales + horasFeriados, true) }}</span>
-        <span class="colab-perfil-stat__label">Horas del período</span>
+    <section class="profile-summary" aria-label="Resumen del período">
+      <div class="profile-metric">
+        <span>Total programado</span>
+        <strong>{{ formatearHorasDia(horasNormales + horasFeriados, true) }}</strong>
+        <small>horas en el período</small>
       </div>
-      <div class="colab-perfil-stat">
-        <span class="colab-perfil-stat__valor">{{ formatearHorasDia(promedioSemanal, true) }}</span>
-        <span class="colab-perfil-stat__label">Promedio · {{ semanasConActividad }} semanas completas con actividad</span>
+      <div class="profile-metric">
+        <span>Promedio semanal</span>
+        <strong>{{ formatearHorasDia(promedioSemanal, true) }}</strong>
+        <small>{{ semanasConActividad }} semanas completas activas</small>
       </div>
-      <div class="colab-perfil-stat">
-        <span class="colab-perfil-stat__valor">{{ formatearHorasDia(horasFeriados, true) }}</span>
-        <span class="colab-perfil-stat__label">Horas en feriado ({{ totalTurnosFeriados }} turnos)</span>
+      <div class="profile-metric">
+        <span>Trabajo en feriado</span>
+        <strong>{{ formatearHorasDia(horasFeriados, true) }}</strong>
+        <small>{{ totalTurnosFeriados }} turnos identificados</small>
       </div>
-      <div class="colab-perfil-stat" [class.colab-perfil-stat--alerta]="excepciones.length > 0">
-        <span class="colab-perfil-stat__valor">{{ excepciones.length }}</span>
-        <span class="colab-perfil-stat__label">Días con excepciones</span>
+      <div class="profile-metric" [class.profile-metric--attention]="excepciones.length > 0">
+        <span>Requiere revisión</span>
+        <strong>{{ excepciones.length }}</strong>
+        <small>días con excepciones</small>
       </div>
-    </div>
+    </section>
 
-    <div class="colab-perfil-grid">
-      <section class="colab-perfil-card">
-        <h2>Composición de horas</h2>
-        <div class="colab-perfil-bar">
-          <div class="colab-perfil-bar__segmento colab-perfil-bar__segmento--normal" [style.width.%]="porcentajeHorasNormales"></div>
-          <div class="colab-perfil-bar__segmento colab-perfil-bar__segmento--feriado" [style.width.%]="porcentajeHorasFeriados"></div>
-        </div>
-        <div class="colab-perfil-bar__leyenda">
-          <span>Normales: {{ formatearHorasDia(horasNormales, true) }} h ({{ porcentajeHorasNormales | number:'1.0-0' }}%)</span>
-          <span>Feriados: {{ formatearHorasDia(horasFeriados, true) }} h ({{ porcentajeHorasFeriados | number:'1.0-0' }}%)</span>
-        </div>
-
-        <h2>Semanas de mayor carga</h2>
-        <div *ngIf="semanasMayorCarga.length; else sinSemanasCompletas" class="colab-perfil-lista">
-          <div *ngFor="let semana of semanasMayorCarga" class="colab-perfil-lista__fila">
-            <span>{{ semana.inicio }} – {{ semana.fin }}</span>
-            <app-badge tone="neutral">
-              {{ formatearHorasDia(semana.horas, true) }} h
-            </app-badge>
+    <div class="profile-grid">
+      <section class="profile-panel profile-panel--composition">
+        <div class="profile-panel__heading">
+          <div>
+            <h2>Composición de horas</h2>
+            <p>Proporción entre jornadas regulares y feriados.</p>
           </div>
         </div>
-        <ng-template #sinSemanasCompletas>
-          <p class="colab-perfil-vacio">No hay semanas completas con actividad en el rango.</p>
-        </ng-template>
+        <div class="profile-composition">
+          <div class="profile-composition__bar" aria-hidden="true">
+            <span class="profile-composition__normal" [style.width.%]="porcentajeHorasNormales"></span>
+            <span class="profile-composition__holiday" [style.width.%]="porcentajeHorasFeriados"></span>
+          </div>
+          <div class="profile-composition__legend">
+            <div>
+              <i class="profile-dot profile-dot--normal" aria-hidden="true"></i>
+              <span>Regulares</span>
+              <strong>{{ formatearHorasDia(horasNormales, true) }} h</strong>
+              <small>{{ porcentajeHorasNormales | number:'1.0-0' }}%</small>
+            </div>
+            <div>
+              <i class="profile-dot profile-dot--holiday" aria-hidden="true"></i>
+              <span>Feriados</span>
+              <strong>{{ formatearHorasDia(horasFeriados, true) }} h</strong>
+              <small>{{ porcentajeHorasFeriados | number:'1.0-0' }}%</small>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <section class="colab-perfil-card">
-        <h2>Distribución por tienda</h2>
-        <div *ngIf="tiendasTrabajadas.length; else sinTiendas" class="colab-perfil-tiendas">
-          <div class="colab-perfil-tiendas__fila" *ngFor="let tienda of tiendasTrabajadas">
-            <span class="colab-perfil-tiendas__nombre">{{ tienda.nombre }}</span>
-            <div class="colab-perfil-tiendas__barra">
-              <div class="colab-perfil-tiendas__relleno" [style.width.%]="tienda.porcentaje"></div>
+      <section class="profile-panel profile-panel--stores">
+        <div class="profile-panel__heading">
+          <div>
+            <h2>Distribución por tienda</h2>
+            <p>Dónde se concentraron las horas del período.</p>
+          </div>
+        </div>
+        <div *ngIf="tiendasTrabajadas.length; else sinTiendas" class="profile-stores">
+          <div class="profile-stores__row" *ngFor="let tienda of tiendasTrabajadas">
+            <div class="profile-stores__label">
+              <span>{{ tienda.nombre }}</span>
+              <strong>{{ formatearHorasDia(tienda.horas, true) }} h</strong>
             </div>
-            <span class="colab-perfil-tiendas__horas">{{ formatearHorasDia(tienda.horas, true) }} h</span>
+            <div class="profile-stores__track" aria-hidden="true">
+              <span [style.width.%]="tienda.porcentaje"></span>
+            </div>
+            <small>{{ tienda.porcentaje | number:'1.0-0' }}% del total</small>
           </div>
         </div>
         <ng-template #sinTiendas>
-          <p class="colab-perfil-vacio">Sin turnos en el rango seleccionado.</p>
+          <p class="profile-empty">Sin turnos en el rango seleccionado.</p>
         </ng-template>
       </section>
 
-      <section class="colab-perfil-card colab-perfil-card--ancho">
-        <h2>Excepciones del período <small>(umbral diario: {{ umbralHorasDiarias }} h)</small></h2>
-        <div *ngIf="excepciones.length; else sinExcepciones" class="colab-perfil-lista">
-          <div *ngFor="let excepcion of excepciones; trackBy: trackByExcepcion" class="colab-perfil-lista__fila">
+      <section class="profile-panel profile-panel--weeks">
+        <div class="profile-panel__heading">
+          <div>
+            <h2>Semanas de mayor carga</h2>
+            <p>Semanas completas con actividad, ordenadas por horas.</p>
+          </div>
+        </div>
+        <div *ngIf="semanasMayorCarga.length; else sinSemanasCompletas" class="profile-list">
+          <div *ngFor="let semana of semanasMayorCarga" class="profile-list__row">
+            <span>{{ semana.inicio }} – {{ semana.fin }}</span>
+            <strong>{{ formatearHorasDia(semana.horas, true) }} h</strong>
+          </div>
+        </div>
+        <ng-template #sinSemanasCompletas>
+          <p class="profile-empty">No hay semanas completas con actividad en el rango.</p>
+        </ng-template>
+      </section>
+
+      <section class="profile-panel profile-panel--wide">
+        <div class="profile-panel__heading">
+          <div>
+            <h2>Excepciones del período</h2>
+            <p>Días con turno partido o que superan el umbral de {{ umbralHorasDiarias }} horas.</p>
+          </div>
+          <span class="profile-panel__count" *ngIf="excepciones.length">{{ excepciones.length }}</span>
+        </div>
+        <div *ngIf="excepciones.length; else sinExcepciones" class="profile-list">
+          <div *ngFor="let excepcion of excepciones; trackBy: trackByExcepcion" class="profile-list__row profile-list__row--exception">
             <span>{{ formatearFecha(excepcion.fecha) }}</span>
-            <span class="colab-perfil-lista__badges">
+            <span class="profile-list__badges">
               <app-badge *ngIf="excepcion.partido" tone="warning">Turno partido · {{ excepcion.cantidadTurnos }}</app-badge>
-              <app-badge *ngIf="excepcion.horasExtra" tone="overtime">Horas extra · {{ formatearHorasDia(excepcion.horas, true) }} h</app-badge>
+              <app-badge *ngIf="excepcion.horasExtra" tone="overtime">Supera umbral · {{ formatearHorasDia(excepcion.horas, true) }} h</app-badge>
               <app-badge *ngIf="excepcion.esFeriado" tone="holiday">Feriado</app-badge>
             </span>
           </div>
         </div>
         <ng-template #sinExcepciones>
-          <app-empty-state icon="✅" title="Sin excepciones" description="Ningún día del rango tiene más de un turno ni supera el umbral diario indicado."></app-empty-state>
+          <app-empty-state icon="✓" title="Sin excepciones" description="Ningún día supera el umbral ni contiene más de un turno."></app-empty-state>
         </ng-template>
       </section>
 
-      <section class="colab-perfil-card colab-perfil-card--ancho">
-        <h2>Actividad reciente</h2>
-        <div *ngIf="turnosRecientes.length; else sinTurnos" class="colab-perfil-lista">
-          <div *ngFor="let turno of turnosRecientes; trackBy: trackByTurnoId" class="colab-perfil-lista__fila colab-perfil-lista__fila--turno">
+      <section class="profile-panel profile-panel--wide">
+        <div class="profile-panel__heading">
+          <div>
+            <h2>Actividad reciente</h2>
+            <p>Últimos turnos incluidos en el período analizado.</p>
+          </div>
+        </div>
+        <div *ngIf="turnosRecientes.length; else sinTurnos" class="profile-activity">
+          <div class="profile-activity__header" aria-hidden="true">
+            <span>Fecha</span><span>Tienda</span><span>Horario</span><span>Duración</span>
+          </div>
+          <div *ngFor="let turno of turnosRecientes; trackBy: trackByTurnoId" class="profile-activity__row">
             <span>{{ formatearFecha(turno.fecha) }}</span>
-            <span>{{ turno.nombreTienda }}</span>
+            <strong>{{ turno.nombreTienda }}</strong>
             <span>{{ formatearHora(turno.horaEntrada) }} – {{ formatearHora(turno.horaSalida) }}</span>
             <span>{{ formatearHorasDia(turno.horasTrabajadas, false) }} h</span>
           </div>
         </div>
         <ng-template #sinTurnos>
-          <p class="colab-perfil-vacio">Sin turnos recientes en el rango seleccionado.</p>
+          <p class="profile-empty">Sin turnos recientes en el rango seleccionado.</p>
         </ng-template>
       </section>
     </div>

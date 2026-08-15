@@ -5,20 +5,8 @@
 
   <nav class="flex-grow overflow-y-auto scrollbar-hidden px-3 py-4">
     <ul class="relative flex flex-col gap-1">
-      <!-- Indicador deslizante: un solo elemento que se mueve/redimensiona
-           detrás del item activo (ver updateIndicator() en el .ts) en vez
-           de que cada link dibuje su propio estado "activo" por separado. -->
-      <li
-        class="nav-indicator"
-        [class.nav-indicator--visible]="indicatorVisible"
-        [style.top.px]="indicatorTop"
-        [style.height.px]="indicatorHeight"
-        aria-hidden="true"
-      ></li>
-
       <li *ngFor="let item of navItems; let i = index" class="nav-item" [style.--i]="i">
         <a
-          #navLink
           [routerLink]="item.link"
           routerLinkActive="active"
           class="nav-link relative z-10 flex items-center gap-3 h-11 px-2.5 rounded-md text-ink-soft hover:text-ink transition-colors duration-fast ease-standard focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
@@ -52,7 +40,6 @@
       <!-- Reportes: no es una ruta propia, es un toggle + submenú -->
       <li class="nav-item" [style.--i]="navItems.length">
         <button
-          #navLink
           type="button"
           (click)="isReportesOpen = !isReportesOpen"
           [class.active]="isReportesActive()"

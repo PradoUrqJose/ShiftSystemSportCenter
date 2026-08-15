@@ -36,7 +36,6 @@ interface OpcionRegla {
     SkeletonComponent,
   ],
   templateUrl: './excepciones.component.html',
-  styleUrl: './excepciones.component.css',
 })
 export class ExcepcionesComponent implements OnInit, OnDestroy {
   readonly skeletonRows = Array.from({ length: 6 });
