@@ -38,6 +38,13 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
+        path: 'resumen',
+        loadComponent: () =>
+          import('./pages/reportes/resumen/resumen.component').then(
+            m => m.ResumenComponent
+          ),
+      },
+      {
         path: 'horas-trabajadas',
         loadComponent: () =>
           import('./pages/reportes/horas-trabajadas/horas-trabajadas.component').then(
@@ -79,7 +86,7 @@ export const routes: Routes = [
             m => m.SemanaNormalComponent
           ),
       },
-      { path: '', redirectTo: 'horas-trabajadas', pathMatch: 'full' },
+      { path: '', redirectTo: 'resumen', pathMatch: 'full' },
     ],
   },
   { path: '', redirectTo: 'turnos', pathMatch: 'full' },

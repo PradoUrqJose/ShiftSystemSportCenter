@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 
 import { ExportExcelComponent, ExportSheet } from '../../../components/export-excel/export-excel.component';
@@ -69,9 +69,11 @@ export class ExcepcionesComponent implements OnInit, OnDestroy {
     private readonly reporteService: ReporteService,
     private readonly empresaService: EmpresaService,
     private readonly calendarioService: CalendarioService,
+    private readonly route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
+    this.aplicarParametrosDeNavegacion();
     this.empresaService.getEmpresas().pipe(takeUntil(this.destroy$)).subscribe({
       next: empresas => (this.empresas = empresas),
     });
@@ -107,7 +109,6 @@ export class ExcepcionesComponent implements OnInit, OnDestroy {
         this.reporte = reporte;
         this.cargando = false;
         this.yaBuscado = true;
-        this.normalizarFiltrosResultado();
       },
       error: () => {
         this.reporte = null;
@@ -208,13 +209,19 @@ export class ExcepcionesComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  private normalizarFiltrosResultado(): void {
-    if (this.severidad && !this.reporte?.excepciones.some(e => e.severidad === this.severidad)) {
-      this.severidad = '';
-    }
-    if (this.regla && !this.reporte?.excepciones.some(e => e.codigo === this.regla)) {
-      this.regla = '';
-    }
+  private aplicarParametrosDeNavegacion(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const desde = params.get('desde');
+    const hasta = params.get('hasta');
+    const empresaId = Number(params.get('empresaId'));
+    const severidad = params.get('severidad') as SeveridadExcepcion | null;
+    const regla = params.get('regla');
+
+    if (desde && /^\d{4}-\d{2}-\d{2}$/.test(desde)) this.desde = desde;
+    if (hasta && /^\d{4}-\d{2}-\d{2}$/.test(hasta)) this.hasta = hasta;
+    if (Number.isInteger(empresaId) && empresaId > 0) this.empresaId = empresaId;
+    if (severidad && this.severidades.some(opcion => opcion.valor === severidad)) this.severidad = severidad;
+    if (regla) this.regla = regla;
   }
 
   private formatearFecha(fecha: string): string {

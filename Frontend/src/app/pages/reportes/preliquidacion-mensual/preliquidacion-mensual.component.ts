@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 
 import { ReporteService, PreliquidacionMensual, DistribucionTienda } from '../../../services/reporte.service';
@@ -83,6 +83,7 @@ export class PreliquidacionMensualComponent implements OnInit, OnDestroy {
     private reporteService: ReporteService,
     private empresaService: EmpresaService,
     private calendarioService: CalendarioService,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
@@ -90,6 +91,7 @@ export class PreliquidacionMensualComponent implements OnInit, OnDestroy {
       .getEmpresas()
       .pipe(takeUntil(this.destroy$))
       .subscribe({ next: (empresas) => (this.empresas = empresas) });
+    if (this.aplicarParametrosDeNavegacion()) this.buscar();
   }
 
   ngOnDestroy(): void {
@@ -215,5 +217,20 @@ export class PreliquidacionMensualComponent implements OnInit, OnDestroy {
 
   trackByFila(_index: number, fila: PreliquidacionMensual): string {
     return `${fila.colaboradorId}-${fila.empresaId}`;
+  }
+
+  private aplicarParametrosDeNavegacion(): boolean {
+    const params = this.route.snapshot.queryParamMap;
+    if (!params.has('mes') || !params.has('anio')) return false;
+    const mes = Number(params.get('mes'));
+    const anio = Number(params.get('anio'));
+    const empresaId = Number(params.get('empresaId'));
+    if (!Number.isInteger(mes) || mes < 1 || mes > 12 || !Number.isInteger(anio) || anio < 2000 || anio > 2100) {
+      return false;
+    }
+    this.mes = mes;
+    this.anio = anio;
+    if (Number.isInteger(empresaId) && empresaId > 0) this.empresaId = empresaId;
+    return true;
   }
 }

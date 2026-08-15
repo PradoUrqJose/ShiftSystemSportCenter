@@ -187,13 +187,26 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       focalizadas de excepciones/ficha/utilidades finalizaron correctamente;
       la revisión visual final fue aprobada por el usuario.
 
-- [ ] **Fase 6 — Portada-resumen compacta.** PENDIENTE. No es un dashboard
-      grande: horas programadas del periodo, horas en feriado, colaboradores
-      con carga excepcional, incidencias de calidad pendientes, una
-      tendencia semanal (normal vs. feriado), una barra horizontal de horas
-      por tienda, una tabla corta de "requiere atención". Cada elemento
-      abre el reporte filtrado que lo explica — si un gráfico no lleva a
-      una acción, no entra.
+- [ ] **Fase 6 — Portada-resumen compacta.** EN CHECKPOINT VISUAL. El endpoint
+      `GET /api/reportes/resumen?desde&hasta&empresaId` compone los agregados
+      diarios/por tienda ya validados con el motor de excepciones; no duplica
+      consultas de horas ni reglas de calidad. La vista `/reportes/resumen`
+      trabaja por mes y empresa histórica, muestra horas programadas y en
+      feriado, colaboradores con carga excepcional, errores de datos,
+      tendencia semanal, distribución por tienda y seis pendientes
+      prioritarios. Cada indicador abre preliquidación o excepciones con el
+      mismo período/filtro, y cada pendiente permite abrir la ficha del
+      colaborador. `/reportes` ahora redirige al resumen y el navbar lo ubica
+      primero.
+
+      Verificación previa al checkpoint: 11 pruebas backend correctas con JDK
+      17, build Angular de producción correcto y 10 pruebas frontend
+      focalizadas correctas. Contra la BD, julio de 2026 coincide exactamente
+      con los reportes fuente: 3981.15 h totales, 356.65 h en feriado, 0
+      errores y 308 riesgos/advertencias. El filtro de empresa 6 también
+      coincide con preliquidación (845 h) y un rango invertido responde 400.
+      Falta aprobación manual de presentación, responsive y navegación antes
+      de marcar esta fase como cerrada.
 
 - [ ] **Cobertura por tienda.** Prioridad Alta pero sin número de fase
       todavía — no estaba en el orden de implementación original. Sin una
@@ -249,9 +262,10 @@ aprobado como conceptos separados) — no se mete sueldo directo en
 
 ## Próximo paso sugerido
 
-Iniciar la Fase 6 — portada-resumen compacta. Debe priorizar lo que requiere
-atención y enlazar cada indicador con su reporte explicativo; no convertirse
-en un dashboard decorativo ni duplicar las listas ya existentes.
+Completar el checkpoint manual de la Fase 6 en `/reportes/resumen`: validar
+presentación desktop/mobile, cambio de mes/empresa y navegación con filtros a
+preliquidación, excepciones y ficha de colaborador. Solo después cerrar la
+fase y decidir la migración de reportes antiguos.
 
 ## Protocolo obligatorio de avance y revisión
 

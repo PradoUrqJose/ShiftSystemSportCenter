@@ -9,6 +9,7 @@
    selectores encapsulados de Angular en cada bloque del reporte. */
 @import './app/pages/reportes/excepciones/excepciones.component.css';
 @import './app/pages/reportes/colaborador-profile/colaborador-profile.component.css';
+@import './app/pages/reportes/resumen/resumen.component.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

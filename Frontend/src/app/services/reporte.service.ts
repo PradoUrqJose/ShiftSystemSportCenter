@@ -68,6 +68,38 @@ export interface ReporteExcepciones {
   excepciones: ExcepcionReporte[];
 }
 
+export interface ResumenSemana {
+  inicio: string;
+  fin: string;
+  horasRegulares: number;
+  horasEnFeriado: number;
+}
+
+export interface ResumenTienda {
+  tiendaId: number;
+  nombreTienda: string;
+  horas: number;
+  porcentaje: number;
+}
+
+export interface ResumenReporte {
+  desde: string;
+  hasta: string;
+  empresaId: number | null;
+  umbralHorasDiarias: number;
+  umbralJornadaExtrema: number;
+  horizonteDias: number;
+  totalHorasProgramadas: number;
+  horasEnFeriado: number;
+  colaboradoresProgramados: number;
+  colaboradoresConCargaExcepcional: number;
+  erroresDatos: number;
+  hallazgosPorConciliar: number;
+  semanas: ResumenSemana[];
+  tiendas: ResumenTienda[];
+  requiereAtencion: ExcepcionReporte[];
+}
+
 // Los dos endpoints devuelven List<TurnoDTO> (backend) — el mismo shape que
 // ya describe la interfaz Turno, no hace falta inventar una nueva. Antes
 // ambos métodos devolvían Observable<any[]>, y ese `any` se filtraba a los
@@ -144,5 +176,24 @@ export class ReporteService {
     }
 
     return this.http.get<ReporteExcepciones>(`${this.reportesApiUrl}/excepciones`, { params });
+  }
+
+  getResumen(
+    desde: string,
+    hasta: string,
+    empresaId?: number,
+    umbralHorasDiarias = 8,
+    umbralJornadaExtrema = 12,
+    horizonteDias = 90,
+  ): Observable<ResumenReporte> {
+    let params = new HttpParams()
+      .set('desde', desde)
+      .set('hasta', hasta)
+      .set('umbralHorasDiarias', umbralHorasDiarias)
+      .set('umbralJornadaExtrema', umbralJornadaExtrema)
+      .set('horizonteDias', horizonteDias);
+
+    if (empresaId != null) params = params.set('empresaId', empresaId);
+    return this.http.get<ResumenReporte>(`${this.reportesApiUrl}/resumen`, { params });
   }
 }

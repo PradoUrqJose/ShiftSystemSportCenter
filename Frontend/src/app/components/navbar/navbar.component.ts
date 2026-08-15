@@ -29,6 +29,7 @@ export default class NavbarComponent {
 
   isReportesOpen = false;
   reportes = [
+    { nombre: 'Resumen', link: '/reportes/resumen' },
     { nombre: 'Preliquidación Mensual', link: '/reportes/preliquidacion' },
     { nombre: 'Excepciones y Calidad', link: '/reportes/excepciones' },
     { nombre: 'Horas Trabajadas', link: '/reportes/horas-trabajadas' },
