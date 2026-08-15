@@ -45,6 +45,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'preliquidacion',
+        loadComponent: () =>
+          import('./pages/reportes/preliquidacion-mensual/preliquidacion-mensual.component').then(
+            m => m.PreliquidacionMensualComponent
+          ),
+      },
+      {
         path: 'colaborador-profile/:id',
         loadComponent: () =>
           import('./pages/reportes/colaborador-profile/colaborador-profile.component').then(

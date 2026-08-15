@@ -1,0 +1,140 @@
+<section class="preliq">
+  <header class="preliq__header">
+    <h1>Preliquidación mensual</h1>
+    <p class="preliq__subtitle">
+      Horas programadas por colaborador, para revisión contable. Se recalcula siempre a partir de los
+      turnos del mes — no guarda estados ni observaciones.
+    </p>
+  </header>
+
+  <form class="preliq-filtros" (ngSubmit)="buscar()">
+    <label class="preliq-filtros__field">
+      <span>Mes</span>
+      <select name="mes" [(ngModel)]="mes">
+        <option *ngFor="let m of meses" [value]="m.valor">{{ m.nombre }}</option>
+      </select>
+    </label>
+
+    <label class="preliq-filtros__field preliq-filtros__field--anio">
+      <span>Año</span>
+      <input type="number" name="anio" [(ngModel)]="anio" min="2000" max="2100" />
+    </label>
+
+    <label class="preliq-filtros__field preliq-filtros__field--empresa">
+      <span>Empresa</span>
+      <select name="empresaId" [(ngModel)]="empresaId">
+        <option [ngValue]="null">Todas las empresas</option>
+        <option *ngFor="let empresa of empresas" [ngValue]="empresa.id">{{ empresa.nombre }}</option>
+      </select>
+    </label>
+
+    <app-button type="submit" variant="primary" [isLoading]="buscando">Generar</app-button>
+
+    <app-export-excel
+      [sheets]="hojasExport"
+      [fileName]="nombreArchivoExport"
+      [disabled]="filas.length === 0"
+    ></app-export-excel>
+  </form>
+
+  <p class="preliq-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <div class="preliq-skeleton" *ngIf="buscando">
+    <app-skeleton *ngFor="let _ of skeletonRows" height="52px" radius="12px"></app-skeleton>
+  </div>
+
+  <ng-container *ngIf="!buscando && yaBuscado && filas.length > 0">
+    <div class="preliq-stats">
+      <div class="preliq-stat">
+        <span class="preliq-stat__valor">{{ filas.length }}</span>
+        <span class="preliq-stat__label">Colaboradores</span>
+      </div>
+      <div class="preliq-stat">
+        <span class="preliq-stat__valor">{{ formatearHoras(totalHoras) }}</span>
+        <span class="preliq-stat__label">Horas programadas</span>
+      </div>
+      <div class="preliq-stat">
+        <span class="preliq-stat__valor">{{ formatearHoras(totalHorasFeriado) }}</span>
+        <span class="preliq-stat__label">Horas en feriado</span>
+      </div>
+      <div class="preliq-stat" [class.preliq-stat--alerta]="totalHorasExtra > 0">
+        <span class="preliq-stat__valor">{{ formatearHoras(totalHorasExtra) }}</span>
+        <span class="preliq-stat__label">Horas extra candidatas</span>
+      </div>
+    </div>
+
+    <div class="preliq-list" role="table" aria-label="Preliquidación por colaborador">
+      <div class="preliq-list__header" role="row">
+        <button type="button" role="columnheader" (click)="ordenarPor('apellido')">
+          Colaborador{{ indicadorOrden('apellido') }}
+        </button>
+        <button type="button" role="columnheader" (click)="ordenarPor('empresa')">
+          Empresa{{ indicadorOrden('empresa') }}
+        </button>
+        <span role="columnheader">Puesto</span>
+        <button type="button" role="columnheader" (click)="ordenarPor('dias')">
+          Días{{ indicadorOrden('dias') }}
+        </button>
+        <button type="button" role="columnheader" (click)="ordenarPor('horas')">
+          Horas{{ indicadorOrden('horas') }}
+        </button>
+        <button type="button" role="columnheader" (click)="ordenarPor('feriado')">
+          Feriado{{ indicadorOrden('feriado') }}
+        </button>
+        <button type="button" role="columnheader" (click)="ordenarPor('extra')">
+          Extra{{ indicadorOrden('extra') }}
+        </button>
+        <span role="columnheader">Tienda(s)</span>
+      </div>
+
+      <a
+        *ngFor="let fila of filas; trackBy: trackByFila"
+        class="preliq-row"
+        [class.preliq-row--alerta]="fila.turnosPartidos > 0"
+        [routerLink]="['/reportes/colaborador-profile', fila.colaboradorId]"
+        [title]="'Ver ficha analítica de ' + fila.nombre + ' ' + fila.apellido"
+        role="row"
+      >
+        <span class="preliq-row__colaborador" role="cell">
+          <strong>{{ fila.nombre }} {{ fila.apellido }}</strong>
+          <small>{{ fila.dni }}</small>
+        </span>
+        <span role="cell">{{ fila.nombreEmpresa }}</span>
+        <span role="cell">{{ fila.nombrePuesto }}</span>
+        <span role="cell">{{ fila.diasProgramados }}</span>
+        <span role="cell">{{ formatearHoras(fila.totalHorasMes) }}</span>
+        <span role="cell">{{ fila.horasEnFeriados > 0 ? formatearHoras(fila.horasEnFeriados) : '—' }}</span>
+        <span role="cell">
+          <app-badge *ngIf="fila.horasExtraCandidatas > 0; else sinExtra" tone="overtime">
+            {{ formatearHoras(fila.horasExtraCandidatas) }}
+          </app-badge>
+          <ng-template #sinExtra>—</ng-template>
+        </span>
+        <span role="cell" class="preliq-row__tiendas">
+          <span>{{ formatearDistribucion(fila.distribucionPorTienda) }}</span>
+          <app-badge *ngIf="fila.turnosPartidos > 0" tone="warning">
+            {{ fila.turnosPartidos }} partido{{ fila.turnosPartidos > 1 ? 's' : '' }}
+          </app-badge>
+        </span>
+      </a>
+
+      <div class="preliq-list__footer" role="row">
+        <span role="cell">Total</span>
+        <span role="cell"></span>
+        <span role="cell"></span>
+        <span role="cell"></span>
+        <span role="cell">{{ formatearHoras(totalHoras) }}</span>
+        <span role="cell">{{ formatearHoras(totalHorasFeriado) }}</span>
+        <span role="cell">{{ formatearHoras(totalHorasExtra) }}</span>
+        <span role="cell"></span>
+      </div>
+    </div>
+  </ng-container>
+
+  <app-empty-state
+    *ngIf="!buscando && yaBuscado && filas.length === 0"
+    icon="🗂️"
+    title="Sin turnos para este período"
+    description="No hay turnos programados para el mes, año y empresa seleccionados."
+  ></app-empty-state>
+</section>

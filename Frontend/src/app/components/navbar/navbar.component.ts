@@ -36,6 +36,7 @@ export default class NavbarComponent implements AfterViewInit, OnDestroy {
 
   isReportesOpen = false;
   reportes = [
+    { nombre: 'Preliquidación Mensual', link: '/reportes/preliquidacion' },
     { nombre: 'Horas Trabajadas', link: '/reportes/horas-trabajadas' },
     { nombre: 'Turnos en Feriados', link: '/reportes/turnos-feriados' },
     { nombre: 'Semana Normal', link: '/reportes/semana-normal' }

@@ -27,6 +27,13 @@ public interface ColaboradorRepository extends JpaRepository<Colaborador, Long> 
     @EntityGraph(attributePaths = {"empresa", "puesto"})
     List<Colaborador> findByHabilitado(boolean habilitado);
 
+    // Redeclarado por el mismo motivo que los de arriba: ReporteService lo usa
+    // para resolver en una sola query los colaboradores con actividad en un
+    // período (nombre, dni, empresa, puesto), sin heredar el default de
+    // JpaRepository que dispara un lazy load por relación y por colaborador.
+    @EntityGraph(attributePaths = {"empresa", "puesto"})
+    List<Colaborador> findAllById(Iterable<Long> ids);
+
     long countByEmpresaId(Long empresaId);
 
     Optional<Colaborador> findByEmail(String email);

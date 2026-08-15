@@ -13,6 +13,9 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
 
+// TurnoDiarioAgregado / TurnoTiendaAgregado: proyecciones de las queries de
+// reportes definidas más abajo, en el mismo paquete (repository/).
+
 @Repository
 public interface TurnoRepository extends JpaRepository<Turno, Long> {
 
@@ -64,4 +67,85 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE Turno t SET t.esFeriado = :esFeriado WHERE t.fecha = :fecha")
     int updateEsFeriadoByFecha(@Param("fecha") LocalDate fecha, @Param("esFeriado") boolean esFeriado);
+
+    // ------------------- REPORTES: agregados en BD -------------------
+    //
+    // Antes de esto, todo reporte (getResumenMensualPorColaboradores,
+    // calcularHorasPorColaborador, etc. en TurnoService) traía la lista
+    // completa de Turno del período y sumaba con streams en Java. Funciona
+    // con el volumen actual, pero no escala y obliga a repetir el mismo
+    // patrón caro en cada reporte nuevo. Estas dos queries dejan que
+    // Postgres agrupe y sume.
+    //
+    // Van en SQL nativo, no JPQL: la resta de horaEntrada/horaSalida
+    // (columnas `time`) más el descuento condicional de almuerzo no tienen
+    // una traducción JPQL limpia, y el proyecto usa un único motor
+    // (Postgres) tanto en dev como en prod, así que la portabilidad entre
+    // motores no es un costo real a evitar acá.
+    //
+    // IMPORTANTE — duplicación intencional de una regla de negocio:
+    // el CASE WHEN de abajo reproduce a mano Turno.isTomoAlmuerzo()/
+    // getHorasTrabajadas() (ventana 12:01–14:00, 45 min de descuento,
+    // ver Turno.java). SQL no puede invocar ese método Java, así que la
+    // regla queda escrita en dos lugares. Si esas constantes cambian en
+    // Turno.java, hay que actualizar también estas dos queries — si no,
+    // el total que devuelve /api/reportes/preliquidacion se desincroniza
+    // silenciosamente de /api/turnos/resumen-mensual (que sí usa el
+    // cálculo Java). Comparar ambos endpoints para el mismo colaborador/mes
+    // es la forma más barata de detectar ese drift.
+
+    /**
+     * Una fila por (colaboradorId, fecha) dentro del rango, con la cantidad
+     * de turnos ese día (para detectar "turno partido": más de 1 fila el
+     * mismo día), los minutos netos ya descontando almuerzo, y si ese día
+     * fue feriado.
+     */
+    @Query(value = """
+            SELECT t.colaborador_id AS colaboradorId,
+                   t.fecha AS fecha,
+                   COUNT(*) AS cantidadTurnos,
+                   SUM(
+                       CASE WHEN t.hora_entrada < TIME '12:01:00' AND t.hora_salida > TIME '14:00:00'
+                            THEN EXTRACT(EPOCH FROM (t.hora_salida - t.hora_entrada)) / 60 - 45
+                            ELSE EXTRACT(EPOCH FROM (t.hora_salida - t.hora_entrada)) / 60
+                       END
+                   ) AS minutosNetos,
+                   bool_or(t.es_feriado) AS esFeriado
+            FROM turno t
+            JOIN colaborador c ON c.id = t.colaborador_id
+            WHERE t.fecha BETWEEN :inicio AND :fin
+              AND (:empresaId IS NULL OR c.empresa_id = :empresaId)
+            GROUP BY t.colaborador_id, t.fecha
+            """, nativeQuery = true)
+    List<TurnoDiarioAgregado> sumarizarPorColaboradorYDia(
+            @Param("inicio") LocalDate inicio,
+            @Param("fin") LocalDate fin,
+            @Param("empresaId") Long empresaId);
+
+    /**
+     * Una fila por (colaboradorId, tiendaId) dentro del rango, con el total
+     * de horas netas trabajadas en esa tienda (mismo descuento de almuerzo
+     * que la query anterior).
+     */
+    @Query(value = """
+            SELECT t.colaborador_id AS colaboradorId,
+                   t.tienda_id AS tiendaId,
+                   tda.nombre AS nombreTienda,
+                   SUM(
+                       CASE WHEN t.hora_entrada < TIME '12:01:00' AND t.hora_salida > TIME '14:00:00'
+                            THEN EXTRACT(EPOCH FROM (t.hora_salida - t.hora_entrada)) / 60 - 45
+                            ELSE EXTRACT(EPOCH FROM (t.hora_salida - t.hora_entrada)) / 60
+                       END
+                   ) / 60.0 AS horas
+            FROM turno t
+            JOIN colaborador c ON c.id = t.colaborador_id
+            JOIN tienda tda ON tda.id = t.tienda_id
+            WHERE t.fecha BETWEEN :inicio AND :fin
+              AND (:empresaId IS NULL OR c.empresa_id = :empresaId)
+            GROUP BY t.colaborador_id, t.tienda_id, tda.nombre
+            """, nativeQuery = true)
+    List<TurnoTiendaAgregado> sumarizarPorColaboradorYTienda(
+            @Param("inicio") LocalDate inicio,
+            @Param("fin") LocalDate fin,
+            @Param("empresaId") Long empresaId);
 }

@@ -12,7 +12,11 @@ import java.time.LocalTime;
         indexes = {
                 @Index(name = "idx_turno_fecha", columnList = "fecha"),
                 @Index(name = "idx_turno_colaborador_id", columnList = "colaborador_id"),
-                @Index(name = "idx_turno_tienda_id", columnList = "tienda_id")
+                @Index(name = "idx_turno_tienda_id", columnList = "tienda_id"),
+                // Compuesto: soporta el WHERE fecha BETWEEN... + JOIN colaborador
+                // de TurnoRepository.sumarizarPorColaboradorYDia/YTienda, que
+                // corre en cada request del reporte de preliquidación.
+                @Index(name = "idx_turno_colaborador_fecha", columnList = "colaborador_id, fecha")
         }
 )
 @Data
@@ -47,6 +51,12 @@ public class Turno {
     // Ventana de almuerzo: si el turno entra antes de las 12:01 y sale después de
     // las 14:00, se asume que el colaborador almorzó y se descuentan estos minutos.
     // Única fuente de verdad para este cálculo (antes estaba duplicado en TurnoService).
+    //
+    // Esta misma regla está duplicada a mano en SQL nativo en
+    // TurnoRepository.sumarizarPorColaboradorYDia/sumarizarPorColaboradorYTienda
+    // (los reportes agregados necesitan que la BD sume, y SQL no puede
+    // invocar este método Java). Si estas constantes cambian, actualizar
+    // también esas dos queries.
     private static final LocalTime INICIO_VENTANA_ALMUERZO = LocalTime.of(12, 1);
     private static final LocalTime FIN_VENTANA_ALMUERZO = LocalTime.of(14, 0);
     private static final int MINUTOS_ALMUERZO = 45;
