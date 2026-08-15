@@ -115,10 +115,17 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       17 pruebas heredadas con configuración deficiente de TestBed; se deja
       como deuda explícita y no se presenta como validación superada.
 
-- [ ] **Fase 5 — Excepciones y calidad de datos.** EN DEFINICIÓN (auditoría
-      de BD realizada el 15 ago 2026). El primer corte propone estas reglas:
+- [ ] **Fase 5 — Excepciones y calidad de datos.** IMPLEMENTADA, PENDIENTE
+      DE REVISIÓN VISUAL (auditoría e implementación del 15 ago 2026).
+      `GET /api/reportes/excepciones?desde&hasta&empresaId&umbralHorasDiarias&umbralJornadaExtrema&horizonteDias`
+      devuelve hallazgos auditables con severidad, período, colaborador,
+      empresa histórica y los IDs de los turnos involucrados. La vista
+      `/reportes/excepciones` incorpora rango/empresa, criterios avanzados,
+      resumen por severidad, filtros locales, exportación y acceso a la ficha
+      del colaborador. El primer corte aplica estas reglas:
       horario incompleto o inválido, solapamiento, turno exacto duplicado,
-      marca de feriado inconsistente, turno futuro de un colaborador,
+      marca de feriado inconsistente, turno futuro de un colaborador
+      deshabilitado,
       posible falta de descanso semanal, jornada extensa, turno partido y
       programación fuera del horizonte. La revisión posterior al primer corte
       obliga a separar dos
@@ -153,12 +160,22 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       Es una señal de posible falta de descanso semanal, no una conclusión
       sobre asistencia real. Hay 27 colaboradores deshabilitados; 23
       tienen historial de turnos válido. Ese historial no se marcará como
-      error, porque no existe fecha de baja en el modelo. Propuesta de
-      severidad pendiente de aprobación: errores para
+      error, porque no existe fecha de baja en el modelo. Severidad
+      implementada: errores para
       integridad/solapamiento/duplicado/feriado; riesgo laboral alto —no
       veredicto automático— para límites diarios/semanales y ausencia aparente
       de descanso semanal; advertencias para deshabilitado futuro, jornada
       extrema y horizonte; información para turno partido.
+
+      La implementación se verificó contra julio de 2026: API y SQL
+      independiente coinciden en 283 jornadas sobre 8 h, 13 semanas completas
+      que tocan el período sobre 48 h y 3 turnos partidos. La API agrega 12
+      señales de posible falta de descanso de 24 h, para un total de 311
+      hallazgos (308 riesgos, 3 informativos, 0 errores). El filtro por empresa
+      conserva únicamente la empresa histórica solicitada y un rango invertido
+      responde HTTP 400. Pendiente antes de cerrar `[x]`: revisión manual de
+      desktop/mobile, filtros, exportación y navegación a la ficha; el navegador
+      automatizado no estuvo disponible en esta sesión.
 
 - [ ] **Fase 6 — Portada-resumen compacta.** PENDIENTE. No es un dashboard
       grande: horas programadas del periodo, horas en feriado, colaboradores
@@ -189,10 +206,10 @@ aprobado como conceptos separados) — no se mete sueldo directo en
   motivo real para "congelar" un periodo.
 - **Sin horas diurnas/nocturnas**: no hay franja horaria definida en el
   dominio (`Turno` no la tiene).
-- **"Horas extra candidatas"**: señal aproximada, no cálculo legal. Umbral
-  diario configurable (8h por defecto vía query param
-  `umbralHorasDiarias`), sin umbral semanal — ver
-  `ReporteService.UMBRAL_HORAS_DIARIAS_DEFAULT`.
+- **"Horas extra candidatas"**: señal aproximada, no cálculo legal. La
+  preliquidación usa un umbral diario configurable (8 h por defecto); el
+  reporte de excepciones agrega la señal semanal de 48 h y descanso aparente,
+  siempre como casos por conciliar, no como infracciones confirmadas.
 - **"Turnos partidos"**: se infiere de más de un `Turno` el mismo día para
   el mismo colaborador. No hay relación "turno partido" explícita en el
   modelo (deuda ya documentada como fuera de alcance en el plan de
@@ -210,7 +227,7 @@ aprobado como conceptos separados) — no se mete sueldo directo en
   ├── Preliquidación mensual   (Fase 3 — lista)
   ├── Colaboradores            (Fase 4 — lista)
   ├── Cobertura por tienda     (sin fase asignada)
-  └── Excepciones              (Fase 5)
+  └── Excepciones              (Fase 5 — en revisión)
   ```
   "Turnos en feriados" pasa a ser un desglose/filtro de preliquidación.
   "Horas trabajadas" queda como el detalle de turnos programados
@@ -219,10 +236,10 @@ aprobado como conceptos separados) — no se mete sueldo directo en
 
 ## Próximo paso sugerido
 
-Conciliar con contabilidad/asesoría laboral una muestra de las jornadas de
-más de 8 h y semanas de más de 48 h contra asistencia, boletas, acuerdos y
-descansos. Después aprobar las reglas y severidades de la Fase 5 e implementar
-primero la consulta y sus pruebas; la pantalla se diseña con resultados reales.
+Revisar visualmente la Fase 5 y conciliar con contabilidad una muestra de las
+jornadas de más de 8 h, semanas de más de 48 h y posibles faltas de descanso.
+Si la navegación, cifras y exportación son correctas, cerrar la fase. Solo
+después iniciar la Fase 6 (portada-resumen compacta).
 
 ## Protocolo obligatorio de avance y revisión
 

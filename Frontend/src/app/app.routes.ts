@@ -52,6 +52,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'excepciones',
+        loadComponent: () =>
+          import('./pages/reportes/excepciones/excepciones.component').then(
+            m => m.ExcepcionesComponent
+          ),
+      },
+      {
         path: 'colaborador-profile/:id',
         loadComponent: () =>
           import('./pages/reportes/colaborador-profile/colaborador-profile.component').then(

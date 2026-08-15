@@ -1,0 +1,162 @@
+<section class="exceptions">
+  <header class="exceptions__header">
+    <div>
+      <span class="exceptions__eyebrow">Control preventivo</span>
+      <h1>Excepciones y calidad</h1>
+      <p>
+        Señales obtenidas de turnos programados. Sirven para revisar datos, asistencia y pagos;
+        no declaran automáticamente una infracción laboral.
+      </p>
+    </div>
+    <div class="exceptions__scope">
+      <strong>8 h / 48 h</strong>
+      <span>se revisan por día y semana, no mediante un límite mensual.</span>
+    </div>
+  </header>
+
+  <form class="exceptions-filters" (ngSubmit)="buscar()">
+    <label>
+      <span>Desde</span>
+      <input type="date" name="desde" [(ngModel)]="desde" />
+    </label>
+    <label>
+      <span>Hasta</span>
+      <input type="date" name="hasta" [(ngModel)]="hasta" />
+    </label>
+    <label class="exceptions-filters__company">
+      <span>Empresa histórica</span>
+      <select name="empresaId" [(ngModel)]="empresaId">
+        <option [ngValue]="null">Todas las empresas</option>
+        <option *ngFor="let empresa of empresas" [ngValue]="empresa.id">{{ empresa.nombre }}</option>
+      </select>
+    </label>
+    <app-button type="submit" variant="primary" [isLoading]="cargando">Analizar</app-button>
+    <app-export-excel
+      [sheets]="hojasExport"
+      [fileName]="nombreArchivoExport"
+      [disabled]="excepcionesFiltradas.length === 0"
+    ></app-export-excel>
+
+    <details class="exceptions-advanced">
+      <summary>Ajustar criterios</summary>
+      <div class="exceptions-advanced__fields">
+        <label>
+          <span>Umbral diario</span>
+          <input type="number" name="umbralHorasDiarias" [(ngModel)]="umbralHorasDiarias" min="0.25" step="0.25" />
+        </label>
+        <label>
+          <span>Jornada extrema</span>
+          <input type="number" name="umbralJornadaExtrema" [(ngModel)]="umbralJornadaExtrema" min="0.5" step="0.25" />
+        </label>
+        <label>
+          <span>Horizonte futuro</span>
+          <input type="number" name="horizonteDias" [(ngModel)]="horizonteDias" min="1" max="365" />
+        </label>
+      </div>
+    </details>
+  </form>
+
+  <p class="exceptions-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <div class="exceptions-skeleton" *ngIf="cargando">
+    <app-skeleton *ngFor="let _ of skeletonRows" height="82px" radius="14px"></app-skeleton>
+  </div>
+
+  <ng-container *ngIf="!cargando && reporte">
+    <div class="exceptions-stats" aria-label="Resumen de excepciones">
+      <div class="exceptions-stat exceptions-stat--total">
+        <strong>{{ totalHallazgos }}</strong>
+        <span>Hallazgos</span>
+      </div>
+      <div class="exceptions-stat exceptions-stat--error">
+        <strong>{{ reporte.errores }}</strong>
+        <span>Errores de datos</span>
+      </div>
+      <div class="exceptions-stat exceptions-stat--risk">
+        <strong>{{ reporte.riesgos }}</strong>
+        <span>Por conciliar</span>
+      </div>
+      <div class="exceptions-stat exceptions-stat--warning">
+        <strong>{{ reporte.advertencias }}</strong>
+        <span>Advertencias</span>
+      </div>
+      <div class="exceptions-stat exceptions-stat--info">
+        <strong>{{ reporte.informativos }}</strong>
+        <span>Informativos</span>
+      </div>
+    </div>
+
+    <div class="exceptions-toolbar" *ngIf="totalHallazgos > 0">
+      <div>
+        <strong>Requieren revisión</strong>
+        <span>{{ excepcionesFiltradas.length }} de {{ totalHallazgos }} visibles</span>
+      </div>
+      <label>
+        <span>Severidad</span>
+        <select [(ngModel)]="severidad">
+          <option *ngFor="let opcion of severidades" [ngValue]="opcion.valor">{{ opcion.etiqueta }}</option>
+        </select>
+      </label>
+      <label>
+        <span>Regla</span>
+        <select [(ngModel)]="regla">
+          <option value="">Todas las reglas</option>
+          <option *ngFor="let opcion of reglas" [value]="opcion.codigo">{{ opcion.etiqueta }}</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="exceptions-list" *ngIf="excepcionesFiltradas.length > 0">
+      <article
+        *ngFor="let excepcion of excepcionesFiltradas; trackBy: trackByExcepcion"
+        class="exception-card"
+        [attr.data-severity]="excepcion.severidad"
+      >
+        <div class="exception-card__signal">
+          <span>{{ etiquetaSeveridad(excepcion.severidad) }}</span>
+          <strong>{{ excepcion.titulo }}</strong>
+        </div>
+
+        <div class="exception-card__identity">
+          <strong>{{ excepcion.nombreColaborador }}</strong>
+          <span>{{ excepcion.dni || 'Sin DNI' }} · {{ excepcion.nombreEmpresa }}</span>
+        </div>
+
+        <div class="exception-card__facts">
+          <span>{{ rangoFecha(excepcion) }}</span>
+          <span *ngIf="excepcion.horasProgramadas != null">{{ formatearHoras(excepcion.horasProgramadas) }}</span>
+          <span>{{ excepcion.cantidadTurnos }} turno{{ excepcion.cantidadTurnos === 1 ? '' : 's' }}</span>
+        </div>
+
+        <p>{{ excepcion.detalle }}</p>
+
+        <a
+          *ngIf="excepcion.colaboradorId"
+          [routerLink]="['/reportes/colaborador-profile', excepcion.colaboradorId]"
+          [queryParams]="{
+            desde: excepcion.fechaInicio || desde,
+            hasta: excepcion.fechaFin || hasta,
+            empresaId: excepcion.empresaId,
+            umbralHorasDiarias: reporte.umbralHorasDiarias
+          }"
+        >
+          Revisar ficha <span aria-hidden="true">→</span>
+        </a>
+      </article>
+    </div>
+
+    <app-empty-state
+      *ngIf="totalHallazgos === 0"
+      icon="✓"
+      title="Sin hallazgos en el período"
+      description="No se detectaron excepciones con los criterios seleccionados. Esto valida la programación, no reemplaza la conciliación con asistencia y planilla."
+    ></app-empty-state>
+
+    <app-empty-state
+      *ngIf="totalHallazgos > 0 && excepcionesFiltradas.length === 0"
+      icon="⌕"
+      title="Sin coincidencias para estos filtros"
+      description="El reporte sí contiene hallazgos, pero ninguno coincide con la severidad y regla seleccionadas."
+    ></app-empty-state>
+  </ng-container>
+</section>

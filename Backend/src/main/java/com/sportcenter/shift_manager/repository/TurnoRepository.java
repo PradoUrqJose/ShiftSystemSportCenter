@@ -31,6 +31,15 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
     @EntityGraph(attributePaths = {"colaborador", "empresa", "tienda"})
     List<Turno> findByFechaBetween(LocalDate startDate, LocalDate endDate);
 
+    @EntityGraph(attributePaths = {"colaborador", "empresa", "tienda"})
+    List<Turno> findByFechaIsNull();
+
+    @EntityGraph(attributePaths = {"colaborador", "empresa", "tienda"})
+    List<Turno> findByEmpresa_IdAndFechaBetween(Long empresaId, LocalDate startDate, LocalDate endDate);
+
+    @EntityGraph(attributePaths = {"colaborador", "empresa", "tienda"})
+    List<Turno> findByEmpresa_IdAndFechaIsNull(Long empresaId);
+
     // Variante paginada, usada en el listado mensual (GET /api/turnos/mensual)
     @EntityGraph(attributePaths = {"colaborador", "empresa", "tienda"})
     Page<Turno> findByFechaBetween(LocalDate startDate, LocalDate endDate, Pageable pageable);
