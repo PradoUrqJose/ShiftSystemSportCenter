@@ -5,6 +5,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -42,4 +45,23 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
 
     @EntityGraph(attributePaths = {"colaborador", "empresa", "tienda"})
     List<Turno> findByColaborador_IdInAndFechaBetween(List<Long> colaboradores, LocalDate inicio, LocalDate fin);
+
+    // es_feriado se persiste en el turno (no se recalcula al leer, ver
+    // TurnoService.aplicarDatosTurno), así que cuando se crea/edita/borra un
+    // feriado hay que reflejarlo a mano en los turnos ya existentes de esa
+    // fecha. Ver FeriadoService.crearFeriado/actualizarFeriado/eliminarFeriado.
+    //
+    // flushAutomatically=true es imprescindible acá: eliminarFeriado y
+    // actualizarFeriado dejan un delete()/save() pendiente en el
+    // contexto de persistencia (Hibernate lo difiere hasta el commit).
+    // Un @Modifying query se ejecuta como SQL directo saltándose ese
+    // contexto, y clearAutomatically=true lo limpia después — sin el
+    // flush previo, ese clear() descarta el delete/update pendiente
+    // ANTES de que llegue a convertirse en SQL, así que el feriado
+    // nunca se borraba/actualizaba en la BD aunque el endpoint devolvía
+    // 204/200 sin error. Confirmado con un DELETE real: sin flushAutomatically
+    // no aparece ningún "delete from feriado" en el log de Hibernate.
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Turno t SET t.esFeriado = :esFeriado WHERE t.fecha = :fecha")
+    int updateEsFeriadoByFecha(@Param("fecha") LocalDate fecha, @Param("esFeriado") boolean esFeriado);
 }

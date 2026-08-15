@@ -4,6 +4,7 @@ import com.sportcenter.shift_manager.dto.FeriadoDTO;
 import com.sportcenter.shift_manager.exception.ResourceNotFoundException;
 import com.sportcenter.shift_manager.model.Feriado;
 import com.sportcenter.shift_manager.repository.FeriadoRepository;
+import com.sportcenter.shift_manager.repository.TurnoRepository;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +20,11 @@ public class FeriadoService {
     private static final Logger log = LoggerFactory.getLogger(FeriadoService.class);
 
     private final FeriadoRepository feriadoRepository;
+    private final TurnoRepository turnoRepository;
 
-    public FeriadoService(FeriadoRepository feriadoRepository) {
+    public FeriadoService(FeriadoRepository feriadoRepository, TurnoRepository turnoRepository) {
         this.feriadoRepository = feriadoRepository;
+        this.turnoRepository = turnoRepository;
     }
 
     // Sin @Transactional: un @PostConstruct corre directo sobre la instancia
@@ -91,7 +94,14 @@ public class FeriadoService {
         }
         Feriado feriado = new Feriado(null, dto.getFecha(), dto.getDescripcion());
         Feriado guardado = feriadoRepository.save(feriado);
-        log.info("Feriado creado: id={}, fecha={}", guardado.getId(), guardado.getFecha());
+
+        // es_feriado queda grabado en el turno al crearlo/editarlo (no se
+        // recalcula al leer), así que si ya había turnos cargados para esta
+        // fecha antes de dar de alta el feriado, quedan desincronizados a
+        // menos que los sincronicemos acá.
+        int actualizados = turnoRepository.updateEsFeriadoByFecha(guardado.getFecha(), true);
+        log.info("Feriado creado: id={}, fecha={}, turnos sincronizados={}",
+                guardado.getId(), guardado.getFecha(), actualizados);
         return guardado;
     }
 
@@ -106,10 +116,21 @@ public class FeriadoService {
                     throw new IllegalArgumentException("Ya existe un feriado registrado para el " + dto.getFecha());
                 });
 
+        LocalDate fechaAnterior = feriado.getFecha();
         feriado.setFecha(dto.getFecha());
         feriado.setDescripcion(dto.getDescripcion());
         Feriado actualizado = feriadoRepository.save(feriado);
-        log.info("Feriado actualizado: id={}", id);
+
+        // Solo hay que tocar turnos si la fecha cambió: la descripción no se
+        // guarda en turno, así que un cambio de solo texto no desincroniza nada.
+        if (!fechaAnterior.equals(actualizado.getFecha())) {
+            int liberados = turnoRepository.updateEsFeriadoByFecha(fechaAnterior, false);
+            int sincronizados = turnoRepository.updateEsFeriadoByFecha(actualizado.getFecha(), true);
+            log.info("Feriado actualizado: id={}, fecha {} -> {}, turnos liberados={}, sincronizados={}",
+                    id, fechaAnterior, actualizado.getFecha(), liberados, sincronizados);
+        } else {
+            log.info("Feriado actualizado: id={}", id);
+        }
         return actualizado;
     }
 
@@ -117,7 +138,10 @@ public class FeriadoService {
     public void eliminarFeriado(Long id) {
         Feriado feriado = feriadoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Feriado con ID " + id + " no encontrado"));
+        LocalDate fecha = feriado.getFecha();
         feriadoRepository.delete(feriado);
-        log.info("Feriado eliminado: id={}", id);
+
+        int liberados = turnoRepository.updateEsFeriadoByFecha(fecha, false);
+        log.info("Feriado eliminado: id={}, fecha={}, turnos liberados={}", id, fecha, liberados);
     }
 }

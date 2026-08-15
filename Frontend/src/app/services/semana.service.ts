@@ -83,10 +83,33 @@ export class SemanaService {
   }
 
   private actualizarSemana(nuevaSemana: DiaSemana[]): DiaSemana[] {
-    const primerDiaValido = nuevaSemana[0];
+    // Se ancla al PRIMER día no-sobrante de la semana, no al lunes fijo ni
+    // a un día fijo como el jueves.
+    //
+    // La semana física que cruza de mes (ej. lun 31 ago - dom 6 sep) se
+    // muestra dos veces al navegar hacia adelante, con dos "sabores"
+    // distintos, cada uno con su propio recorte de días editables:
+    //  1) como cola de agosto (obtenerSemanasDelMes(agosto)): 31 ago real,
+    //     1-6 sep sobrantes/no editables.
+    //  2) como cabecera de septiembre (obtenerSemanasDelMes(septiembre)):
+    //     1-6 sep reales, 31 ago sobrante/no editable.
+    // Anclar al lunes (bug original) siempre da 31 ago sin importar el
+    // sabor, así que el estado queda leído como "agosto" en los dos casos:
+    // avanzar recalcula sobre la lista de agosto de nuevo y rebota ahí
+    // para siempre. Anclar a un día fijo como el jueves sí distingue mes,
+    // pero el jueves de esta semana (3 sep) cae dentro de la lista de
+    // septiembre en AMBOS sabores, así que el segundo click cree que el
+    // sabor "cabecera de septiembre" ya se mostró y salta directo a la
+    // semana siguiente (7-13 sep), sin renderizarlo nunca. El primer día
+    // real de la semana sí distingue los dos sabores (31 ago vs. 1 sep) y
+    // además, para una semana totalmente interior sin cruce de mes, es
+    // simplemente el lunes — mismo comportamiento de siempre. Bug
+    // reportado 14 ago 2026, fix revisado el mismo día tras encontrar que
+    // el ancla fija (jueves) se saltaba el segundo sabor.
+    const diaAncla = nuevaSemana.find((dia) => !dia.esSobrante) ?? nuevaSemana[0];
 
-    if (primerDiaValido) {
-      const [year, month, day] = primerDiaValido.fecha.split('-').map(Number);
+    if (diaAncla) {
+      const [year, month, day] = diaAncla.fecha.split('-').map(Number);
       const nuevaFecha = new Date(year, month - 1, day);
 
       this.turnoStateService.setSemanaActual(nuevaFecha);
