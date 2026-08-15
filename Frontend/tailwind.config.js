@@ -35,6 +35,7 @@ module.exports = withMT({
           soft: 'var(--color-line-soft)',
         },
         paper: 'var(--color-paper)',
+        surface: 'var(--color-surface)',
       },
       borderRadius: {
         sm: 'var(--radius-sm)',

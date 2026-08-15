@@ -16,6 +16,13 @@ export type ButtonHue = 'brand' | 'teal' | 'violet' | 'neutral';
   templateUrl: './button.component.html',
   styleUrls: ['./button.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // El host (<app-button>) es inline por defecto (custom element sin
+  // estilo propio) — un ancho 100% en el <button> interno no tiene contra
+  // qué crecer ahí adentro. [fullWidth] blockifica también el host, así el
+  // botón realmente llena a su contenedor (ej. submit de un form angosto).
+  host: {
+    '[class.app-button--full]': "fullWidth && variant !== 'icon'",
+  },
 })
 export class ButtonComponent {
   @Input() variant: ButtonVariant = 'primary';
@@ -23,6 +30,8 @@ export class ButtonComponent {
   @Input() hue: ButtonHue = 'neutral';
   @Input() type: 'button' | 'submit' = 'button';
   @Input() disabled: boolean = false;
+  /** Solo variant='primary'|'secondary': ocupa todo el ancho del contenedor (ej. submit de un form angosto). */
+  @Input() fullWidth: boolean = false;
   @Input() isLoading: boolean = false;
   /** Solo variant='icon': texto del tooltip CSS-puro (ver .icon-action original). */
   @Input() tooltip: string | null = null;

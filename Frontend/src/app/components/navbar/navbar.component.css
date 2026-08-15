@@ -1,19 +1,179 @@
-.nav-link.active {
-  color: var(--color-brand);
-  font-weight: bold;
-  border-left: 4px solid var(--color-brand);
+/* Sidebar — mismo criterio de motion que login.component.css (tokens de
+ * tokens.css, nunca un ms suelto), pero calibrado distinto a propósito:
+ * el login es una portada que se ve una vez, esto es el chrome que
+ * Jose va a tener enfrente toda la jornada. Por eso acá NO hay nada en
+ * loop infinito (nada de glow/orbes) — la única pieza "viva" es el
+ * indicador que desliza al navegar, que es señal de estado, no
+ * decoración pura (ver DESIGN.md principio 4). Todo lo demás es una
+ * animación de entrada que corre una sola vez cuando el sidebar se
+ * monta (login → primera pantalla protegida).
+ */
+
+.app-sidebar {
+  animation: sidebar-in var(--duration-modal) var(--ease-standard) backwards;
 }
 
-@keyframes fadeIn {
+@keyframes sidebar-in {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateX(-14px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
   }
 }
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
+
+/* ---------- Items de navegación: entrada en cascada ---------- */
+/* OJO: la animación va en .nav-link (el <a>/<button> que mide
+ * updateIndicator()), NO en .nav-item (el <li> que lo contiene). Un
+ * ancestro con `transform` activo (aunque sea `position: static`) pasa a
+ * ser el offsetParent del descendiente mientras la animación corre — el
+ * indicador medía offsetTop relativo al <li> en vez del <ul>, siempre 0.
+ * El transform del propio elemento medido no afecta a su propio offsetTop,
+ * así que acá es seguro. --i se declara en el <li> (ver html) y se lee acá
+ * por herencia normal de custom properties. */
+.nav-link {
+  font-weight: 600;
+  animation: nav-item-in var(--duration-modal) var(--ease-standard) backwards;
+  /* +120ms: arrancan justo después de que el sidebar empieza a entrar,
+   * no exactamente a la vez — se sienten secuenciados, no todo de golpe. */
+  animation-delay: calc(var(--i, 0) * 45ms + 120ms);
+}
+
+@keyframes nav-item-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ---------- Indicador deslizante ---------- */
+/* Un solo elemento absoluto que el .ts mueve/redimensiona (top/height en
+ * px, medidos del <a>/<button> real vía #navLink) en vez de que cada link
+ * pinte su propio "estoy activo" por separado — así al navegar se ve
+ * como una sola pieza deslizando de un item a otro, no un parpadeo. */
+.nav-indicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-brand-soft);
+  box-shadow: inset 3px 0 0 var(--color-brand);
+  opacity: 0;
+  transform: scaleY(0.85);
+  transition: top var(--duration-modal) var(--ease-standard),
+    height var(--duration-modal) var(--ease-standard),
+    opacity var(--duration-base) var(--ease-standard),
+    transform var(--duration-base) var(--ease-standard);
+  pointer-events: none;
+}
+.nav-indicator--visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- Icono en chip ---------- */
+
+.nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  color: var(--color-ink-faint);
+  transition: background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+.nav-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.nav-link:hover .nav-icon {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Después de :hover a propósito: misma especificidad (3 clases c/u), así
+ * que si el item activo también está en hover, esta gana por orden de
+ * cascada — el estado activo no debe "apagarse" al pasar el mouse. */
+.nav-link.active {
+  color: var(--color-brand-ink);
+  font-weight: 800;
+}
+.nav-link.active .nav-icon {
+  background: var(--color-brand);
+  color: #ffffff;
+  box-shadow: var(--shadow-hover);
+}
+
+.nav-chevron {
+  color: var(--color-ink-faint);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+.nav-chevron--open {
+  transform: rotate(180deg);
+}
+
+/* ---------- Submenú de Reportes ---------- */
+/* grid-template-rows 0fr→1fr en vez de *ngIf: el contenido sigue montado
+ * (necesario para poder animar el CIERRE, no solo la apertura — un *ngIf
+ * lo desmonta de golpe) y [attr.inert] en el html lo saca del tab order
+ * mientras está colapsado. */
+.nav-submenu {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows var(--duration-modal) var(--ease-standard),
+    opacity var(--duration-base) var(--ease-standard);
+}
+.nav-submenu--open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.nav-submenu__inner {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0 4px 34px; /* 34px = ancho de .nav-icon: el texto queda alineado con el label del padre */
+}
+
+.nav-subitem__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-ink-faint);
+  flex-shrink: 0;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+.nav-subitem a.active {
+  color: var(--color-brand-ink);
+  font-weight: 700;
+  background: var(--color-brand-soft);
+}
+.nav-subitem a.active .nav-subitem__dot {
+  background: var(--color-brand);
+}
+
+/* ---------- Accesibilidad ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar,
+  .nav-link,
+  .nav-indicator,
+  .nav-chevron,
+  .nav-submenu {
+    animation: none;
+    transition: none;
+  }
 }
