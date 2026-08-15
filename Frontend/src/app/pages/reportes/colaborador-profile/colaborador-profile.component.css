@@ -1,141 +1,289 @@
-::ng-deep .container1 {
-  padding: 0 !important;
-  width: 100% !important;
+/* Ficha analítica de un colaborador: diseño propio, igual libertad que
+   preliquidación (Fase 3) — sin las tarjetas cuadradas + wallpaper de
+   empresa + gráficos Chart.js de antes. Header + tira de stats + tarjetas
+   con listas/barras CSS, tokens de tokens.css. */
+
+.colab-perfil {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
+/* ---------- Header ---------- */
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.colab-perfil__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
 }
 
-/* Asegurar que los cards en la fila se alineen en altura */
-.grid {
+.colab-perfil__identidad {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1 1 260px;
+}
+
+.colab-perfil__foto {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--empresa-color, var(--color-line));
+}
+
+.colab-perfil__datos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.colab-perfil__nombre-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.colab-perfil__nombre-row h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--color-ink);
+}
+
+.colab-perfil__meta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+}
+
+.colab-perfil-filtros {
+  display: flex;
+  gap: 12px;
+}
+
+.colab-perfil-filtros__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--color-ink-soft);
+}
+
+.colab-perfil-filtros__field input {
+  min-height: 40px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+}
+
+/* ---------- Skeleton ---------- */
+
+.colab-perfil-skeleton {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
 }
 
-.fade-in {
-  animation: fadeIn 0.8s ease-out forwards;
+/* ---------- Tira de stats ---------- */
+
+.colab-perfil-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  padding: 16px 20px;
+  background: var(--color-paper);
+  border-radius: var(--radius-lg);
 }
 
-.card {
-  z-index: 5;
-  background: linear-gradient(70deg, #ffffffa5, #ffffff91);
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+.colab-perfil-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+.colab-perfil-stat__valor {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-ink);
 }
 
-.card {
+.colab-perfil-stat__valor small {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--color-ink-soft);
+}
+
+.colab-perfil-stat__label {
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+.colab-perfil-stat--alerta .colab-perfil-stat__valor {
+  color: var(--shift-warning-ink);
+}
+
+/* ---------- Grid de tarjetas ---------- */
+
+.colab-perfil-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.colab-perfil-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-hover);
+}
+
+.colab-perfil-card--ancho {
+  grid-column: 1 / -1;
+}
+
+.colab-perfil-card h2 {
+  margin: 4px 0 2px;
+  font-size: 0.95rem;
+  color: var(--color-ink);
+}
+
+.colab-perfil-card h2:first-child {
+  margin-top: 0;
+}
+
+.colab-perfil-vacio {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-ink-faint);
+}
+
+/* ---------- Composición de horas ---------- */
+
+.colab-perfil-bar {
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
   overflow: hidden;
-  /* Evitar desbordamiento */
+  display: flex;
+  background: var(--color-paper);
 }
 
-.card canvas {
-  width: 100% !important;
-  height: 100% !important;
+.colab-perfil-bar__segmento--normal {
+  height: 100%;
+  background: var(--color-line);
 }
 
-/* Restringir la altura del card order-3 a la de los cuadrados */
-.card.order-3 {
+.colab-perfil-bar__segmento--feriado {
+  height: 100%;
+  background: var(--shift-holiday-accent);
+}
+
+.colab-perfil-bar__leyenda {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--color-ink-soft);
+}
+
+/* ---------- Distribución por tienda ---------- */
+
+.colab-perfil-tiendas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.colab-perfil-tiendas__fila {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.colab-perfil-tiendas__nombre {
+  color: var(--color-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.colab-perfil-tiendas__barra {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-paper);
+  overflow: hidden;
+}
+
+.colab-perfil-tiendas__relleno {
+  height: 100%;
+  background: var(--empresa-color, var(--color-line));
+  border-radius: 999px;
+}
+
+.colab-perfil-tiendas__horas {
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+}
+
+/* ---------- Listas (semanas atípicas, excepciones, actividad) ---------- */
+
+.colab-perfil-lista {
   display: flex;
   flex-direction: column;
 }
 
-/* Hacer que el contenedor del gráfico ocupe el espacio disponible */
-.card.order-3 .relative {
-  min-height: 0; /* Evita problemas con flex */
-}
-/* Asegurar que el canvas se ajuste al contenedor */
-.card.order-3 canvas {
-  width: 100% !important;
-  height: 100% !important;
+.colab-perfil-lista__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+  border-top: 1px solid var(--color-line-soft);
 }
 
-@media (min-width: 640px)
-{
-  .card.order-4 {
-    max-height: auto !important;
+.colab-perfil-lista__fila:first-child {
+  border-top: none;
+}
+
+.colab-perfil-lista__badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.colab-perfil-lista__fila--turno {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1.4fr auto;
+  justify-content: normal;
+}
+
+@media (max-width: 900px) {
+  .colab-perfil-grid {
+    grid-template-columns: 1fr;
   }
-}
 
-@media (min-width: 1024px) {
-  .card.order-3 {
-    max-height: auto;
+  .colab-perfil-card--ancho {
+    grid-column: auto;
   }
-}
 
-@media (min-width: 1280px) {
-  .card.order-3 {
-    max-height: calc(40vw / 2)!important;
+  .colab-perfil-lista__fila--turno {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
-}
-
-@media (min-width: 1536px) {
-  .card.order-3 {
-    max-height: calc(40vw / 2)!important;
-  }
-}
-
-.gradient-empresa {
-  background: var(--empresa-color);
-  background: linear-gradient(315deg, var(--empresa-color) 20%, rgba(255, 255, 255, 1) 100%);
-}
-
-.gradient-to-diag {
-  background: linear-gradient(315deg, rgba(255, 255, 255, 0.505) 50%, rgb(255, 255, 255) 100%);
-}
-
-/* Estilos para el contenedor del datepicker */
-.shadow-md {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-/* Estilizar el datepicker */
-input[type="date"] {
-  position: relative;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-}
-
-/* Quitar flechas predeterminadas y personalizar el ícono */
-input[type="date"]::-webkit-calendar-picker-indicator {
-  opacity: 0;
-  position: absolute;
-  right: 8px;
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-/* Transiciones suaves */
-.transition {
-  transition: all 0.2s ease-in-out;
-}
-
-/* Asegurar que el contenedor sea consistente */
-.relative {
-  position: relative;
-}
-
-/* Personalizar el fondo y borde al enfocar */
-input[type="date"]:focus {
-  outline: none;
-}
-
-
-.trHead:hover {
-  background-color: var(--empresa);
 }

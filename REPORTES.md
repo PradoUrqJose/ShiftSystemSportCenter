@@ -52,12 +52,25 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       cruzando totales contra `/api/turnos/resumen-mensual` (deben
       coincidir exactamente — mismo cálculo, dos caminos).
 
-- [ ] **Fase 4 — Rediseñar análisis de colaborador.** PENDIENTE. Reescribir
-      `colaborador-profile` como ficha analítica (sin rankings de
-      desempeño): horas del periodo, promedio semanal, semanas críticas,
-      distribución por tienda, tabla de excepciones. Evaluar qué mover a
-      queries agregadas de backend (hoy `calcularEstadisticasSemanales` es
-      client-side) en vez de recalcular en Angular.
+- [x] **Fase 4 — Rediseñar análisis de colaborador.** CERRADA 14 ago 2026.
+      `colaborador-profile` reescrito como ficha analítica: header con
+      identidad + filtro de rango, tira de stats (horas del período,
+      promedio semanal ± desviación, horas en feriado, días con
+      excepciones), semanas atípicas, distribución por tienda (barras CSS,
+      no Chart.js), "Excepciones del período" nueva (turno partido / horas
+      extra candidatas por día, acotada a este colaborador) y actividad
+      reciente. Se evaluó mover cálculos a backend como en Fase 2 y se
+      decidió que no: acá es un solo colaborador (no todos los de una
+      empresa), y los datos ya llegan correctos desde
+      `Turno.getHorasTrabajadas()` sin la duplicación SQL que sí se
+      justifica en preliquidación por volumen — todo sigue en Angular. Sí
+      se corrigió una llamada HTTP redundante (`getTurnosFeriados` traía de
+      nuevo lo que ya venía en `getHorasTrabajadas`; ahora se filtra
+      client-side por `esFeriado`). Puro frontend, sin cambios de backend.
+      Efecto colateral: `colaborador-profile` era el único consumidor de
+      `chart.js`/`ng2-charts`/`ngx-countup`/`chartjs-plugin-datalabels` y de
+      `utils/chart-config.util.ts` — se borraron del `package.json` y el
+      util, ya sin uso.
 
 - [ ] **Fase 5 — Excepciones y calidad de datos.** PENDIENTE. El más
       importante para prevenir errores administrativos, aunque no sea
@@ -124,7 +137,7 @@ aprobado como conceptos separados) — no se mete sueldo directo en
 
 ## Próximo paso sugerido
 
-Fase 4 — Análisis de colaborador.
+Fase 5 — Excepciones y calidad de datos.
 
 ## Cómo se actualiza este documento
 

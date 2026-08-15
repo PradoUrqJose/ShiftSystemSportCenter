@@ -2,29 +2,28 @@ import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/co
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Chart, ChartConfiguration, registerables } from 'chart.js';
-import { BaseChartDirective } from 'ng2-charts';
-import { CountUpModule } from 'ngx-countup';
 import { ColaboradorService, Colaborador } from '../../../services/colaborador.service';
 import { ReporteService } from '../../../services/reporte.service';
 import { CalendarioService } from '../../../services/calendario.service';
-import { eachDayOfInterval, eachMonthOfInterval, eachWeekOfInterval, endOfWeek, format, isToday, parseISO, startOfWeek } from 'date-fns';
-import { es } from 'date-fns/locale'; // Importar localización en español
-import { forkJoin, Subject, takeUntil } from 'rxjs';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { endOfWeek, eachWeekOfInterval, format, parseISO, startOfWeek } from 'date-fns';
+import { Subject, takeUntil } from 'rxjs';
 import { Turno } from '../../../services/turno.service';
-import { getEmpresaColor, getWallpStyles, lightenDarkenColor } from '../../../utils/color.util';
-import { crearOpcionesGraficoMensual, crearOpcionesGraficoTiendas, crearOpcionesGraficoSemanaActual } from '../../../utils/chart-config.util';
+import { getEmpresaColor } from '../../../utils/color.util';
 import { ButtonComponent } from '../../../components/ui/button/button.component';
 import { EmptyStateComponent } from '../../../components/ui/empty-state/empty-state.component';
 import { BadgeComponent } from '../../../components/ui/badge/badge.component';
-
-Chart.register(...registerables, ChartDataLabels);
+import { SkeletonComponent } from '../../../components/ui/skeleton/skeleton.component';
 
 // Semana con horas muy por fuera del promedio del rango seleccionado
 // (ver calcularEstadisticasSemanales). 1.5 desviaciones estándar es un
 // umbral simple para resaltar outliers sin marcar la variación normal.
 const UMBRAL_SEMANA_CRITICA_EN_DESVIACIONES = 1.5;
+
+// Espeja ReporteService.UMBRAL_HORAS_DIARIAS_DEFAULT (backend). Es el mismo
+// tipo de duplicación ya documentada entre Turno.java y las queries SQL de
+// reportes: acá no vale la pena traer el dato del backend solo para esto,
+// pero si ese default cambia allá, hay que actualizarlo también acá.
+const UMBRAL_HORAS_DIARIAS_DEFAULT = 8;
 
 interface SemanaCritica {
   inicio: string;
@@ -33,24 +32,49 @@ interface SemanaCritica {
   tipo: 'baja' | 'alta';
 }
 
+interface DistribucionTiendaVista {
+  nombre: string;
+  horas: number;
+  porcentaje: number;
+}
+
+interface ExcepcionDia {
+  fecha: string;
+  horas: number;
+  cantidadTurnos: number;
+  esFeriado: boolean;
+  partido: boolean;
+  horasExtra: boolean;
+}
+
 @Component({
   selector: 'app-colaborador-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective, CountUpModule, ButtonComponent, EmptyStateComponent, BadgeComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonComponent,
+    EmptyStateComponent,
+    BadgeComponent,
+    SkeletonComponent,
+  ],
   templateUrl: './colaborador-profile.component.html',
   styleUrls: ['./colaborador-profile.component.css']
 })
 export class ColaboradorProfileComponent implements OnInit, OnDestroy {
+  readonly skeletonRows = Array.from({ length: 4 });
+
   colaborador: Colaborador | null = null;
+  cargandoStats = false;
   fechaInicio: string = this.getDefaultFechaInicio();
   fechaFin: string = this.getDefaultFechaFin();
-  totalTurnosFeriados: number = 0;
+
   turnosRecientes: Turno[] = [];
-  tiendasTrabajadas: { nombre: string, horas: number }[] = [];
-  totalHorasSemanaActual: number = 0;
+  tiendasTrabajadas: DistribucionTiendaVista[] = [];
 
   // Composición normal/feriado y estadísticas semanales del rango
   // seleccionado (ver calcularComposicionHoras y calcularEstadisticasSemanales).
+  totalTurnosFeriados: number = 0;
   horasNormales: number = 0;
   horasFeriados: number = 0;
   porcentajeHorasNormales: number = 0;
@@ -58,19 +82,10 @@ export class ColaboradorProfileComponent implements OnInit, OnDestroy {
   promedioSemanal: number = 0;
   desviacionEstandarSemanal: number = 0;
   semanasCriticas: SemanaCritica[] = [];
+  excepciones: ExcepcionDia[] = [];
+
   @ViewChild('fechaInicioInput') fechaInicioInput!: ElementRef<HTMLInputElement>;
   @ViewChild('fechaFinInput') fechaFinInput!: ElementRef<HTMLInputElement>;
-
-  barChartData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
-  // Las opciones de los 3 gráficos (Chart.js) viven en utils/chart-config.util.ts
-  // — acá solo se les inyecta el formateador de horas del componente.
-  barChartOptions = crearOpcionesGraficoMensual((h, t) => this.formatearHorasDia(h, t));
-
-  horizontalBarChartData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
-  horizontalBarChartOptions = crearOpcionesGraficoTiendas((h, t) => this.formatearHorasDia(h, t));
-
-  barChartSemanaActualData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
-  barChartSemanaActualOptions = crearOpcionesGraficoSemanaActual((h, t) => this.formatearHorasDia(h, t));
 
   constructor(
     private route: ActivatedRoute,
@@ -94,6 +109,7 @@ export class ColaboradorProfileComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
   }
+
   getDefaultFechaInicio(): string {
     const date = new Date();
     date.setMonth(0); // Enero
@@ -119,49 +135,31 @@ export class ColaboradorProfileComponent implements OnInit, OnDestroy {
   }
 
   loadStatistics(colaboradorId: number): void {
-    const colaboradores = [colaboradorId];
-    forkJoin({
-      horasTrabajadas: this.reporteService.getHorasTrabajadas(this.fechaInicio, this.fechaFin, colaboradores),
-      turnosFeriados: this.reporteService.getTurnosFeriados(this.fechaInicio, this.fechaFin, colaboradores)
-    }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: ({ horasTrabajadas, turnosFeriados }) => {
-        // "Recientes" sale de horasTrabajadas (ya filtrado por fechaInicio/
-        // fechaFin) en vez de pedir todos los turnos del colaborador, para
-        // que respete el rango seleccionado y no dispare un fetch aparte.
-        const turnosOrdenados = this.ordenarTurnosPorFecha([...horasTrabajadas]);
-        this.turnosRecientes = turnosOrdenados.slice(0, 5);
+    this.cargandoStats = true;
+    // Un solo pedido de turnos para todo el rango. turnosFeriados es un
+    // subconjunto exacto (Turno.esFeriado ya viene en el DTO) — antes esto
+    // era una segunda llamada HTTP a /turnos/reporte/feriados que traía de
+    // nuevo los mismos turnos.
+    this.reporteService.getHorasTrabajadas(this.fechaInicio, this.fechaFin, [colaboradorId])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (horasTrabajadas) => {
+          const turnosFeriados = horasTrabajadas.filter(t => t.esFeriado);
 
-        this.actualizarGraficoMensual(horasTrabajadas);
-        this.totalTurnosFeriados = turnosFeriados.length;
-        this.calcularComposicionHoras(horasTrabajadas, turnosFeriados);
-        this.calcularEstadisticasSemanales(horasTrabajadas);
-        this.loadTiendasTrabajadas(horasTrabajadas);
-        this.loadSemanaActual(horasTrabajadas);
-      }
-    });
-  }
+          const turnosOrdenados = this.ordenarTurnosPorFecha([...horasTrabajadas]);
+          this.turnosRecientes = turnosOrdenados.slice(0, 5);
 
-  private actualizarGraficoMensual(turnos: Turno[]): void {
-    const meses = this.calcularHorasPorMes(turnos);
-    const empresaColor = getEmpresaColor(this.colaborador?.empresaNombre);
-    const colorMesActual = lightenDarkenColor(empresaColor, -100);
-    const claveMesActual = format(new Date(), 'yyyy-MM');
-
-    // Asignar colores: empresa para el mes actual, gris oscuro para los demás
-    const backgroundColors = meses.map(mes =>
-      format(mes.fecha, 'yyyy-MM') === claveMesActual ? colorMesActual : 'rgba(0, 0, 0, 0.7)'
-    );
-
-    this.barChartData = {
-      labels: meses.map(mes => mes.label),
-      datasets: [{
-        data: meses.map(mes => mes.horas),
-        backgroundColor: backgroundColors,
-        hoverBackgroundColor: backgroundColors.map(color =>
-          color === colorMesActual ? lightenDarkenColor(empresaColor, -70) : 'rgba(0, 0, 0, 0.9)'
-        )
-      }]
-    };
+          this.totalTurnosFeriados = turnosFeriados.length;
+          this.calcularComposicionHoras(horasTrabajadas, turnosFeriados);
+          this.calcularEstadisticasSemanales(horasTrabajadas);
+          this.calcularExcepciones(horasTrabajadas);
+          this.loadTiendasTrabajadas(horasTrabajadas);
+          this.cargandoStats = false;
+        },
+        error: () => {
+          this.cargandoStats = false;
+        }
+      });
   }
 
   // Composición horas normales vs. feriado sobre el total trabajado en el
@@ -230,59 +228,32 @@ export class ColaboradorProfileComponent implements OnInit, OnDestroy {
       : [];
   }
 
-  loadSemanaActual(horasTrabajadas: Turno[]): void {
-    const today = new Date();
-    const start = startOfWeek(today, { weekStartsOn: 1 }); // Lunes 17 de febrero
-    const end = endOfWeek(today, { weekStartsOn: 1 }); // Domingo 23 de febrero
-    const daysOfWeek = eachDayOfInterval({ start, end });
-
-    // Usar localización en español para los días de la semana
-    const labels = daysOfWeek.map(day => format(day, 'EEE', { locale: es })); // "Lun", "Mar", "Mié", etc.
-    const data = daysOfWeek.map(day => {
-      const dayString = format(day, 'yyyy-MM-dd');
-      const horasDia = horasTrabajadas
-        .filter(turno => turno.fecha === dayString)
-        .reduce((sum, turno) => sum + (turno.horasTrabajadas || 0), 0);
-      return horasDia;
-    });
-
-    this.totalHorasSemanaActual = data.reduce((sum, horas) => sum + horas, 0);
-    const empresaColor = getEmpresaColor(this.colaborador?.empresaNombre);
-    const backgroundColors = daysOfWeek.map(day => isToday(day) ? empresaColor : 'rgba(0, 0, 0, 0.7)');
-
-    this.barChartSemanaActualData = {
-      labels, // Ahora en español: "Lun", "Mar", "Mié", etc.
-      datasets: [{
-        data,
-        backgroundColor: backgroundColors,
-        borderWidth: 0,
-        barThickness: 18 // Mover barThickness aquí para hacer las barras más delgadas
-      }]
-    };
-  }
-
-  // Agrupa por año-mes (no solo por número de mes) para que un rango de
-  // varios años no mezcle "enero" de años distintos en la misma barra.
-  private calcularHorasPorMes(turnos: Turno[]): { fecha: Date; label: string; horas: number }[] {
-    const desde = parseISO(this.fechaInicio);
-    const hasta = parseISO(this.fechaFin);
-    if (desde > hasta) return [];
-
-    const horasPorClave = new Map<string, number>();
+  // Excepciones acotadas a este colaborador: días con más de un turno
+  // (turno partido, se infiere del conteo — no hay relación explícita en
+  // el modelo) y/o con más horas que UMBRAL_HORAS_DIARIAS_DEFAULT (horas
+  // extra candidatas, señal aproximada, no un cálculo legal). Mismas
+  // señales que preliquidación, calculadas acá 100% en el cliente porque
+  // el volumen (un solo colaborador) no justifica una query agregada.
+  private calcularExcepciones(turnos: Turno[]): void {
+    const porDia = new Map<string, { horas: number; cantidad: number; esFeriado: boolean }>();
     turnos.forEach(turno => {
-      const clave = turno.fecha.slice(0, 7); // "yyyy-MM"
-      horasPorClave.set(clave, (horasPorClave.get(clave) || 0) + (turno.horasTrabajadas || 0));
+      const actual = porDia.get(turno.fecha) || { horas: 0, cantidad: 0, esFeriado: false };
+      actual.horas += turno.horasTrabajadas || 0;
+      actual.cantidad += 1;
+      actual.esFeriado = actual.esFeriado || !!turno.esFeriado;
+      porDia.set(turno.fecha, actual);
     });
 
-    return eachMonthOfInterval({ start: desde, end: hasta }).map(fecha => ({
+    this.excepciones = Array.from(porDia, ([fecha, dia]) => ({
       fecha,
-      label: this.capitalizar(format(fecha, 'MMM yyyy', { locale: es })), // date-fns/es da "ene 2026" en minúscula
-      horas: horasPorClave.get(format(fecha, 'yyyy-MM')) || 0
-    }));
-  }
-
-  private capitalizar(texto: string): string {
-    return texto.charAt(0).toUpperCase() + texto.slice(1);
+      horas: dia.horas,
+      cantidadTurnos: dia.cantidad,
+      esFeriado: dia.esFeriado,
+      partido: dia.cantidad > 1,
+      horasExtra: dia.horas > UMBRAL_HORAS_DIARIAS_DEFAULT,
+    }))
+      .filter(dia => dia.partido || dia.horasExtra)
+      .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
   }
 
   formatearHora(hora: string | undefined): string {
@@ -303,6 +274,10 @@ export class ColaboradorProfileComponent implements OnInit, OnDestroy {
     return this.calendarioService.formatearHoras(horasTrabajadas ?? 0, type);
   }
 
+  formatearFecha(fecha: string): string {
+    return format(parseISO(fecha), 'dd/MM/yyyy');
+  }
+
   loadTiendasTrabajadas(turnos: Turno[]): void {
     const tiendasMap = new Map<string, number>();
 
@@ -311,36 +286,24 @@ export class ColaboradorProfileComponent implements OnInit, OnDestroy {
       tiendasMap.set(tienda, (tiendasMap.get(tienda) || 0) + (turno.horasTrabajadas || 0));
     });
 
-    // Ordenar tiendas por horas trabajadas y tomar solo las 5 más altas
-    this.tiendasTrabajadas = Array.from(tiendasMap, ([nombre, horas]) => ({ nombre, horas }))
-      .sort((a, b) => b.horas - a.horas)
-      .slice(0, 6); // Limitar a las 5 más trabajadas
+    const totalHoras = Array.from(tiendasMap.values()).reduce((sum, h) => sum + h, 0);
 
-    const empresaColor = getEmpresaColor(this.colaborador?.empresaNombre);
-    const backgroundColors = lightenDarkenColor(empresaColor, -100);
-
-    this.horizontalBarChartData = {
-      labels: this.tiendasTrabajadas.map(t => t.nombre),
-      datasets: [{
-        data: this.tiendasTrabajadas.map(t => t.horas),
-        backgroundColor: backgroundColors,
-        borderWidth: 0,
-        barThickness: 19, // Mantener barras delgadas
-      }]
-    };
+    this.tiendasTrabajadas = Array.from(tiendasMap, ([nombre, horas]) => ({
+      nombre,
+      horas,
+      porcentaje: totalHoras > 0 ? (horas / totalHoras) * 100 : 0,
+    })).sort((a, b) => b.horas - a.horas);
   }
+
   goBack(): void {
     this.router.navigate(['/colaboradores']);
   }
 
-  // Delegan a utils/color.util.ts — el template las llama directo (no puede
-  // llamar funciones sueltas), estos son wrappers finos.
+  // Delega a utils/color.util.ts — el template lo llama directo (no puede
+  // llamar funciones sueltas), es un wrapper fino. Se usa solo como acento
+  // puntual (ej. borde/badge), no como fondo de página.
   getEmpresaColor(empresaNombre: string | undefined): string {
     return getEmpresaColor(empresaNombre);
-  }
-
-  getWallpStyles(empresaNombre: string | undefined, conPatron: boolean): Record<string, string | number> {
-    return getWallpStyles(empresaNombre, conPatron);
   }
 
   abrirCalendario(state: string): void {
@@ -349,5 +312,9 @@ export class ColaboradorProfileComponent implements OnInit, OnDestroy {
 
   trackByTurnoId(_index: number, turno: Turno): number {
     return turno.id;
+  }
+
+  trackByExcepcion(_index: number, excepcion: ExcepcionDia): string {
+    return excepcion.fecha;
   }
 }
