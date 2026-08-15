@@ -31,7 +31,6 @@ HELP.md
 node_modules/
 .angular/
 dist/
-public/
 
 # Archivos de configuración temporales
 editorconfig
@@ -51,4 +50,3 @@ editorconfig
 # Dumps de base de datos (pueden contener datos reales de producción)
 *.dump
 *.sql.gz
-
