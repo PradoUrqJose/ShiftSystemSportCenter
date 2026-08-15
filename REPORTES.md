@@ -187,7 +187,7 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       focalizadas de excepciones/ficha/utilidades finalizaron correctamente;
       la revisión visual final fue aprobada por el usuario.
 
-- [ ] **Fase 6 — Portada-resumen compacta.** EN CHECKPOINT VISUAL. El endpoint
+- [x] **Fase 6 — Portada-resumen compacta.** CERRADA 15 ago 2026. El endpoint
       `GET /api/reportes/resumen?desde&hasta&empresaId` compone los agregados
       diarios/por tienda ya validados con el motor de excepciones; no duplica
       consultas de horas ni reglas de calidad. La vista `/reportes/resumen`
@@ -205,8 +205,9 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       con los reportes fuente: 3981.15 h totales, 356.65 h en feriado, 0
       errores y 308 riesgos/advertencias. El filtro de empresa 6 también
       coincide con preliquidación (845 h) y un rango invertido responde 400.
-      Falta aprobación manual de presentación, responsive y navegación antes
-      de marcar esta fase como cerrada.
+      La presentación, el responsive y la navegación entre resumen,
+      preliquidación, excepciones y ficha de colaborador fueron aprobados
+      manualmente por el usuario.
 
 - [ ] **Cobertura por tienda.** Prioridad Alta pero sin número de fase
       todavía — no estaba en el orden de implementación original. Sin una
@@ -262,10 +263,11 @@ aprobado como conceptos separados) — no se mete sueldo directo en
 
 ## Próximo paso sugerido
 
-Completar el checkpoint manual de la Fase 6 en `/reportes/resumen`: validar
-presentación desktop/mobile, cambio de mes/empresa y navegación con filtros a
-preliquidación, excepciones y ficha de colaborador. Solo después cerrar la
-fase y decidir la migración de reportes antiguos.
+Iniciar una fase corta de consolidación de navegación: retirar del submenú las
+entradas antiguas que ya quedaron cubiertas por los nuevos reportes, convertir
+"Turnos en feriados" en un desglose de preliquidación y mover "Semana normal"
+al módulo de Turnos. No borrar rutas ni componentes hasta comprobar que no
+existan enlaces o flujos todavía dependientes de ellos.
 
 ## Protocolo obligatorio de avance y revisión
 
