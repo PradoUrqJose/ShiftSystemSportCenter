@@ -130,6 +130,15 @@ public class TurnoService {
         return horasPorColaborador;
     }
 
+    // El frontend manda una lista vacía para "todos los colaboradores"
+    // (ver ReporteFiltrosService.onEmpresaChange). Sin esto, un IN [] en el
+    // repositorio no trae ningún turno en vez de traerlos todos.
+    private List<Long> resolverColaboradores(List<Long> colaboradores) {
+        return colaboradores != null && !colaboradores.isEmpty()
+                ? colaboradores
+                : colaboradorRepository.findAll().stream().map(Colaborador::getId).toList();
+    }
+
     // Obtener turnos por mes para un colaborador específico
     public List<TurnoDTO> getTurnosMensualesPorColaborador(Long colaboradorId, int mes, int anio) {
         LocalDate inicioMes = LocalDate.of(anio, mes, 1);
@@ -289,7 +298,7 @@ public class TurnoService {
         LocalDate inicio = LocalDate.parse(fechaInicio);
         LocalDate fin = LocalDate.parse(fechaFin);
 
-        List<Turno> turnos = turnoRepository.findByColaborador_IdInAndFechaBetween(colaboradores, inicio, fin);
+        List<Turno> turnos = turnoRepository.findByColaborador_IdInAndFechaBetween(resolverColaboradores(colaboradores), inicio, fin);
         Map<Long, Double> horasTotales = calcularHorasPorColaborador(turnos);
 
         return turnos.stream().map(turno -> {
@@ -304,7 +313,7 @@ public class TurnoService {
         LocalDate inicio = LocalDate.parse(fechaInicio);
         LocalDate fin = LocalDate.parse(fechaFin);
         // Filtrar por colaboradores y rango de fechas, luego por feriados
-        List<Turno> turnos = turnoRepository.findByColaborador_IdInAndFechaBetween(colaboradores, inicio, fin)
+        List<Turno> turnos = turnoRepository.findByColaborador_IdInAndFechaBetween(resolverColaboradores(colaboradores), inicio, fin)
                 .stream()
                 .filter(Turno::isEsFeriado)
                 .collect(Collectors.toList());
@@ -326,10 +335,7 @@ public class TurnoService {
         LocalDate inicioMes = LocalDate.of(anio, mes, 1);
         LocalDate finMes = inicioMes.withDayOfMonth(inicioMes.lengthOfMonth());
 
-        // Si no se especifican colaboradores, obtener todos
-        List<Long> idsAConsultar = colaboradoresIds != null && !colaboradoresIds.isEmpty()
-                ? colaboradoresIds
-                : colaboradorRepository.findAll().stream().map(Colaborador::getId).toList();
+        List<Long> idsAConsultar = resolverColaboradores(colaboradoresIds);
 
         List<Turno> turnos = turnoRepository.findByColaborador_IdInAndFechaBetween(idsAConsultar, inicioMes, finMes);
 

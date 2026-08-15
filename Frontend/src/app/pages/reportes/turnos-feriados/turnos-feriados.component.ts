@@ -16,7 +16,7 @@ import { SortState, nextSortState, sortRows } from '../../../utils/table-sort.ut
 // colaboradores (el reporte solo trae el nombre).
 type ReporteTurnoFeriado = Turno & { apellido: string };
 
-type ReporteFeriadoSortField = 'nombreColaborador' | 'dniColaborador' | 'nombreEmpresa' | 'nombreTienda' | 'fecha' | 'horaEntrada' | 'horaSalida' | 'horasTotalesSemana';
+type ReporteFeriadoSortField = 'nombreColaborador' | 'dniColaborador' | 'nombreEmpresa' | 'nombreTienda' | 'fecha' | 'horaEntrada' | 'horaSalida' | 'horasTrabajadas';
 
 const REPORTE_FERIADO_SORT_SELECTORS: Record<ReporteFeriadoSortField, (r: ReporteTurnoFeriado) => unknown> = {
   nombreColaborador: (r) => `${r.nombreColaborador} ${r.apellido}`,
@@ -26,7 +26,7 @@ const REPORTE_FERIADO_SORT_SELECTORS: Record<ReporteFeriadoSortField, (r: Report
   fecha: (r) => r.fecha,
   horaEntrada: (r) => r.horaEntrada,
   horaSalida: (r) => r.horaSalida,
-  horasTotalesSemana: (r) => r.horasTotalesSemana,
+  horasTrabajadas: (r) => r.horasTrabajadas,
 };
 
 @Component({
@@ -51,7 +51,7 @@ export class TurnosFeriadosComponent implements OnInit, OnDestroy {
     { key: 'fecha', label: 'Fecha' },
     { key: 'horaEntrada', label: 'Ingreso' },
     { key: 'horaSalida', label: 'Salida' },
-    { key: 'horasTotalesSemana', label: 'Horas en Feriado' },
+    { key: 'horasTrabajadas', label: 'Horas en Feriado' },
   ];
 
   private readonly destroy$ = new Subject<void>();
@@ -114,12 +114,15 @@ export class TurnosFeriadosComponent implements OnInit, OnDestroy {
   }
 
   formatearHorasFeriado(reporte: ReporteTurnoFeriado): string {
-    // Las horas en feriados están en horasTotalesSemana (calculadas en el backend)
-    return this.calendarioService.formatearHoras(reporte.horasTotalesSemana ?? 0);
+    // Horas trabajadas en ese turno feriado puntual (no el acumulado del
+    // colaborador: ese vive en horasTotalesSemana y sumarlo por fila
+    // multiplicaba el total cuando un colaborador tenía varios turnos
+    // feriados en el rango).
+    return this.calendarioService.formatearHoras(reporte.horasTrabajadas ?? 0);
   }
 
   calcularTotalHorasFeriados(): string {
-    const totalHorasFeriados = this.reportes.reduce((total, reporte) => total + (reporte.horasTotalesSemana ?? 0), 0);
+    const totalHorasFeriados = this.reportes.reduce((total, reporte) => total + (reporte.horasTrabajadas ?? 0), 0);
     return this.calendarioService.formatearHoras(totalHorasFeriados);
   }
 
