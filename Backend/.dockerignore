@@ -7,6 +7,9 @@ dist
 nbbuild
 nbdist
 .nb-gradle
+.env
+.env.*
+!.env.example
 
 # Archivos de configuración de IDEs
 .idea
