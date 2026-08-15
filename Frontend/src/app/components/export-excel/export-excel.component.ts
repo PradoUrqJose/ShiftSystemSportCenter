@@ -7,6 +7,8 @@ import type ExcelJS from 'exceljs';
 export interface ExportColumn {
   key: string;
   label: string;
+  width?: number;
+  numFmt?: string;
 }
 
 // Una hoja del libro cuando se exporta con [sheets] (múltiples hojas) en vez
@@ -23,12 +25,14 @@ export interface ExportSheet {
   imports: [CommonModule],
   template: `
     <button
-      class="h-10 px-4 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+      class="h-10 px-4 text-white font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+      [ngClass]="label ? 'bg-brand hover:bg-brand-hover' : 'bg-green-600 hover:bg-green-700'"
       [disabled]="disabled || !hayDatosParaExportar()"
       (click)="exportExcel()"
       title="Exportar a Excel"
     >
       <i class="fa-solid fa-file-excel"></i>
+      <span *ngIf="label">{{ label }}</span>
     </button>
   `,
 })
@@ -36,11 +40,12 @@ export class ExportExcelComponent {
   @Input() data: Array<Record<string, any>> = [];
   @Input() columns: ExportColumn[] = [];
   // Si viene seteado, exportExcel() genera una hoja por entrada y [data]/
-  // [columns] se ignoran — así horas-trabajadas/turnos-feriados (que solo
-  // usan [data]/[columns]) no cambian de comportamiento.
+  // [columns] se ignoran. El modo simple se conserva para consumidores de
+  // una sola hoja; la exportación contable usa [sheets].
   @Input() sheets?: ExportSheet[];
   @Input() fileName: string = 'reporte';
   @Input() disabled: boolean = false;
+  @Input() label: string = '';
 
   hayDatosParaExportar(): boolean {
     if (this.sheets) {
@@ -76,13 +81,24 @@ export class ExportExcelComponent {
     ws.columns = sheet.columns.map(col => ({
       header: col.label,
       key: col.key,
-      width: Math.max(
+      width: col.width ?? Math.max(
         col.label.length + 2,
-        ...sheet.data.map(r => (r[col.key] ? String(r[col.key]).length + 2 : 10))
+        ...sheet.data.map(r => (r[col.key] != null ? String(r[col.key]).length + 2 : 10))
       ),
     }));
 
     sheet.data.forEach(row => ws.addRow(row));
+
+    sheet.columns.forEach(col => {
+      if (col.numFmt) ws.getColumn(col.key).numFmt = col.numFmt;
+    });
+    ws.views = [{ state: 'frozen', ySplit: 1 }];
+    if (sheet.columns.length > 0) {
+      ws.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: 1, column: sheet.columns.length },
+      };
+    }
 
     // Estilos básicos (negrita al header)
     ws.getRow(1).eachCell(cell => {

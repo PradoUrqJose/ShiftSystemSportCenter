@@ -45,11 +45,15 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'horas-trabajadas',
+        path: 'exportacion-contable',
         loadComponent: () =>
-          import('./pages/reportes/horas-trabajadas/horas-trabajadas.component').then(
-            m => m.HorasTrabajadasComponent
+          import('./pages/reportes/exportacion-contable/exportacion-contable.component').then(
+            m => m.ExportacionContableComponent
           ),
+      },
+      {
+        path: 'horas-trabajadas',
+        redirectTo: 'exportacion-contable',
       },
       {
         path: 'preliquidacion',
@@ -74,10 +78,7 @@ export const routes: Routes = [
       },
       {
         path: 'turnos-feriados',
-        loadComponent: () =>
-          import('./pages/reportes/turnos-feriados/turnos-feriados.component').then(
-            m => m.TurnosFeriadosComponent
-          ),
+        redirectTo: 'exportacion-contable',
       },
       {
         path: 'semana-normal',

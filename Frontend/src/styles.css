@@ -10,6 +10,7 @@
 @import './app/pages/reportes/excepciones/excepciones.component.css';
 @import './app/pages/reportes/colaborador-profile/colaborador-profile.component.css';
 @import './app/pages/reportes/resumen/resumen.component.css';
+@import './app/pages/reportes/exportacion-contable/exportacion-contable.component.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

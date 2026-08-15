@@ -31,9 +31,8 @@ export default class NavbarComponent {
   reportes = [
     { nombre: 'Resumen', link: '/reportes/resumen' },
     { nombre: 'Preliquidación Mensual', link: '/reportes/preliquidacion' },
+    { nombre: 'Exportación Contable', link: '/reportes/exportacion-contable' },
     { nombre: 'Excepciones y Calidad', link: '/reportes/excepciones' },
-    { nombre: 'Horas Trabajadas', link: '/reportes/horas-trabajadas' },
-    { nombre: 'Turnos en Feriados', link: '/reportes/turnos-feriados' },
     { nombre: 'Semana Normal', link: '/reportes/semana-normal' }
   ];
 

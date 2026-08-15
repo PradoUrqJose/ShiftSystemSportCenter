@@ -1,3 +1,0 @@
-/* El ancho fijo del .ng-select (min-height/height) es global a propósito
-   (::ng-deep en reportes.component.css, el ancestro de esta ruta) — no se
-   duplica acá. */

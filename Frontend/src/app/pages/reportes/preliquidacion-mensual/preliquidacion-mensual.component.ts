@@ -42,8 +42,7 @@ const MESES = [
 
 // Reporte de solo lectura, siempre recalculado a partir de los turnos del
 // mes: no persiste estado ni observaciones (ver GET /api/reportes/preliquidacion).
-// Diseño propio, sin reusar la composición toolbar+tabla de horas-trabajadas/
-// turnos-feriados: filtro simple de mes/año/empresa, tira de totales, y un
+// Diseño propio: filtro simple de mes/año/empresa, tira de totales, y un
 // listado en el que cada fila lleva al perfil analítico del colaborador
 // (/reportes/colaborador-profile) en vez de abrir un detalle propio.
 @Component({

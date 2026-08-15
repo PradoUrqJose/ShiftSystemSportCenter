@@ -1,5 +1,4 @@
-/* Preliquidación mensual: diseño propio, no el de horas-trabajadas/
-   turnos-feriados (toolbar elevado + <table> con bordes). Acá el filtro es
+/* Preliquidación mensual: diseño propio. Acá el filtro es
    una fila simple sin panel, y el listado es un grid de tarjetas planas
    (cada fila lleva al perfil del colaborador) en vez de una tabla HTML. */
 

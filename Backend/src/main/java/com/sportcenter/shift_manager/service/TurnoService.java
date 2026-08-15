@@ -130,9 +130,8 @@ public class TurnoService {
         return horasPorColaborador;
     }
 
-    // El frontend manda una lista vacía para "todos los colaboradores"
-    // (ver ReporteFiltrosService.onEmpresaChange). Sin esto, un IN [] en el
-    // repositorio no trae ningún turno en vez de traerlos todos.
+    // Una lista vacía significa "todos los colaboradores". Sin esta
+    // resolución, un IN [] no devolvería ningún turno.
     private List<Long> resolverColaboradores(List<Long> colaboradores) {
         return colaboradores != null && !colaboradores.isEmpty()
                 ? colaboradores
@@ -307,29 +306,6 @@ public class TurnoService {
             return dto;
         }).distinct().toList();
     }
-
-    // Reporte 3: Turnos en feriados (MODIFICADO)
-    public List<TurnoDTO> getTurnosEnFeriados(List<Long> colaboradores, String fechaInicio, String fechaFin) {
-        LocalDate inicio = LocalDate.parse(fechaInicio);
-        LocalDate fin = LocalDate.parse(fechaFin);
-        // Filtrar por colaboradores y rango de fechas, luego por feriados
-        List<Turno> turnos = turnoRepository.findByColaborador_IdInAndFechaBetween(resolverColaboradores(colaboradores), inicio, fin)
-                .stream()
-                .filter(Turno::isEsFeriado)
-                .collect(Collectors.toList());
-
-        Map<Long, Double> horasFeriadosPorColaborador = calcularHorasPorColaborador(turnos);
-
-        return turnos.stream()
-                .map(turno -> {
-                    TurnoDTO dto = convertToDTO(turno);
-                    dto.setHorasTotalesSemana(horasFeriadosPorColaborador.get(turno.getColaborador().getId()));
-                    return dto;
-                })
-                .distinct()
-                .collect(Collectors.toList());
-    }
-
 
     public List<ResumenMensualDTO> getResumenMensualPorColaboradores(List<Long> colaboradoresIds, int mes, int anio) {
         LocalDate inicioMes = LocalDate.of(anio, mes, 1);

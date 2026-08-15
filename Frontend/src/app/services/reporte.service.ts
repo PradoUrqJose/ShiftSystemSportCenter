@@ -100,10 +100,58 @@ export interface ResumenReporte {
   requiereAtencion: ExcepcionReporte[];
 }
 
-// Los dos endpoints devuelven List<TurnoDTO> (backend) — el mismo shape que
-// ya describe la interfaz Turno, no hace falta inventar una nueva. Antes
-// ambos métodos devolvían Observable<any[]>, y ese `any` se filtraba a los
-// componentes que los consumen (horas-trabajadas, turnos-feriados).
+export interface ResumenProgramacionContable {
+  colaboradorId: number;
+  dni: string;
+  nombre: string;
+  apellido: string;
+  empresaId: number;
+  nombreEmpresa: string;
+  rucEmpresa: string;
+  diasProgramados: number;
+  cantidadTurnos: number;
+  horasRegulares: number;
+  horasEnFeriado: number;
+  totalHorasProgramadas: number;
+  horasSobreUmbralDiario: number;
+  diasConTurnoPartido: number;
+}
+
+export interface TurnoProgramacionContable {
+  turnoId: number;
+  colaboradorId: number;
+  dni: string;
+  nombre: string;
+  apellido: string;
+  empresaId: number;
+  nombreEmpresa: string;
+  rucEmpresa: string;
+  tiendaId: number;
+  nombreTienda: string;
+  fecha: string;
+  horaEntrada: string;
+  horaSalida: string;
+  horasProgramadas: number;
+  descuentoAlmuerzo: boolean;
+  feriado: boolean;
+  turnoPartido: boolean;
+}
+
+export interface ProgramacionContable {
+  desde: string;
+  hasta: string;
+  empresaId: number | null;
+  umbralHorasDiarias: number;
+  colaboradoresIncluidos: number;
+  turnosIncluidos: number;
+  totalHorasProgramadas: number;
+  totalHorasEnFeriado: number;
+  resumen: ResumenProgramacionContable[];
+  turnos: TurnoProgramacionContable[];
+}
+
+// El endpoint liviano de turnos conserva el mismo shape de TurnoDTO y se usa
+// en la ficha individual. La exportación contable usa su contrato propio.
 @Injectable({
   providedIn: 'root'
 })
@@ -123,17 +171,6 @@ export class ReporteService {
     }
 
     return this.http.get<Turno[]>(this.apiUrl, { params });
-  }
-
-  getTurnosFeriados(fechaInicio: string, fechaFin: string, colaboradores: number[]): Observable<Turno[]> {
-    let params = new HttpParams()
-      .set('fechaInicio', fechaInicio)
-      .set('fechaFin', fechaFin);
-
-    if (colaboradores.length > 0) {
-      params = params.set('colaboradores', colaboradores.join(','));
-    }
-    return this.http.get<Turno[]>(`${this.apiUrl}/feriados`, { params });
   }
 
   getPreliquidacionMensual(
@@ -195,5 +232,21 @@ export class ReporteService {
 
     if (empresaId != null) params = params.set('empresaId', empresaId);
     return this.http.get<ResumenReporte>(`${this.reportesApiUrl}/resumen`, { params });
+  }
+
+  getProgramacionContable(
+    desde: string,
+    hasta: string,
+    empresaId?: number,
+    colaboradores: number[] = [],
+    umbralHorasDiarias = 8,
+  ): Observable<ProgramacionContable> {
+    let params = new HttpParams()
+      .set('desde', desde)
+      .set('hasta', hasta)
+      .set('umbralHorasDiarias', umbralHorasDiarias);
+    if (empresaId != null) params = params.set('empresaId', empresaId);
+    if (colaboradores.length > 0) params = params.set('colaboradores', colaboradores.join(','));
+    return this.http.get<ProgramacionContable>(`${this.reportesApiUrl}/programacion-contable`, { params });
   }
 }

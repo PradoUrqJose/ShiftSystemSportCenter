@@ -11,7 +11,7 @@ import { TurnoStateService } from './turno-state.service';
 // extraído de turnos.component.ts, que mezclaba esto con el modal de alta/
 // edición y los filtros de la barra superior. Sin providedIn: 'root': se
 // declara en el `providers` de TurnosComponent (ver ngModule del
-// componente), mismo criterio que ReporteFiltrosService/TooltipService en
+// componente), mismo criterio que TooltipService en
 // esta misma limpieza — un estado por instancia de página, no uno global.
 @Injectable()
 export class TurnosCalendarService implements OnDestroy {

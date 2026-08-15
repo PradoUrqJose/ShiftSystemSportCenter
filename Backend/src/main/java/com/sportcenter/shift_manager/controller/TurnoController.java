@@ -121,17 +121,6 @@ public class TurnoController {
         return ResponseEntity.ok(turnoService.getHorasTrabajadasPorColaboradores(colaboradoresIds, fechaInicio, fechaFin));
     }
 
-    @GetMapping("/reporte/feriados")
-    public ResponseEntity<List<TurnoDTO>> getTurnosEnFeriados(
-            @RequestParam("fechaInicio") String fechaInicio,
-            @RequestParam("fechaFin") String fechaFin,
-            @RequestParam(value = "colaboradores", required = false) String colaboradores) {
-        List<Long> colaboradoresIds = (colaboradores != null && !colaboradores.isEmpty())
-                ? Arrays.stream(colaboradores.split(",")).map(Long::parseLong).toList()
-                : new ArrayList<>();
-        return ResponseEntity.ok(turnoService.getTurnosEnFeriados(colaboradoresIds, fechaInicio, fechaFin));
-    }
-
     @GetMapping("/resumen-mensual")
     public ResponseEntity<List<ResumenMensualDTO>> getResumenMensual(
             @RequestParam("mes") int mes,

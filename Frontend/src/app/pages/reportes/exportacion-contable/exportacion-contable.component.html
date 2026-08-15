@@ -1,0 +1,100 @@
+<section class="accounting-export">
+  <header class="accounting-export__header">
+    <div>
+      <span class="accounting-export__eyebrow">Entrega a contabilidad</span>
+      <h1>Exportación de turnos</h1>
+      <p>Consolida horas regulares y feriados en un solo archivo, con el detalle necesario para auditar cada total.</p>
+    </div>
+    <div class="accounting-export__notice">
+      <span class="accounting-export__notice-icon"><i class="fa-solid fa-file-excel" aria-hidden="true"></i></span>
+      <div><strong>Horas programadas</strong><span>El archivo no representa asistencia ni pagos realizados.</span></div>
+    </div>
+  </header>
+
+  <form class="accounting-export__filters" (ngSubmit)="generar()">
+    <label><span>Desde</span><input type="date" name="desde" [(ngModel)]="desde"></label>
+    <label><span>Hasta</span><input type="date" name="hasta" [(ngModel)]="hasta"></label>
+    <label class="accounting-export__company">
+      <span>Empresa histórica</span>
+      <select name="empresaId" [(ngModel)]="empresaId">
+        <option [ngValue]="null">Todas las empresas</option>
+        <option *ngFor="let empresa of empresas" [ngValue]="empresa.id">{{ empresa.nombre }}</option>
+      </select>
+    </label>
+    <label class="accounting-export__people">
+      <span>Trabajadores <small>Vacío incluye a todos</small></span>
+      <ng-select
+        name="colaboradores"
+        [items]="colaboradores"
+        bindValue="id"
+        [(ngModel)]="colaboradoresSeleccionados"
+        [multiple]="true"
+        [closeOnSelect]="false"
+        [clearable]="true"
+        placeholder="Todos los trabajadores"
+      >
+        <ng-template ng-label-tmp let-item="item">{{ item.nombre }} {{ item.apellido }}</ng-template>
+        <ng-template ng-option-tmp let-item="item">
+          <div class="accounting-export__person-option">
+            <span>{{ item.nombre }} {{ item.apellido }}</span>
+            <small>{{ item.dni }} · empresa actual: {{ item.empresaNombre }}</small>
+          </div>
+        </ng-template>
+      </ng-select>
+    </label>
+    <app-button type="submit" variant="primary" [isLoading]="cargando">Preparar archivo</app-button>
+  </form>
+
+  <p class="accounting-export__error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <div class="accounting-export__skeleton" *ngIf="cargando">
+    <app-skeleton *ngFor="let _ of skeletonRows" height="90px" radius="12px"></app-skeleton>
+  </div>
+
+  <ng-container *ngIf="!cargando && reporte">
+    <div class="accounting-export__context">
+      <span>{{ reporte.desde }} – {{ reporte.hasta }}</span>
+      <span>{{ nombreEmpresa }}</span>
+      <span>{{ alcanceTrabajadores }}</span>
+    </div>
+
+    <section class="accounting-export-summary" aria-label="Totales de la exportación">
+      <div><span>Trabajadores</span><strong>{{ reporte.colaboradoresIncluidos }}</strong><small>personas incluidas</small></div>
+      <div><span>Turnos</span><strong>{{ reporte.turnosIncluidos }}</strong><small>filas en el detalle</small></div>
+      <div><span>Horas programadas</span><strong>{{ reporte.totalHorasProgramadas | number:'1.2-2' }}</strong><small>formato decimal</small></div>
+      <div><span>Horas en feriado</span><strong>{{ reporte.totalHorasEnFeriado | number:'1.2-2' }}</strong><small>incluidas en el mismo archivo</small></div>
+    </section>
+
+    <section class="accounting-export-file" *ngIf="reporte.turnosIncluidos > 0">
+      <div class="accounting-export-file__intro">
+        <span class="accounting-export-file__icon"><i class="fa-solid fa-table-list" aria-hidden="true"></i></span>
+        <div>
+          <h2>Archivo listo para descargar</h2>
+          <p><strong>Resumen por trabajador</strong> para conciliar totales y <strong>Detalle de turnos</strong> para verificar cada jornada.</p>
+        </div>
+      </div>
+      <app-export-excel [sheets]="hojasExport" [fileName]="nombreArchivo" label="Descargar Excel"></app-export-excel>
+    </section>
+
+    <section class="accounting-export-preview" *ngIf="reporte.resumen.length > 0">
+      <div class="accounting-export-preview__heading">
+        <div><h2>Vista previa del resumen</h2><p>Los valores se exportarán como números decimales, no como texto HH:MM.</p></div>
+        <span>{{ reporte.resumen.length }} relaciones trabajador–empresa</span>
+      </div>
+      <div class="accounting-export-preview__header" aria-hidden="true">
+        <span>Trabajador</span><span>Empresa histórica</span><span>Días / turnos</span><span>Regular</span><span>Feriado</span><span>Total</span>
+      </div>
+      <div class="accounting-export-preview__row" *ngFor="let fila of reporte.resumen; trackBy: trackByResumen">
+        <span><strong>{{ fila.apellido }}, {{ fila.nombre }}</strong><small>{{ fila.dni }}</small></span>
+        <span><strong>{{ fila.nombreEmpresa }}</strong><small>RUC {{ fila.rucEmpresa }}</small></span>
+        <span>{{ fila.diasProgramados }} / {{ fila.cantidadTurnos }}</span>
+        <span>{{ fila.horasRegulares | number:'1.2-2' }}</span>
+        <span>{{ fila.horasEnFeriado | number:'1.2-2' }}</span>
+        <span><strong>{{ fila.totalHorasProgramadas | number:'1.2-2' }}</strong></span>
+      </div>
+    </section>
+
+    <app-empty-state *ngIf="reporte.turnosIncluidos === 0" icon="⌕" title="Sin turnos para exportar"
+      description="No existen turnos que coincidan con el período, empresa y trabajadores seleccionados."></app-empty-state>
+  </ng-container>
+</section>

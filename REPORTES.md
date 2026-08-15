@@ -17,7 +17,8 @@ acá se explica el *criterio* y el *estado*, no el detalle de implementación.
 | Excepciones y calidad | Detectar feriados mal clasificados, jornadas extensas, datos futuros o inconsistentes | Muy alta |
 | Cobertura por tienda | Saber cuántas personas y horas están programadas por tienda/día | Alta |
 | Resumen operativo | Saber qué requiere atención sin recorrer tablas | Media |
-| Detalle de turnos | Auditar el origen de cualquier total y exportarlo | Necesario, como drill-down (ya existe: `horas-trabajadas`) |
+| Exportación contable | Entregar resumen y detalle decimal auditable en un único Excel | Muy alta |
+| Detalle de turnos | Auditar el origen de cualquier total exportado | Necesario, como segunda hoja del Excel contable |
 
 No se persigue calcular nómina real todavía: con el modelo actual, todo lo
 que sigue es **horas programadas**, no horas trabajadas ni liquidación.
@@ -40,9 +41,9 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       `TurnoRepository.sumarizarPorColaboradorYDia`/`YTienda` (SQL nativo,
       `GROUP BY` por colaborador+empresa histórica) reemplazan las sumas en
       memoria para reportes nuevos.
-      `TurnoService` (reportes viejos: horas-trabajadas, turnos-feriados,
-      resumen-mensual) no se tocó — sigue sumando en Java, se migra reporte
-      por reporte si hace falta, no de una.
+      Los reportes heredados de `TurnoService` siguieron sumando en Java en
+      ese checkpoint; su consolidación se hizo posteriormente, reporte por
+      reporte, sin reescribir de una vez todos los consumidores.
 
 - [x] **Fase 3 — Preliquidación mensual + exportación.** CERRADA 14 ago,
       con una corrección de fondo el 15 ago (mismo checkpoint que Fase 4,
@@ -111,9 +112,11 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       para junio de 2026 el mismo total general (2418.5 h) y su reparto por
       empresa histórica (694 h + 1724.5 h); también se verificó el rechazo
       de un mes inválido. La revisión manual de navegación y presentación
-      fue aprobada por el usuario. La suite frontend completa todavía tiene
-      17 pruebas heredadas con configuración deficiente de TestBed; se deja
-      como deuda explícita y no se presenta como validación superada.
+      fue aprobada por el usuario. La suite frontend completa continúa como
+      deuda explícita y no se presenta como validación superada. En la última
+      medición (15 ago) pasan 16 de 31 pruebas y fallan 15 por configuración
+      heredada de TestBed (`HttpClient` ausente o componentes standalone
+      declarados como módulos), no por las pruebas focalizadas de Reportes.
 
 - [x] **Fase 5 — Excepciones y calidad de datos.** CERRADA 15 ago 2026,
       incluida la revisión manual de presentación y navegación.
@@ -209,6 +212,25 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       preliquidación, excepciones y ficha de colaborador fueron aprobados
       manualmente por el usuario.
 
+- [ ] **Consolidación contable y navegación.** EN CHECKPOINT 15 ago 2026.
+      `GET /api/reportes/programacion-contable?desde&hasta&empresaId&colaboradores&umbralHorasDiarias`
+      entrega una fuente única para contabilidad por período libre: resumen
+      por trabajador y empresa histórica más el detalle de cada turno. La
+      nueva vista `/reportes/exportacion-contable` genera un Excel de dos
+      hojas con horas como números decimales, columnas de feriado, descuento
+      de almuerzo y turno partido, filtros, cabecera inmovilizada y autofiltro.
+      Los reportes heredados `horas-trabajadas` y `turnos-feriados`, junto con
+      su toolbar y servicio compartidos ya sin consumidores, fueron retirados;
+      sus URLs redirigen a la exportación unificada para no romper favoritos.
+
+      Contra la BD, julio de 2026 devuelve 23 personas, 512 turnos, 3981.15 h
+      programadas y 356.65 h en feriado; resumen, detalle y preliquidación
+      coinciden exactamente. También se verificaron el filtro combinado por
+      empresa histórica y trabajador y el rechazo de un rango invertido. Las
+      suites focalizadas y el build de producción están correctos. Falta la
+      revisión manual del archivo descargado y del responsive antes de cerrar
+      este punto.
+
 - [ ] **Cobertura por tienda.** Prioridad Alta pero sin número de fase
       todavía — no estaba en el orden de implementación original. Sin una
       definición de "dotación necesaria" (tienda + puesto + día/franja +
@@ -239,7 +261,7 @@ aprobado como conceptos separados) — no se mete sueldo directo en
   modelo (deuda ya documentada como fuera de alcance en el plan de
   mantenibilidad previo).
 - **Diseño visual de los reportes nuevos: herramienta operativa sobria.** No
-  replicar la composición de `horas-trabajadas`/`turnos-feriados` (toolbar
+  replicar la composición de los reportes tabulares heredados (toolbar
   elevado + `<table>`) ni usar bordes superiores/laterales de color como
   recurso de estado o selección. La jerarquía se construye con tipografía,
   espaciado y superficies; el color queda restringido a chips, puntos de
@@ -252,22 +274,24 @@ aprobado como conceptos separados) — no se mete sueldo directo en
   Reportes
   ├── Resumen                  (Fase 6)
   ├── Preliquidación mensual   (Fase 3 — lista)
+  ├── Exportación contable     (en checkpoint)
   ├── Colaboradores            (Fase 4 — lista)
   ├── Cobertura por tienda     (sin fase asignada)
   └── Excepciones              (Fase 5 — lista)
   ```
-  "Turnos en feriados" pasa a ser un desglose/filtro de preliquidación.
-  "Horas trabajadas" queda como el detalle de turnos programados
-  (drill-down). "Semana normal" no es un reporte — pertenece al módulo de
-  Turnos, no a esta sección.
+  "Turnos en feriados" y "Horas trabajadas" quedan unificados en la
+  exportación contable: el feriado es una columna del detalle y no un archivo
+  separado. "Semana normal" no es un reporte — pertenece al módulo de Turnos,
+  no a esta sección.
 
 ## Próximo paso sugerido
 
-Iniciar una fase corta de consolidación de navegación: retirar del submenú las
-entradas antiguas que ya quedaron cubiertas por los nuevos reportes, convertir
-"Turnos en feriados" en un desglose de preliquidación y mover "Semana normal"
-al módulo de Turnos. No borrar rutas ni componentes hasta comprobar que no
-existan enlaces o flujos todavía dependientes de ellos.
+Cerrar la revisión manual de `/reportes/exportacion-contable` y del `.xlsx`.
+Después, completar la preparación para despliegue: resolver las vulnerabilidades
+altas de Angular mediante una migración controlada (sin `npm audit fix --force`),
+sanear y documentar la configuración de producción, ensayar migraciones y
+respaldo de la BD, agregar una señal de salud para el hosting y estabilizar la
+suite frontend completa. Finalmente, mover "Semana normal" al módulo de Turnos.
 
 ## Protocolo obligatorio de avance y revisión
 
