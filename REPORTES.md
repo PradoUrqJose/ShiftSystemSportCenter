@@ -115,11 +115,32 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       17 pruebas heredadas con configuración deficiente de TestBed; se deja
       como deuda explícita y no se presenta como validación superada.
 
-- [ ] **Fase 5 — Excepciones y calidad de datos.** PENDIENTE. El más
-      importante para prevenir errores administrativos, aunque no sea
-      "bonito": feriados mal marcados, jornadas por encima de un umbral,
-      turnos de colaboradores deshabilitados, solapamientos, turnos sin
-      empresa/tienda/puesto, turnos futuros fuera de horizonte.
+- [ ] **Fase 5 — Excepciones y calidad de datos.** EN DEFINICIÓN (auditoría
+      de BD realizada el 15 ago 2026). El primer corte propone estas reglas:
+      horario incompleto o inválido, solapamiento, turno exacto duplicado,
+      marca de feriado inconsistente, turno futuro de un colaborador
+      deshabilitado, jornada extensa, turno partido y programación fuera del
+      horizonte. La jornada extensa debe usar 12 h por defecto (configurable):
+      8 h no discrimina anomalías en esta operación, porque 3971 jornadas la
+      superan y 9.75 h es la duración más frecuente. El umbral de 8 h sigue
+      siendo válido como dato contable de "horas extra candidatas", no como
+      alarma de calidad. "Turno sin puesto histórico" queda fuera: `Turno`
+      no almacena puesto y el puesto actual del colaborador no permite
+      reconstruir el pasado con rigor. Empresa y tienda ya son obligatorias
+      por esquema y claves foráneas, pero se conservarán como controles
+      defensivos en la consulta.
+
+      Línea base de 6157 turnos (2025-02-01 a 2026-09-10): 0 horarios
+      incompletos/inválidos, 0 solapamientos, 0 duplicados exactos, 0
+      inconsistencias de feriado, 0 turnos futuros de deshabilitados y 0
+      turnos a más de 90 días; sí existen 50 días con turno partido y 7
+      jornadas por encima de 12 h. Hay 27 colaboradores deshabilitados; 23
+      tienen historial de turnos válido. Ese historial no se marcará como
+      error, porque no existe fecha de baja en el modelo. Propuesta de
+      severidad pendiente de aprobación: errores para
+      integridad/solapamiento/duplicado/feriado; advertencias para
+      deshabilitado futuro, jornada extensa y horizonte; información para
+      turno partido.
 
 - [ ] **Fase 6 — Portada-resumen compacta.** PENDIENTE. No es un dashboard
       grande: horas programadas del periodo, horas en feriado, colaboradores
@@ -180,8 +201,9 @@ aprobado como conceptos separados) — no se mete sueldo directo en
 
 ## Próximo paso sugerido
 
-Implementar la Fase 5 — Excepciones y calidad de datos, empezando por
-definir cada regla y su severidad antes de diseñar la pantalla.
+Aprobar las reglas y severidades de la Fase 5 descritas arriba. Después,
+implementar primero la consulta y sus pruebas; la pantalla se diseña con
+los resultados reales, no antes.
 
 ## Protocolo obligatorio de avance y revisión
 
