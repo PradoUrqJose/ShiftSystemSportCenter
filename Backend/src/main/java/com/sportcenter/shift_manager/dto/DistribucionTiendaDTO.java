@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/** Horas trabajadas por un colaborador en una tienda dentro de un período. */
+/** Horas programadas por un colaborador en una tienda dentro de un período. */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

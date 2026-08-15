@@ -38,13 +38,28 @@ aprobado como conceptos separados) — no se mete sueldo directo en
 
 - [x] **Fase 2 — Consultas agregadas en backend.** CERRADA 14 ago 2026.
       `TurnoRepository.sumarizarPorColaboradorYDia`/`YTienda` (SQL nativo,
-      `GROUP BY`) reemplazan las sumas en memoria para reportes nuevos.
+      `GROUP BY` por colaborador+empresa histórica) reemplazan las sumas en
+      memoria para reportes nuevos.
       `TurnoService` (reportes viejos: horas-trabajadas, turnos-feriados,
       resumen-mensual) no se tocó — sigue sumando en Java, se migra reporte
       por reporte si hace falta, no de una.
 
-- [x] **Fase 3 — Preliquidación mensual + exportación.** CERRADA 14 ago
-      2026. `GET /api/reportes/preliquidacion?mes&anio&empresaId&umbralHorasDiarias`
+- [x] **Fase 3 — Preliquidación mensual + exportación.** CERRADA 14 ago,
+      con una corrección de fondo el 15 ago (mismo checkpoint que Fase 4,
+      ver abajo). La implementación del 14 ago quedó funcional pero
+      atribuía turnos históricos a la empresa *actual* del colaborador
+      (`colaborador.getEmpresa()`) en vez de la empresa real del turno
+      (`turno.empresa_id`) — si un colaborador cambió de empresa, todo su
+      historial se mostraba bajo la empresa nueva, lo que invalida el
+      filtro contable por empresa aunque el total general coincida.
+      Corregido en `TurnoRepository.sumarizarPorColaboradorYDia/YTienda`
+      (agrupan y unen por `empresa_id` del turno, no del colaborador) y
+      `ReporteService.getPreliquidacionMensual` (agrupa por
+      colaborador+empresa histórica — un colaborador que trabajó en dos
+      empresas en el mes ahora sale como dos filas). De paso, validación de
+      parámetros (mes 1-12, año 2000-2100, umbral > 0) y test dedicado
+      (`ReporteServiceTest`, cubre el caso de empresa histórica dividida y
+      los parámetros inválidos). `GET /api/reportes/preliquidacion?mes&anio&empresaId&umbralHorasDiarias`
       (`ReporteController`/`ReporteService`, `PreliquidacionMensualDTO`) +
       vista `/reportes/preliquidacion` (diseño propio, ver más abajo) +
       export Excel de 2 hojas (Resumen/Detalle, `ExportExcelComponent`
@@ -52,25 +67,53 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       cruzando totales contra `/api/turnos/resumen-mensual` (deben
       coincidir exactamente — mismo cálculo, dos caminos).
 
-- [x] **Fase 4 — Rediseñar análisis de colaborador.** CERRADA 14 ago 2026.
-      `colaborador-profile` reescrito como ficha analítica: header con
-      identidad + filtro de rango, tira de stats (horas del período,
-      promedio semanal ± desviación, horas en feriado, días con
-      excepciones), semanas atípicas, distribución por tienda (barras CSS,
-      no Chart.js), "Excepciones del período" nueva (turno partido / horas
-      extra candidatas por día, acotada a este colaborador) y actividad
-      reciente. Se evaluó mover cálculos a backend como en Fase 2 y se
+- [x] **Fase 4 — Rediseñar análisis de colaborador.** CERRADA 15 ago 2026.
+      El rediseño del 14 ago tuvo una vuelta de corrección al día
+      siguiente: el criterio original de "semana atípica" (outlier por
+      desviación estándar) mezclaba semanas parciales y semanas sin
+      actividad sin que exista jornada contractual — se reemplazó por
+      "semanas de mayor carga" (top 4 por horas, solo semanas completas con
+      actividad, excluyendo la semana en curso), y `getDefaultFechaInicio/
+      Fin` tenía un corrimiento de un día por convertir a UTC (`toISOString`)
+      — ahora usa `formatearFechaLocal`. La lógica de cálculo se extrajo a
+      `colaborador-analytics.util.ts` (funciones puras, sin Angular, con su
+      propio `.spec.ts`) en vez de vivir toda en el componente.
+      `colaborador-profile` quedó como ficha analítica: header con
+      identidad + filtro de rango + manejo de error de rango inválido, tira
+      de stats (horas del período, promedio de semanas completas con
+      actividad, horas en feriado, días con excepciones), composición
+      normal/feriado, semanas de mayor carga, distribución por tienda
+      (barras CSS, no Chart.js), "Excepciones del período" (turno partido /
+      horas extra candidatas por día, acotada a este colaborador) y
+      actividad reciente. Soporta deep-link por query params
+      (`desde`/`hasta`/`empresaId`/`umbralHorasDiarias`) — el listado de
+      preliquidación linkea con esos params, así que la ficha muestra
+      "Empresa del período" (la de ese contexto, filtrando los turnos por
+      `empresaId`) en vez de la empresa actual del colaborador, relevante
+      si cambió de empresa — esto fue lo que expuso el bug de Fase 3 de
+      arriba. Se evaluó mover cálculos a backend como en Fase 2 y se
       decidió que no: acá es un solo colaborador (no todos los de una
       empresa), y los datos ya llegan correctos desde
       `Turno.getHorasTrabajadas()` sin la duplicación SQL que sí se
       justifica en preliquidación por volumen — todo sigue en Angular. Sí
       se corrigió una llamada HTTP redundante (`getTurnosFeriados` traía de
       nuevo lo que ya venía en `getHorasTrabajadas`; ahora se filtra
-      client-side por `esFeriado`). Puro frontend, sin cambios de backend.
-      Efecto colateral: `colaborador-profile` era el único consumidor de
+      client-side por `esFeriado`). Efecto colateral: `colaborador-profile`
+      era el único consumidor de
       `chart.js`/`ng2-charts`/`ngx-countup`/`chartjs-plugin-datalabels` y de
       `utils/chart-config.util.ts` — se borraron del `package.json` y el
       util, ya sin uso.
+
+      Checkpoint de cierre de ambas fases (15 ago): suite backend completa
+      con JDK 17 (`mvn test`, 3 tests), build Angular de producción y los 6
+      tests focalizados de la ficha de colaborador, todos correctos. La API
+      levantada contra la BD y una consulta SQL independiente confirmaron
+      para junio de 2026 el mismo total general (2418.5 h) y su reparto por
+      empresa histórica (694 h + 1724.5 h); también se verificó el rechazo
+      de un mes inválido. La revisión manual de navegación y presentación
+      fue aprobada por el usuario. La suite frontend completa todavía tiene
+      17 pruebas heredadas con configuración deficiente de TestBed; se deja
+      como deuda explícita y no se presenta como validación superada.
 
 - [ ] **Fase 5 — Excepciones y calidad de datos.** PENDIENTE. El más
       importante para prevenir errores administrativos, aunque no sea
@@ -125,8 +168,8 @@ aprobado como conceptos separados) — no se mete sueldo directo en
   ```
   Reportes
   ├── Resumen                  (Fase 6)
-  ├── Preliquidación mensual   (Fase 3 — listo)
-  ├── Colaboradores            (Fase 4)
+  ├── Preliquidación mensual   (Fase 3 — lista)
+  ├── Colaboradores            (Fase 4 — lista)
   ├── Cobertura por tienda     (sin fase asignada)
   └── Excepciones              (Fase 5)
   ```
@@ -137,7 +180,40 @@ aprobado como conceptos separados) — no se mete sueldo directo en
 
 ## Próximo paso sugerido
 
-Fase 5 — Excepciones y calidad de datos.
+Implementar la Fase 5 — Excepciones y calidad de datos, empezando por
+definir cada regla y su severidad antes de diseñar la pantalla.
+
+## Protocolo obligatorio de avance y revisión
+
+Esta sección aplica a cualquier agente que continúe el trabajo, incluido
+Claude. Compilar no equivale a cerrar una fase. Antes de marcar una fase como
+`[x]` hay que demostrar que sus cifras, semántica y navegación son correctas.
+
+1. Trabajar una unidad coherente y mantener actualizado este roadmap.
+2. Detenerse en un **checkpoint de revisión** cuando cambie una regla de
+   negocio, una agregación contable, el esquema/migración, la navegación entre
+   reportes o una pantalla que necesite evaluación visual.
+3. En cada checkpoint indicar al usuario:
+   - rutas y pantallas exactas que debe revisar;
+   - casos concretos y resultado esperado;
+   - verificaciones automáticas ejecutadas y sus limitaciones;
+   - archivos modificados y riesgos pendientes;
+   - comandos de stage y un mensaje de commit descriptivo.
+4. No ejecutar `git commit` salvo pedido explícito. El formato de entrega es:
+   ```bash
+   git add .
+   git commit -m "tipo(alcance): resumen" -m "Contexto y comportamiento corregido..." -m "Verificación realizada..."
+   ```
+5. Si la revisión revela una inconsistencia, reabrir la fase en este documento;
+   no minimizarla porque la aplicación compile o el total general coincida.
+6. Para reportes contables validar siempre al menos:
+   - total general;
+   - distribución por empresa histórica;
+   - detalle que explica cada agregado;
+   - feriados y turnos partidos;
+   - filtros vacíos y períodos sin datos.
+7. Para análisis de colaborador validar desktop, mobile, rango inválido, rango
+   sin turnos, turno partido real, feriado y cambios rápidos de filtro.
 
 ## Cómo se actualiza este documento
 

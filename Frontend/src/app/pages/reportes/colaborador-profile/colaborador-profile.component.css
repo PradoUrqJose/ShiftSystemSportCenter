@@ -62,6 +62,7 @@
 
 .colab-perfil-filtros {
   display: flex;
+  align-items: flex-end;
   gap: 12px;
 }
 
@@ -81,6 +82,15 @@
   background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-sm);
+}
+
+.colab-perfil-error {
+  margin: -12px 0 0;
+  padding: 10px 12px;
+  color: var(--shift-warning-ink);
+  background: var(--shift-warning-bg);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
 }
 
 /* ---------- Skeleton ---------- */
@@ -112,12 +122,6 @@
   font-size: 1.4rem;
   font-weight: 600;
   color: var(--color-ink);
-}
-
-.colab-perfil-stat__valor small {
-  font-size: 0.85rem;
-  font-weight: 400;
-  color: var(--color-ink-soft);
 }
 
 .colab-perfil-stat__label {
@@ -159,8 +163,10 @@
   color: var(--color-ink);
 }
 
-.colab-perfil-card h2:first-child {
-  margin-top: 0;
+.colab-perfil-card h2 small {
+  color: var(--color-ink-soft);
+  font-size: 0.75rem;
+  font-weight: 400;
 }
 
 .colab-perfil-vacio {
@@ -274,6 +280,11 @@
 }
 
 @media (max-width: 900px) {
+  .colab-perfil-filtros {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
   .colab-perfil-grid {
     grid-template-columns: 1fr;
   }

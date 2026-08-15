@@ -13,9 +13,8 @@ import java.time.LocalTime;
                 @Index(name = "idx_turno_fecha", columnList = "fecha"),
                 @Index(name = "idx_turno_colaborador_id", columnList = "colaborador_id"),
                 @Index(name = "idx_turno_tienda_id", columnList = "tienda_id"),
-                // Compuesto: soporta el WHERE fecha BETWEEN... + JOIN colaborador
-                // de TurnoRepository.sumarizarPorColaboradorYDia/YTienda, que
-                // corre en cada request del reporte de preliquidación.
+                // Compuesto: soporta el rango temporal y la agrupación por
+                // colaborador de los reportes agregados.
                 @Index(name = "idx_turno_colaborador_fecha", columnList = "colaborador_id, fecha")
         }
 )

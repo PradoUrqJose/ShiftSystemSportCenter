@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { GestionarPuestosComponent } from './gestionar-puestos.component';
+import GestionarPuestosComponent from './gestionar-puestos.component';
 
 describe('GestionarPuestosComponent', () => {
   let component: GestionarPuestosComponent;

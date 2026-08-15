@@ -157,7 +157,7 @@ export class PreliquidacionMensualComponent implements OnInit, OnDestroy {
         { key: 'dni', label: 'DNI' },
         { key: 'colaborador', label: 'Colaborador' },
         { key: 'empresa', label: 'Empresa' },
-        { key: 'puesto', label: 'Puesto' },
+        { key: 'puesto', label: 'Puesto actual' },
         { key: 'dias', label: 'Días programados' },
         { key: 'horas', label: 'Horas totales' },
         { key: 'horasFeriado', label: 'Horas en feriado' },
@@ -204,7 +204,16 @@ export class PreliquidacionMensualComponent implements OnInit, OnDestroy {
     return `preliquidacion-${this.anio}-${String(this.mes).padStart(2, '0')}`;
   }
 
-  trackByFila(_index: number, fila: PreliquidacionMensual): number {
-    return fila.colaboradorId;
+  get fechaInicioPeriodo(): string {
+    return `${this.anio}-${String(this.mes).padStart(2, '0')}-01`;
+  }
+
+  get fechaFinPeriodo(): string {
+    const ultimoDia = new Date(this.anio, this.mes, 0).getDate();
+    return `${this.anio}-${String(this.mes).padStart(2, '0')}-${String(ultimoDia).padStart(2, '0')}`;
+  }
+
+  trackByFila(_index: number, fila: PreliquidacionMensual): string {
+    return `${fila.colaboradorId}-${fila.empresaId}`;
   }
 }

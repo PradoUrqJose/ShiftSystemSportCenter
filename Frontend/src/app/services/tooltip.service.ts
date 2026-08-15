@@ -1,8 +1,5 @@
 import { ElementRef, Injectable, OnDestroy } from '@angular/core';
 import tippy, { Instance as TippyInstance } from 'tippy.js';
-import 'tippy.js/dist/tippy.css';
-import 'tippy.js/animations/shift-away-extreme.css';
-import 'tippy.js/themes/light.css';
 
 // Sin `providedIn: 'root'` a propósito: cada componente que muestra celdas de
 // turno (weekly-view, monthly-view) lo declara en su propio `providers`, así

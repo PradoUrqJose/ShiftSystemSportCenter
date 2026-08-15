@@ -71,7 +71,7 @@
         <button type="button" role="columnheader" (click)="ordenarPor('empresa')">
           Empresa{{ indicadorOrden('empresa') }}
         </button>
-        <span role="columnheader">Puesto</span>
+        <span role="columnheader">Puesto actual</span>
         <button type="button" role="columnheader" (click)="ordenarPor('dias')">
           Días{{ indicadorOrden('dias') }}
         </button>
@@ -92,6 +92,12 @@
         class="preliq-row"
         [class.preliq-row--alerta]="fila.turnosPartidos > 0"
         [routerLink]="['/reportes/colaborador-profile', fila.colaboradorId]"
+        [queryParams]="{
+          desde: fechaInicioPeriodo,
+          hasta: fechaFinPeriodo,
+          empresaId: fila.empresaId,
+          umbralHorasDiarias: fila.umbralHorasDiariasUsado
+        }"
         [title]="'Ver ficha analítica de ' + fila.nombre + ' ' + fila.apellido"
         role="row"
       >

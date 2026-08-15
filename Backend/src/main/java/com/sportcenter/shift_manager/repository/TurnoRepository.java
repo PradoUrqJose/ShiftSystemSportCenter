@@ -49,6 +49,13 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
     @EntityGraph(attributePaths = {"colaborador", "empresa", "tienda"})
     List<Turno> findByColaborador_IdInAndFechaBetween(List<Long> colaboradores, LocalDate inicio, LocalDate fin);
 
+    @EntityGraph(attributePaths = {"colaborador", "empresa", "tienda"})
+    List<Turno> findByColaborador_IdInAndEmpresa_IdAndFechaBetween(
+            List<Long> colaboradores,
+            Long empresaId,
+            LocalDate inicio,
+            LocalDate fin);
+
     // es_feriado se persiste en el turno (no se recalcula al leer, ver
     // TurnoService.aplicarDatosTurno), así que cuando se crea/edita/borra un
     // feriado hay que reflejarlo a mano en los turnos ya existentes de esa
@@ -95,13 +102,15 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
     // es la forma más barata de detectar ese drift.
 
     /**
-     * Una fila por (colaboradorId, fecha) dentro del rango, con la cantidad
-     * de turnos ese día (para detectar "turno partido": más de 1 fila el
-     * mismo día), los minutos netos ya descontando almuerzo, y si ese día
-     * fue feriado.
+     * Una fila por (colaboradorId, empresa histórica, fecha) dentro del rango,
+     * con la cantidad de turnos ese día (para detectar "turno partido": más
+     * de 1 fila el mismo día), los minutos netos ya descontando almuerzo, y si
+     * ese día fue feriado.
      */
     @Query(value = """
             SELECT t.colaborador_id AS colaboradorId,
+                   t.empresa_id AS empresaId,
+                   e.nombre AS nombreEmpresa,
                    t.fecha AS fecha,
                    COUNT(*) AS cantidadTurnos,
                    SUM(
@@ -112,10 +121,10 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
                    ) AS minutosNetos,
                    bool_or(t.es_feriado) AS esFeriado
             FROM turno t
-            JOIN colaborador c ON c.id = t.colaborador_id
+            JOIN empresa e ON e.id = t.empresa_id
             WHERE t.fecha BETWEEN :inicio AND :fin
-              AND (:empresaId IS NULL OR c.empresa_id = :empresaId)
-            GROUP BY t.colaborador_id, t.fecha
+              AND (:empresaId IS NULL OR t.empresa_id = :empresaId)
+            GROUP BY t.colaborador_id, t.empresa_id, e.nombre, t.fecha
             """, nativeQuery = true)
     List<TurnoDiarioAgregado> sumarizarPorColaboradorYDia(
             @Param("inicio") LocalDate inicio,
@@ -123,12 +132,13 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
             @Param("empresaId") Long empresaId);
 
     /**
-     * Una fila por (colaboradorId, tiendaId) dentro del rango, con el total
-     * de horas netas trabajadas en esa tienda (mismo descuento de almuerzo
-     * que la query anterior).
+     * Una fila por (colaboradorId, empresa histórica, tiendaId) dentro del
+     * rango, con el total de horas netas programadas en esa tienda (mismo
+     * descuento de almuerzo que la query anterior).
      */
     @Query(value = """
             SELECT t.colaborador_id AS colaboradorId,
+                   t.empresa_id AS empresaId,
                    t.tienda_id AS tiendaId,
                    tda.nombre AS nombreTienda,
                    SUM(
@@ -138,11 +148,10 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
                        END
                    ) / 60.0 AS horas
             FROM turno t
-            JOIN colaborador c ON c.id = t.colaborador_id
             JOIN tienda tda ON tda.id = t.tienda_id
             WHERE t.fecha BETWEEN :inicio AND :fin
-              AND (:empresaId IS NULL OR c.empresa_id = :empresaId)
-            GROUP BY t.colaborador_id, t.tienda_id, tda.nombre
+              AND (:empresaId IS NULL OR t.empresa_id = :empresaId)
+            GROUP BY t.colaborador_id, t.empresa_id, t.tienda_id, tda.nombre
             """, nativeQuery = true)
     List<TurnoTiendaAgregado> sumarizarPorColaboradorYTienda(
             @Param("inicio") LocalDate inicio,
