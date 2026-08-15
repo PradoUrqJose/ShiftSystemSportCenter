@@ -8,22 +8,35 @@ import { CountUpModule } from 'ngx-countup';
 import { ColaboradorService, Colaborador } from '../../../services/colaborador.service';
 import { ReporteService } from '../../../services/reporte.service';
 import { CalendarioService } from '../../../services/calendario.service';
-import { eachDayOfInterval, endOfWeek, format, isToday, parseISO, startOfWeek } from 'date-fns';
+import { eachDayOfInterval, eachMonthOfInterval, eachWeekOfInterval, endOfWeek, format, isToday, parseISO, startOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale'; // Importar localización en español
 import { forkJoin, Subject, takeUntil } from 'rxjs';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { Turno, TurnoService } from '../../../services/turno.service';
+import { Turno } from '../../../services/turno.service';
 import { getEmpresaColor, getWallpStyles, lightenDarkenColor } from '../../../utils/color.util';
 import { crearOpcionesGraficoMensual, crearOpcionesGraficoTiendas, crearOpcionesGraficoSemanaActual } from '../../../utils/chart-config.util';
 import { ButtonComponent } from '../../../components/ui/button/button.component';
 import { EmptyStateComponent } from '../../../components/ui/empty-state/empty-state.component';
+import { BadgeComponent } from '../../../components/ui/badge/badge.component';
 
 Chart.register(...registerables, ChartDataLabels);
+
+// Semana con horas muy por fuera del promedio del rango seleccionado
+// (ver calcularEstadisticasSemanales). 1.5 desviaciones estándar es un
+// umbral simple para resaltar outliers sin marcar la variación normal.
+const UMBRAL_SEMANA_CRITICA_EN_DESVIACIONES = 1.5;
+
+interface SemanaCritica {
+  inicio: string;
+  fin: string;
+  horas: number;
+  tipo: 'baja' | 'alta';
+}
 
 @Component({
   selector: 'app-colaborador-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective, CountUpModule, ButtonComponent, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, BaseChartDirective, CountUpModule, ButtonComponent, EmptyStateComponent, BadgeComponent],
   templateUrl: './colaborador-profile.component.html',
   styleUrls: ['./colaborador-profile.component.css']
 })
@@ -31,14 +44,20 @@ export class ColaboradorProfileComponent implements OnInit, OnDestroy {
   colaborador: Colaborador | null = null;
   fechaInicio: string = this.getDefaultFechaInicio();
   fechaFin: string = this.getDefaultFechaFin();
-  totalTurnos: number = 0;
   totalTurnosFeriados: number = 0;
   turnosRecientes: Turno[] = [];
-  horasPorMes: number[] = [];
-  horasFeriados: number = 0;
-  turnosFeriados: Turno[] = [];
   tiendasTrabajadas: { nombre: string, horas: number }[] = [];
   totalHorasSemanaActual: number = 0;
+
+  // Composición normal/feriado y estadísticas semanales del rango
+  // seleccionado (ver calcularComposicionHoras y calcularEstadisticasSemanales).
+  horasNormales: number = 0;
+  horasFeriados: number = 0;
+  porcentajeHorasNormales: number = 0;
+  porcentajeHorasFeriados: number = 0;
+  promedioSemanal: number = 0;
+  desviacionEstandarSemanal: number = 0;
+  semanasCriticas: SemanaCritica[] = [];
   @ViewChild('fechaInicioInput') fechaInicioInput!: ElementRef<HTMLInputElement>;
   @ViewChild('fechaFinInput') fechaFinInput!: ElementRef<HTMLInputElement>;
 
@@ -58,8 +77,7 @@ export class ColaboradorProfileComponent implements OnInit, OnDestroy {
     private router: Router,
     private colaboradorService: ColaboradorService,
     private reporteService: ReporteService,
-    private calendarioService: CalendarioService,
-    private turnoService: TurnoService
+    private calendarioService: CalendarioService
   ) { }
 
   private readonly destroy$ = new Subject<void>();
@@ -103,38 +121,113 @@ export class ColaboradorProfileComponent implements OnInit, OnDestroy {
   loadStatistics(colaboradorId: number): void {
     const colaboradores = [colaboradorId];
     forkJoin({
-      turnos: this.turnoService.getTurnosByColaboradorId(colaboradorId),
       horasTrabajadas: this.reporteService.getHorasTrabajadas(this.fechaInicio, this.fechaFin, colaboradores),
       turnosFeriados: this.reporteService.getTurnosFeriados(this.fechaInicio, this.fechaFin, colaboradores)
     }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: ({ turnos, horasTrabajadas, turnosFeriados }) => {
-        const turnosOrdenados = this.ordenarTurnosPorFecha(turnos);
+      next: ({ horasTrabajadas, turnosFeriados }) => {
+        // "Recientes" sale de horasTrabajadas (ya filtrado por fechaInicio/
+        // fechaFin) en vez de pedir todos los turnos del colaborador, para
+        // que respete el rango seleccionado y no dispare un fetch aparte.
+        const turnosOrdenados = this.ordenarTurnosPorFecha([...horasTrabajadas]);
         this.turnosRecientes = turnosOrdenados.slice(0, 5);
-        this.horasPorMes = this.calcularHorasPorMes(horasTrabajadas);
 
-        const mesActual = new Date().getMonth(); // 0-based: Ene=0, Feb=1, etc.
-        const empresaColor = getEmpresaColor(this.colaborador?.empresaNombre);
-
-        // Asignar colores: empresa para el mes actual, gris oscuro para los demás
-        const backgroundColors = this.horasPorMes.map((_, index) =>
-          index === mesActual ? lightenDarkenColor(empresaColor, -100) : 'rgba(0, 0, 0, 0.7)'
-        );
-        this.barChartData = {
-          labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-          datasets: [{
-            data: this.horasPorMes,
-            backgroundColor: backgroundColors,
-            hoverBackgroundColor: backgroundColors.map(color =>
-              color === lightenDarkenColor(empresaColor, -100) ? lightenDarkenColor(empresaColor, -70) : 'rgba(0, 0, 0, 0.9)'
-            )
-          }]
-        };
-
+        this.actualizarGraficoMensual(horasTrabajadas);
         this.totalTurnosFeriados = turnosFeriados.length;
+        this.calcularComposicionHoras(horasTrabajadas, turnosFeriados);
+        this.calcularEstadisticasSemanales(horasTrabajadas);
         this.loadTiendasTrabajadas(horasTrabajadas);
         this.loadSemanaActual(horasTrabajadas);
       }
     });
+  }
+
+  private actualizarGraficoMensual(turnos: Turno[]): void {
+    const meses = this.calcularHorasPorMes(turnos);
+    const empresaColor = getEmpresaColor(this.colaborador?.empresaNombre);
+    const colorMesActual = lightenDarkenColor(empresaColor, -100);
+    const claveMesActual = format(new Date(), 'yyyy-MM');
+
+    // Asignar colores: empresa para el mes actual, gris oscuro para los demás
+    const backgroundColors = meses.map(mes =>
+      format(mes.fecha, 'yyyy-MM') === claveMesActual ? colorMesActual : 'rgba(0, 0, 0, 0.7)'
+    );
+
+    this.barChartData = {
+      labels: meses.map(mes => mes.label),
+      datasets: [{
+        data: meses.map(mes => mes.horas),
+        backgroundColor: backgroundColors,
+        hoverBackgroundColor: backgroundColors.map(color =>
+          color === colorMesActual ? lightenDarkenColor(empresaColor, -70) : 'rgba(0, 0, 0, 0.9)'
+        )
+      }]
+    };
+  }
+
+  // Composición horas normales vs. feriado sobre el total trabajado en el
+  // rango — turnosFeriados ya es un subconjunto de horasTrabajadas (mismos
+  // turnos, filtrados por esFeriado), así que no se duplican horas.
+  private calcularComposicionHoras(horasTrabajadas: Turno[], turnosFeriados: Turno[]): void {
+    const horasTotales = horasTrabajadas.reduce((sum, t) => sum + (t.horasTrabajadas || 0), 0);
+    this.horasFeriados = turnosFeriados.reduce((sum, t) => sum + (t.horasTrabajadas || 0), 0);
+    this.horasNormales = Math.max(0, horasTotales - this.horasFeriados);
+
+    const total = this.horasNormales + this.horasFeriados;
+    this.porcentajeHorasNormales = total > 0 ? (this.horasNormales / total) * 100 : 0;
+    this.porcentajeHorasFeriados = total > 0 ? (this.horasFeriados / total) * 100 : 0;
+  }
+
+  // Promedio semanal, desviación estándar y semanas "atípicas" (a más de
+  // UMBRAL_SEMANA_CRITICA_EN_DESVIACIONES desviaciones del promedio) dentro
+  // del rango seleccionado. Las semanas futuras se excluyen del análisis:
+  // si fechaFin cae después de hoy, todavía no pasaron y no son "semanas
+  // en cero" reales, así que contarlas como críticas sería ruido.
+  private calcularEstadisticasSemanales(turnos: Turno[]): void {
+    const hoy = new Date();
+    const desde = parseISO(this.fechaInicio);
+    const hastaConfigurado = parseISO(this.fechaFin);
+    const hasta = hastaConfigurado < hoy ? hastaConfigurado : hoy;
+
+    if (desde > hasta) {
+      this.promedioSemanal = 0;
+      this.desviacionEstandarSemanal = 0;
+      this.semanasCriticas = [];
+      return;
+    }
+
+    const horasPorSemana = new Map<string, number>();
+    turnos.forEach(turno => {
+      const inicioSemana = startOfWeek(parseISO(turno.fecha), { weekStartsOn: 1 });
+      const clave = format(inicioSemana, 'yyyy-MM-dd');
+      horasPorSemana.set(clave, (horasPorSemana.get(clave) || 0) + (turno.horasTrabajadas || 0));
+    });
+
+    // Se generan todas las semanas del rango (no solo las que tienen
+    // turnos) para que una semana sin ningún turno cuente como 0 horas
+    // y pueda salir como atípica, en vez de desaparecer del cálculo.
+    const semanas = eachWeekOfInterval({ start: desde, end: hasta }, { weekStartsOn: 1 })
+      .map(inicioSemana => ({
+        inicioSemana,
+        horas: horasPorSemana.get(format(inicioSemana, 'yyyy-MM-dd')) || 0
+      }));
+
+    const sumaHoras = semanas.reduce((sum, s) => sum + s.horas, 0);
+    this.promedioSemanal = sumaHoras / semanas.length;
+
+    const varianza = semanas.reduce((sum, s) => sum + Math.pow(s.horas - this.promedioSemanal, 2), 0) / semanas.length;
+    this.desviacionEstandarSemanal = Math.sqrt(varianza);
+
+    const umbral = this.desviacionEstandarSemanal * UMBRAL_SEMANA_CRITICA_EN_DESVIACIONES;
+    this.semanasCriticas = umbral > 0
+      ? semanas
+          .filter(s => Math.abs(s.horas - this.promedioSemanal) > umbral)
+          .map(s => ({
+            inicio: format(s.inicioSemana, 'dd/MM'),
+            fin: format(endOfWeek(s.inicioSemana, { weekStartsOn: 1 }), 'dd/MM'),
+            horas: s.horas,
+            tipo: s.horas < this.promedioSemanal ? 'baja' as const : 'alta' as const
+          }))
+      : [];
   }
 
   loadSemanaActual(horasTrabajadas: Turno[]): void {
@@ -168,14 +261,28 @@ export class ColaboradorProfileComponent implements OnInit, OnDestroy {
     };
   }
 
-  calcularHorasPorMes(turnos: Turno[]): number[] {
-    const horasPorMes = new Array(12).fill(0);
+  // Agrupa por año-mes (no solo por número de mes) para que un rango de
+  // varios años no mezcle "enero" de años distintos en la misma barra.
+  private calcularHorasPorMes(turnos: Turno[]): { fecha: Date; label: string; horas: number }[] {
+    const desde = parseISO(this.fechaInicio);
+    const hasta = parseISO(this.fechaFin);
+    if (desde > hasta) return [];
+
+    const horasPorClave = new Map<string, number>();
     turnos.forEach(turno => {
-      const fecha = parseISO(turno.fecha);
-      const mes = fecha.getMonth();
-      horasPorMes[mes] += turno.horasTrabajadas || 0;
+      const clave = turno.fecha.slice(0, 7); // "yyyy-MM"
+      horasPorClave.set(clave, (horasPorClave.get(clave) || 0) + (turno.horasTrabajadas || 0));
     });
-    return horasPorMes;
+
+    return eachMonthOfInterval({ start: desde, end: hasta }).map(fecha => ({
+      fecha,
+      label: this.capitalizar(format(fecha, 'MMM yyyy', { locale: es })), // date-fns/es da "ene 2026" en minúscula
+      horas: horasPorClave.get(format(fecha, 'yyyy-MM')) || 0
+    }));
+  }
+
+  private capitalizar(texto: string): string {
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
   }
 
   formatearHora(hora: string | undefined): string {

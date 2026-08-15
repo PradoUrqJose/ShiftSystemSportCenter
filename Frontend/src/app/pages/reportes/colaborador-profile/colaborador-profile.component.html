@@ -99,6 +99,49 @@
       </div>
     </div>
 
+    <div class="card p-6 fade-in order-6 md:col-span-2 lg:col-span-2">
+      <h4 class="text-lg font-semibold text-gray-800 mb-4">Resumen del rango</h4>
+
+      <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-5">
+        <div>
+          <p class="text-black font-bold">Promedio semanal</p>
+          <p>{{ formatearHorasDia(promedioSemanal, true) }} h</p>
+        </div>
+        <div>
+          <p class="text-black font-bold">Desviación</p>
+          <p>± {{ formatearHorasDia(desviacionEstandarSemanal, true) }} h</p>
+        </div>
+      </div>
+
+      <div class="mb-5">
+        <p class="text-black font-bold text-sm mb-1.5">Composición de horas</p>
+        <div class="w-full h-3 rounded-full overflow-hidden flex bg-gray-100">
+          <div class="h-full bg-gray-400" [style.width.%]="porcentajeHorasNormales"></div>
+          <div class="h-full" style="background-color: var(--shift-holiday-accent)"
+            [style.width.%]="porcentajeHorasFeriados"></div>
+        </div>
+        <div class="flex justify-between text-xs text-gray-500 mt-1.5">
+          <span>Normales: {{ formatearHorasDia(horasNormales, true) }} h ({{ porcentajeHorasNormales | number:'1.0-0' }}%)</span>
+          <span>Feriados: {{ formatearHorasDia(horasFeriados, true) }} h ({{ porcentajeHorasFeriados | number:'1.0-0' }}%, {{ totalTurnosFeriados }} turnos)</span>
+        </div>
+      </div>
+
+      <div>
+        <p class="text-black font-bold text-sm mb-2">Semanas atípicas</p>
+        <div *ngIf="semanasCriticas.length; else sinSemanasCriticas" class="flex flex-col gap-1.5 max-h-32 overflow-y-auto">
+          <div *ngFor="let semana of semanasCriticas" class="flex items-center justify-between text-xs text-gray-600">
+            <span>{{ semana.inicio }} – {{ semana.fin }}</span>
+            <app-badge [tone]="semana.tipo === 'alta' ? 'overtime' : 'warning'">
+              {{ semana.tipo === 'alta' ? 'Sobrecarga' : 'Baja' }} · {{ formatearHorasDia(semana.horas, true) }} h
+            </app-badge>
+          </div>
+        </div>
+        <ng-template #sinSemanasCriticas>
+          <p class="text-xs text-gray-400">Sin semanas atípicas en el rango seleccionado.</p>
+        </ng-template>
+      </div>
+    </div>
+
     <div class="card p-6 fade-in order-5 md:col-span-2 lg:col-span-2">
       <h4 class="text-lg font-semibold text-gray-800 mb-4">Turnos Recientes</h4>
       <div class="flex flex-col">
