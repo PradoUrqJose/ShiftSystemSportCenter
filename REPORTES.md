@@ -115,8 +115,8 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       17 pruebas heredadas con configuración deficiente de TestBed; se deja
       como deuda explícita y no se presenta como validación superada.
 
-- [ ] **Fase 5 — Excepciones y calidad de datos.** IMPLEMENTADA, PENDIENTE
-      DE REVISIÓN VISUAL (auditoría e implementación del 15 ago 2026).
+- [x] **Fase 5 — Excepciones y calidad de datos.** CERRADA 15 ago 2026,
+      incluida la revisión manual de presentación y navegación.
       `GET /api/reportes/excepciones?desde&hasta&empresaId&umbralHorasDiarias&umbralJornadaExtrema&horizonteDias`
       devuelve hallazgos auditables con severidad, período, colaborador,
       empresa histórica y los IDs de los turnos involucrados. La vista
@@ -173,9 +173,9 @@ aprobado como conceptos separados) — no se mete sueldo directo en
       señales de posible falta de descanso de 24 h, para un total de 311
       hallazgos (308 riesgos, 3 informativos, 0 errores). El filtro por empresa
       conserva únicamente la empresa histórica solicitada y un rango invertido
-      responde HTTP 400. Pendiente antes de cerrar `[x]`: revisión manual de
-      desktop/mobile, filtros, exportación y navegación a la ficha; el navegador
-      automatizado no estuvo disponible en esta sesión.
+      responde HTTP 400. La revisión manual de desktop/mobile, filtros,
+      exportación y navegación a la ficha fue aprobada por el usuario; el
+      navegador automatizado no estuvo disponible en esta sesión.
 
 - [ ] **Fase 6 — Portada-resumen compacta.** PENDIENTE. No es un dashboard
       grande: horas programadas del periodo, horas en feriado, colaboradores
@@ -227,7 +227,7 @@ aprobado como conceptos separados) — no se mete sueldo directo en
   ├── Preliquidación mensual   (Fase 3 — lista)
   ├── Colaboradores            (Fase 4 — lista)
   ├── Cobertura por tienda     (sin fase asignada)
-  └── Excepciones              (Fase 5 — en revisión)
+  └── Excepciones              (Fase 5 — lista)
   ```
   "Turnos en feriados" pasa a ser un desglose/filtro de preliquidación.
   "Horas trabajadas" queda como el detalle de turnos programados
@@ -236,10 +236,9 @@ aprobado como conceptos separados) — no se mete sueldo directo en
 
 ## Próximo paso sugerido
 
-Revisar visualmente la Fase 5 y conciliar con contabilidad una muestra de las
-jornadas de más de 8 h, semanas de más de 48 h y posibles faltas de descanso.
-Si la navegación, cifras y exportación son correctas, cerrar la fase. Solo
-después iniciar la Fase 6 (portada-resumen compacta).
+Iniciar la Fase 6 — portada-resumen compacta. Debe priorizar lo que requiere
+atención y enlazar cada indicador con su reporte explicativo; no convertirse
+en un dashboard decorativo ni duplicar las listas ya existentes.
 
 ## Protocolo obligatorio de avance y revisión
 
