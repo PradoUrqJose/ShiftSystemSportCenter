@@ -60,7 +60,7 @@ export class ExportExcelComponent {
     if (!this.hayDatosParaExportar()) return;
 
     // Carga diferida: exceljs y file-saver solo se descargan cuando el usuario exporta.
-    const [{ default: ExcelJS }, { saveAs }] = await Promise.all([
+    const [{ default: ExcelJS }, { default: saveAs }] = await Promise.all([
       import('exceljs'),
       import('file-saver'),
     ]);
