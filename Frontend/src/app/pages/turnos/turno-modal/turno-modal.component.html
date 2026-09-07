@@ -3,7 +3,7 @@
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm"
     (click)="cerrarModal()">
     <div
-      class="bg-white p-8 rounded-lg shadow-soft transform transition-all duration-modal w-11/12 sm:w-3/4 md:w-2/3 lg:w-1/2 max-w-[720px] relative"
+      class="bg-white rounded-lg shadow-soft transform transition-all duration-modal w-11/12 sm:w-3/4 md:w-2/3 lg:w-1/2 max-w-[720px] relative flex flex-col max-h-[90vh]"
       [ngClass]="{'opacity-0 -translate-y-10': !isModalVisible, 'opacity-100 translate-y-0': isModalVisible}"
       (click)="$event.stopPropagation()">
       <!-- Botón de cierre -->
@@ -13,8 +13,8 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
-      <!-- Encabezado -->
-      <div class="text-center pb-6 border-b border-gray-100">
+      <!-- Encabezado: fuera del área scrolleable, siempre visible -->
+      <div class="text-center pb-6 border-b border-gray-100 px-8 pt-8 shrink-0">
         <h3 class="text-2xl font-bold text-gray-800 mb-2">
           {{ estaEditandoTurnoExistente ? 'Editar Turno' : 'Agregar Turno' }}
         </h3>
@@ -22,8 +22,11 @@
           {{ estaEditandoTurnoExistente ? 'Modifica los datos del turno seleccionado.' : 'Introduce datos para registrar un nuevo turno.' }}
         </p>
       </div>
-      <!-- Formulario -->
-      <form (ngSubmit)="guardarTurno()" class="mt-6 space-y-6">
+      <!-- Formulario: header y botones fijos, el contenido del medio scrollea
+      cuando un turno partido de varios bloques no entra en la pantalla
+      (ver flex-col + overflow-y-auto más abajo). -->
+      <form (ngSubmit)="guardarTurno()" class="flex flex-col flex-1 min-h-0">
+        <div class="flex-1 min-h-0 overflow-y-auto px-8 py-6 space-y-6">
         <!-- Sección: Tipo de Turno -->
         <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
           <label class="flex items-center space-x-2 cursor-pointer">
@@ -178,8 +181,9 @@
             (click)="abrirModalGestionarTiendas()">Gestionar Tiendas</button>
           </div>
         </div>
-        <!-- Botones -->
-        <div class="flex justify-between items-center mt-6">
+        </div>
+        <!-- Botones: fuera del área scrolleable, siempre visibles -->
+        <div class="flex justify-between items-center px-8 py-6 border-t border-gray-100 shrink-0">
           <app-button type="submit" [isLoading]="isSubmitting"
             [disabled]="!!(!seRealizaronCambios() || errorHoraEntrada || errorHoraSalida || (esTurnoPartido && hayErroresEnBloques()))">
             {{ estaEditandoTurnoExistente ? 'Actualizar Turno' : 'Agregar Turno' }}
