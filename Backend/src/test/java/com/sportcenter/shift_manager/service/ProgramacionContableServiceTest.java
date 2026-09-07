@@ -124,6 +124,11 @@ class ProgramacionContableServiceTest {
         turno.setColaborador(colaborador);
         turno.setEmpresa(empresa(10L, "Empresa A", "20123456789"));
         turno.setTienda(tienda);
+        // tomoAlmuerzo ya no se calcula solo — se persiste (ver Turno.java).
+        // Este helper construye la entidad directo, sin pasar por
+        // TurnoService.aplicarDatosTurno, así que replica acá la misma
+        // regla por defecto que aplicaría el servicio.
+        turno.setTomoAlmuerzo(Turno.calcularAlmuerzoPorDefecto(entrada, salida));
         return turno;
     }
 
