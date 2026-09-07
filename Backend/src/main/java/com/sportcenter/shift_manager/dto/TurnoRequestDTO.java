@@ -30,4 +30,10 @@ public class TurnoRequestDTO {
 
     @NotNull(message = "La hora de salida es obligatoria")
     private LocalTime horaSalida;
+
+    // Opcional: si el cliente no lo manda (null), TurnoService aplica la
+    // regla automática (Turno.calcularAlmuerzoPorDefecto). Si lo manda, se
+    // persiste tal cual — así el administrador puede desactivar el
+    // descuento de almuerzo a mano aunque el horario cumpla la regla.
+    private Boolean tomoAlmuerzo;
 }

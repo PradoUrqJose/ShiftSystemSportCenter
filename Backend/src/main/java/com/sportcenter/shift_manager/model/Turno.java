@@ -47,20 +47,28 @@ public class Turno {
     @Transient
     private double horasTrabajadas;
 
-    // Ventana de almuerzo: si el turno entra antes de las 12:01 y sale después de
-    // las 14:00, se asume que el colaborador almorzó y se descuentan estos minutos.
-    // Única fuente de verdad para este cálculo (antes estaba duplicado en TurnoService).
+    // Si el colaborador tomó almuerzo en este turno (se descuentan
+    // MINUTOS_ALMUERZO de las horas trabajadas). Antes esto se recalculaba
+    // en cada consulta a partir del horario (ventana 12:01-14:00) y no era
+    // editable; ahora se persiste, para que el administrador pueda
+    // desactivarlo a mano en turnos donde no aplica (ej. un turno partido
+    // con un bloque que cruza el mediodía pero sin pausa real).
+    // calcularAlmuerzoPorDefecto() sigue siendo la regla automática, usada
+    // solo para fijar el valor por defecto al crear/editar (ver
+    // TurnoService.aplicarDatosTurno) — no para calcular horasTrabajadas.
     //
-    // Esta misma regla está duplicada a mano en SQL nativo en
+    // Esta misma regla por defecto está duplicada a mano en SQL nativo en
     // TurnoRepository.sumarizarPorColaboradorYDia/sumarizarPorColaboradorYTienda
-    // (los reportes agregados necesitan que la BD sume, y SQL no puede
-    // invocar este método Java). Si estas constantes cambian, actualizar
-    // también esas dos queries.
+    // (backfill de V8__add_turno_tomo_almuerzo.sql). Si estas constantes
+    // cambian, no hace falta tocar esas queries — ya leen la columna
+    // persistida — pero sí revisar el backfill si se re-ejecuta a mano.
     private static final LocalTime INICIO_VENTANA_ALMUERZO = LocalTime.of(12, 1);
     private static final LocalTime FIN_VENTANA_ALMUERZO = LocalTime.of(14, 0);
     private static final int MINUTOS_ALMUERZO = 45;
 
-    public boolean isTomoAlmuerzo() {
+    private boolean tomoAlmuerzo;
+
+    public static boolean calcularAlmuerzoPorDefecto(LocalTime horaEntrada, LocalTime horaSalida) {
         return horaEntrada != null && horaSalida != null
                 && horaEntrada.isBefore(INICIO_VENTANA_ALMUERZO)
                 && horaSalida.isAfter(FIN_VENTANA_ALMUERZO);
@@ -71,7 +79,7 @@ public class Turno {
             return 0;
         }
         long minutosTrabajados = java.time.Duration.between(horaEntrada, horaSalida).toMinutes();
-        if (isTomoAlmuerzo()) {
+        if (tomoAlmuerzo) {
             minutosTrabajados -= MINUTOS_ALMUERZO;
         }
         return minutosTrabajados / 60.0;

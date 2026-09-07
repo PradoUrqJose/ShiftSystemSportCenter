@@ -48,6 +48,12 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
     @EntityGraph(attributePaths = {"colaborador", "empresa", "tienda"})
     List<Turno> findByColaborador_IdAndFechaBetween(Long colaboradorId, LocalDate startDate, LocalDate endDate);
 
+    // Turnos del mismo colaborador el mismo día — usado por
+    // TurnoService.aplicarDatosTurno para validar que un turno partido (o
+    // cualquier alta/edición) no se solape con otro bloque horario ya
+    // existente ese día.
+    List<Turno> findByColaborador_IdAndFecha(Long colaboradorId, LocalDate fecha);
+
     // Método para buscar turnos por tienda y rango de fechas, ordenados por fecha
     @EntityGraph(attributePaths = {"colaborador", "empresa", "tienda"})
     List<Turno> findByTienda_IdAndFechaBetweenOrderByFechaAsc(
@@ -99,16 +105,11 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
     // (Postgres) tanto en dev como en prod, así que la portabilidad entre
     // motores no es un costo real a evitar acá.
     //
-    // IMPORTANTE — duplicación intencional de una regla de negocio:
-    // el CASE WHEN de abajo reproduce a mano Turno.isTomoAlmuerzo()/
-    // getHorasTrabajadas() (ventana 12:01–14:00, 45 min de descuento,
-    // ver Turno.java). SQL no puede invocar ese método Java, así que la
-    // regla queda escrita en dos lugares. Si esas constantes cambian en
-    // Turno.java, hay que actualizar también estas dos queries — si no,
-    // el total que devuelve /api/reportes/preliquidacion se desincroniza
-    // silenciosamente de /api/turnos/resumen-mensual (que sí usa el
-    // cálculo Java). Comparar ambos endpoints para el mismo colaborador/mes
-    // es la forma más barata de detectar ese drift.
+    // El descuento de almuerzo (45 min) ahora lee la columna persistida
+    // t.tomo_almuerzo directamente (ver Turno.java y V8__add_turno_
+    // tomo_almuerzo.sql) — ya no repite la regla de horario a mano, así que
+    // este total queda automáticamente en sync con Turno.getHorasTrabajadas()
+    // y con el override manual del administrador.
 
     /**
      * Una fila por (colaboradorId, empresa histórica, fecha) dentro del rango,
@@ -123,7 +124,7 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
                    t.fecha AS fecha,
                    COUNT(*) AS cantidadTurnos,
                    SUM(
-                       CASE WHEN t.hora_entrada < TIME '12:01:00' AND t.hora_salida > TIME '14:00:00'
+                       CASE WHEN t.tomo_almuerzo
                             THEN EXTRACT(EPOCH FROM (t.hora_salida - t.hora_entrada)) / 60 - 45
                             ELSE EXTRACT(EPOCH FROM (t.hora_salida - t.hora_entrada)) / 60
                        END
@@ -151,7 +152,7 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
                    t.tienda_id AS tiendaId,
                    tda.nombre AS nombreTienda,
                    SUM(
-                       CASE WHEN t.hora_entrada < TIME '12:01:00' AND t.hora_salida > TIME '14:00:00'
+                       CASE WHEN t.tomo_almuerzo
                             THEN EXTRACT(EPOCH FROM (t.hora_salida - t.hora_entrada)) / 60 - 45
                             ELSE EXTRACT(EPOCH FROM (t.hora_salida - t.hora_entrada)) / 60
                        END

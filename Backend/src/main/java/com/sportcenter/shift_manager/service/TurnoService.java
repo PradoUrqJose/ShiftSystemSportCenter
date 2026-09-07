@@ -85,6 +85,8 @@ public class TurnoService {
             throw new IllegalArgumentException("El colaborador no tiene una empresa asignada");
         }
 
+        validarSinSolapamiento(turno.getId(), request);
+
         turno.setColaborador(colaborador);
         turno.setEmpresa(colaborador.getEmpresa());
         turno.setTienda(tienda);
@@ -92,6 +94,31 @@ public class TurnoService {
         turno.setHoraEntrada(request.getHoraEntrada());
         turno.setHoraSalida(request.getHoraSalida());
         turno.setEsFeriado(feriadoService.isFeriado(request.getFecha()));
+        turno.setTomoAlmuerzo(request.getTomoAlmuerzo() != null
+                ? request.getTomoAlmuerzo()
+                : Turno.calcularAlmuerzoPorDefecto(request.getHoraEntrada(), request.getHoraSalida()));
+    }
+
+    // Un turno partido son varias filas Turno independientes del mismo
+    // colaborador/fecha (ver clase Turno) — acá se valida que sus bloques
+    // horarios no se crucen entre sí. excluirTurnoId es el propio turno en
+    // una edición (null al crear), para no compararlo contra sí mismo.
+    private void validarSinSolapamiento(Long excluirTurnoId, TurnoRequestDTO request) {
+        List<Turno> turnosDelDia = turnoRepository.findByColaborador_IdAndFecha(
+                request.getColaboradorId(), request.getFecha());
+
+        for (Turno otro : turnosDelDia) {
+            if (otro.getId().equals(excluirTurnoId)) {
+                continue;
+            }
+            boolean seSolapan = request.getHoraEntrada().isBefore(otro.getHoraSalida())
+                    && otro.getHoraEntrada().isBefore(request.getHoraSalida());
+            if (seSolapan) {
+                throw new IllegalArgumentException(
+                        "El horario se solapa con otro turno del mismo día (" +
+                                otro.getHoraEntrada() + " - " + otro.getHoraSalida() + ")");
+            }
+        }
     }
 
     // Métodos públicos: Gestión de turnos por colaborador
