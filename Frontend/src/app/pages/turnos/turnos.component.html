@@ -143,6 +143,7 @@
   <!-- Modal para Turnos -->
   <app-turno-modal [mostrarModal]="(mostrarModal$ | async) === true"
     [isModalVisible]="(isModalVisible$ | async) === true" [turnoActual]="turnoActual" [turnoOriginal]="turnoOriginal"
+    [turnosDelDiaActual]="turnosDelDiaActual"
     [tiendas$]="tiendas$" (cerrarModalEvent)="cerrarModal()" (turnoGuardado)="manejarTurnoGuardado()"
     (turnoEliminado)="manejarTurnoEliminado()">
   </app-turno-modal>

@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, map, takeUntil } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, map, take, takeUntil } from 'rxjs';
 import { WeeklyViewComponent } from '../../turnos/weekly-view/weekly-view.component';
 import { DiaSemana } from '../../../services/calendario.service';
 import { Colaborador, ColaboradorService } from '../../../services/colaborador.service';
@@ -36,6 +36,8 @@ export class SemanaNormalComponent implements OnInit, OnDestroy {
   isModalVisible$!: Observable<boolean>;
   turnoActual: Turno = crearTurnoVacio();
   turnoOriginal: Turno | null = null;
+  // Turnos del mismo colaborador+fecha que turnoActual (ver turnos.component.ts)
+  turnosDelDiaActual: Turno[] = [];
   tiendas$!: Observable<any[]>;
   private readonly destroy$ = new Subject<void>();
 
@@ -166,7 +168,14 @@ export class SemanaNormalComponent implements OnInit, OnDestroy {
     this.resetearEstadoModal();
     this.turnoOriginal = { ...turno, tiendaId: turno.tiendaId };
     this.turnoActual = { ...turno, tiendaId: turno.tiendaId };
-    this.modalService.abrirModal(MODAL_OPEN_DELAY_MS);
+    // Ver comentario equivalente en turnos.component.ts: hay que resolver
+    // turnosDelDiaActual antes de abrir el modal, no en paralelo.
+    this.turnos$.pipe(take(1), takeUntil(this.destroy$)).subscribe((turnos) => {
+      this.turnosDelDiaActual = (turnos || []).filter(
+        (t) => t.colaboradorId === turno.colaboradorId && t.fecha === turno.fecha
+      );
+      this.modalService.abrirModal(MODAL_OPEN_DELAY_MS);
+    });
   }
 
   cerrarModal(): void {
@@ -176,6 +185,7 @@ export class SemanaNormalComponent implements OnInit, OnDestroy {
   resetearEstadoModal(): void {
     this.turnoOriginal = null;
     this.turnoActual = crearTurnoVacio();
+    this.turnosDelDiaActual = [];
   }
 
   manejarTurnoGuardado(): void {

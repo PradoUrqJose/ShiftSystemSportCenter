@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TurnoService, Turno, TurnoPayload, TurnoPartidoPayload, crearTurnoVacio } from '../../../services/turno.service';
@@ -13,6 +13,18 @@ import { TimePickerComponent } from '../../../components/time-picker/time-picker
 import { TiendaSelectComponent } from '../../../components/tienda-select/tienda-select.component';
 import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../../utils/modal-timing';
 import { ButtonComponent } from '../../../components/ui/button/button.component';
+
+// Un bloque = un turno (fila independiente en el backend) dentro de un
+// turno partido. `id` presente significa que ya existe como Turno guardado
+// (se actualiza al guardar); sin `id` es un bloque nuevo (se crea).
+interface BloqueForm {
+  id?: number;
+  horaEntrada: string;
+  horaSalida: string;
+  tomoAlmuerzo: boolean;
+  errorHoraEntrada: string | null;
+  errorHoraSalida: string | null;
+}
 
 @Component({
     selector: 'app-turno-modal',
@@ -30,11 +42,16 @@ import { ButtonComponent } from '../../../components/ui/button/button.component'
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./turno-modal.component.css']
 })
-export class TurnoModalComponent implements OnInit, OnDestroy {
+export class TurnoModalComponent implements OnInit, OnChanges, OnDestroy {
   @Input() mostrarModal: boolean = false;
   @Input() isModalVisible: boolean = false;
   @Input() turnoActual: Turno = crearTurnoVacio();
   @Input() turnoOriginal: Turno | null = null;
+  // Todos los turnos (filas) del mismo colaborador+fecha que turnoActual —
+  // si hay más de uno, el modal abre en modo "turno partido" con un bloque
+  // por fila existente. El padre lo arma filtrando su lista de turnos (ver
+  // turnos.component.ts / semana-normal.component.ts).
+  @Input() turnosDelDiaActual: Turno[] = [];
   @Input() tiendas$: Observable<Tienda[]> = new Observable<Tienda[]>();
   @Input() tiendasInput$: Observable<Tienda[]> = new Observable<Tienda[]>();
 
@@ -47,18 +64,28 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
   errorHoraSalida: string | null = null;
   errorTienda: string | null = null;
 
-  // Variables para turnos partidos
+  // Turnos partidos: N bloques horarios, 2 por defecto, hasta MAX_BLOQUES.
+  readonly MIN_BLOQUES = 2;
+  readonly MAX_BLOQUES = 4;
   esTurnoPartido: boolean = false;
-  turnoManana = { horaEntrada: '', horaSalida: '' };
-  turnoTarde = { horaEntrada: '', horaSalida: '' };
-  errorHoraEntradaManana: string | null = null;
-  errorHoraSalidaManana: string | null = null;
-  errorHoraEntradaTarde: string | null = null;
-  errorHoraSalidaTarde: string | null = null;
+  bloques: BloqueForm[] = [];
+  // Turnos ya existentes ese día al abrir el modal (para diffear altas/
+  // actualizaciones/eliminaciones al guardar). Vacío si se está creando.
+  private bloquesOriginales: Turno[] = [];
 
-  // Control para deshabilitar turno partido en edición
-  get isTurnoPartidoDisabled(): boolean {
-    return !!this.turnoActual.id; // Deshabilitado si estamos editando
+  // El tipo de turno (simple/partido) queda fijo una vez que se edita un
+  // turno existente — cuántas filas había ese día ya lo decidió el padre.
+  // Lo que sí se puede editar libremente dentro de un turno partido es la
+  // cantidad y el horario de sus bloques (agregar/quitar/modificar).
+  get tipoTurnoDisabled(): boolean {
+    return this.estaEditandoTurnoExistente;
+  }
+
+  // true si el formulario abrió sobre un turno (simple o partido) que ya
+  // existe como fila(s) en el backend — decide si el tipo de turno queda
+  // fijo, el label del botón, y si se muestra "Eliminar".
+  get estaEditandoTurnoExistente(): boolean {
+    return !!this.turnoActual.id || this.bloquesOriginales.length > 0;
   }
 
   mostrarModalAgregarTienda: boolean = false;
@@ -90,6 +117,15 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
     this.cargarPlantillas();
   }
 
+  // El modal es un singleton reutilizado (el padre solo cambia sus @Input y
+  // alterna mostrarModal) — acá es donde se re-siembra el formulario cada
+  // vez que se abre para editar un turno existente.
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['mostrarModal'] && this.mostrarModal) {
+      this.inicializarFormulario();
+    }
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -106,14 +142,24 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
     }, MODAL_CLOSE_DELAY_MS);
   }
 
+  private inicializarFormulario(): void {
+    if (this.turnosDelDiaActual && this.turnosDelDiaActual.length > 1) {
+      this.esTurnoPartido = true;
+      this.bloquesOriginales = [...this.turnosDelDiaActual].sort((a, b) =>
+        this.formatearHora(a.horaEntrada).localeCompare(this.formatearHora(b.horaEntrada))
+      );
+      this.bloques = this.bloquesOriginales.map((turno) => this.crearBloqueDesdeTurno(turno));
+    } else {
+      this.esTurnoPartido = false;
+      this.bloquesOriginales = [];
+      this.bloques = this.crearBloquesVacios();
+    }
+  }
+
   resetTurnoPartido(): void {
     this.esTurnoPartido = false;
-    this.turnoManana = { horaEntrada: '', horaSalida: '' };
-    this.turnoTarde = { horaEntrada: '', horaSalida: '' };
-    this.errorHoraEntradaManana = null;
-    this.errorHoraSalidaManana = null;
-    this.errorHoraEntradaTarde = null;
-    this.errorHoraSalidaTarde = null;
+    this.bloques = this.crearBloquesVacios();
+    this.bloquesOriginales = [];
   }
 
   guardarTurno(): void {
@@ -123,10 +169,6 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
     // Limpiar errores
     this.errorHoraEntrada = null;
     this.errorHoraSalida = null;
-    this.errorHoraEntradaManana = null;
-    this.errorHoraSalidaManana = null;
-    this.errorHoraEntradaTarde = null;
-    this.errorHoraSalidaTarde = null;
     this.errorTienda = null;
 
     if (!this.turnoActual.tiendaId) {
@@ -139,8 +181,7 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Solo permitir turno partido al agregar (no al editar)
-    if (this.esTurnoPartido && !this.turnoActual.id) {
+    if (this.esTurnoPartido) {
       this.guardarTurnoPartido();
     } else {
       this.guardarTurnoSimple();
@@ -170,6 +211,7 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
       horaEntrada: this.turnoActual.horaEntrada,
       horaSalida: this.turnoActual.horaSalida,
       tiendaId: Number(this.turnoActual.tiendaId),
+      tomoAlmuerzo: !!this.turnoActual.tomoAlmuerzo,
     };
 
     const operacion = this.turnoActual.id
@@ -196,36 +238,57 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
   }
 
   private guardarTurnoPartido(): void {
-    this.validarTurnoPartido();
+    this.validarBloques();
 
-    if (this.errorHoraEntradaManana || this.errorHoraSalidaManana ||
-        this.errorHoraEntradaTarde || this.errorHoraSalidaTarde) {
+    if (this.hayErroresEnBloques()) {
       this.isSubmitting = false;
       return;
     }
 
-    const turnoPartido: TurnoPartidoPayload = {
-      colaboradorId: this.turnoActual.colaboradorId!,
-      fecha: this.turnoActual.fecha,
-      tiendaId: Number(this.turnoActual.tiendaId),
-      turnoManana: {
-        horaEntrada: this.turnoManana.horaEntrada,
-        horaSalida: this.turnoManana.horaSalida
-      },
-      turnoTarde: {
-        horaEntrada: this.turnoTarde.horaEntrada,
-        horaSalida: this.turnoTarde.horaSalida
-      }
-    };
+    const colaboradorId = this.turnoActual.colaboradorId!;
+    const fecha = this.turnoActual.fecha;
+    const tiendaId = Number(this.turnoActual.tiendaId);
 
-    this.turnoService.addTurnoPartido(turnoPartido).pipe(takeUntil(this.destroy$)).subscribe({
+    const idsActuales = new Set(this.bloques.filter((b) => b.id != null).map((b) => b.id));
+    const eliminaciones = this.bloquesOriginales
+      .filter((turno) => !idsActuales.has(turno.id))
+      .map((turno) => turno.id);
+
+    const altas: TurnoPayload[] = this.bloques
+      .filter((b) => b.id == null)
+      .map((b) => ({
+        colaboradorId,
+        fecha,
+        tiendaId,
+        horaEntrada: b.horaEntrada,
+        horaSalida: b.horaSalida,
+        tomoAlmuerzo: b.tomoAlmuerzo,
+      }));
+
+    const actualizaciones = this.bloques
+      .filter((b): b is BloqueForm & { id: number } => b.id != null)
+      .map((b) => ({
+        id: b.id,
+        payload: {
+          colaboradorId,
+          fecha,
+          tiendaId,
+          horaEntrada: b.horaEntrada,
+          horaSalida: b.horaSalida,
+          tomoAlmuerzo: b.tomoAlmuerzo,
+        } as TurnoPayload,
+      }));
+
+    const esEdicion = this.bloquesOriginales.length > 0;
+
+    this.turnoService.guardarBloques({ altas, actualizaciones, eliminaciones }).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.turnoGuardado.emit();
         this.cerrarModal();
-        Notiflix.Notify.success('Turno partido creado con éxito', {
-          position: 'right-bottom',
-          cssAnimationStyle: 'from-right'
-        });
+        Notiflix.Notify.success(
+          esEdicion ? 'Turno partido actualizado con éxito' : 'Turno partido creado con éxito',
+          { position: 'right-bottom', cssAnimationStyle: 'from-right' }
+        );
       },
       error: (err) => {
         this.isSubmitting = false;
@@ -238,30 +301,39 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
   }
 
   eliminarTurno(): void {
-    if (!this.turnoActual.id) return;
+    if (!this.turnoActual.id && this.bloquesOriginales.length === 0) return;
+
+    const idsAEliminar = this.esTurnoPartido
+      ? this.bloquesOriginales.map((t) => t.id)
+      : [this.turnoActual.id!];
 
     Notiflix.Confirm.show(
       'Confirmar Eliminación',
-      '¿Estás seguro de que deseas eliminar este turno?',
+      this.esTurnoPartido
+        ? '¿Estás seguro de que deseas eliminar este turno partido (todos sus bloques)?'
+        : '¿Estás seguro de que deseas eliminar este turno?',
       'Eliminar',
       'Cancelar',
       () => {
-        this.turnoService.deleteTurno(this.turnoActual.id!).pipe(takeUntil(this.destroy$)).subscribe({
-          next: () => {
-            this.turnoEliminado.emit();
-            this.cerrarModal();
-            Notiflix.Notify.success('Turno eliminado con éxito', {
-              position: 'right-bottom',
-              cssAnimationStyle: 'from-right',
-            });
-          },
-          error: () => {
-            Notiflix.Notify.failure('Error al eliminar el turno', {
-              position: 'right-bottom',
-              cssAnimationStyle: 'from-right',
-            });
-          }
-        });
+        this.turnoService
+          .guardarBloques({ altas: [], actualizaciones: [], eliminaciones: idsAEliminar })
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.turnoEliminado.emit();
+              this.cerrarModal();
+              Notiflix.Notify.success('Turno eliminado con éxito', {
+                position: 'right-bottom',
+                cssAnimationStyle: 'from-right',
+              });
+            },
+            error: () => {
+              Notiflix.Notify.failure('Error al eliminar el turno', {
+                position: 'right-bottom',
+                cssAnimationStyle: 'from-right',
+              });
+            }
+          });
       },
       () => {}
     );
@@ -297,31 +369,17 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
   onHoraEntradaChange(valor: string): void {
     this.turnoActual.horaEntrada = valor;
     this.validarHorarioEntrada();
+    this.turnoActual.tomoAlmuerzo = this.calcularAlmuerzoAutomatico(this.turnoActual.horaEntrada, this.turnoActual.horaSalida);
   }
 
   onHoraSalidaChange(valor: string): void {
     this.turnoActual.horaSalida = valor;
     this.validarHorarioSalida();
+    this.turnoActual.tomoAlmuerzo = this.calcularAlmuerzoAutomatico(this.turnoActual.horaEntrada, this.turnoActual.horaSalida);
   }
 
-  onHoraEntradaMananaChange(valor: string): void {
-    this.turnoManana.horaEntrada = valor;
-    this.validarHorarioEntradaManana();
-  }
-
-  onHoraSalidaMananaChange(valor: string): void {
-    this.turnoManana.horaSalida = valor;
-    this.validarHorarioSalidaManana();
-  }
-
-  onHoraEntradaTardeChange(valor: string): void {
-    this.turnoTarde.horaEntrada = valor;
-    this.validarHorarioEntradaTarde();
-  }
-
-  onHoraSalidaTardeChange(valor: string): void {
-    this.turnoTarde.horaSalida = valor;
-    this.validarHorarioSalidaTarde();
+  onTomoAlmuerzoChange(checked: boolean): void {
+    this.turnoActual.tomoAlmuerzo = checked;
   }
 
   onTiendaChange(id: number): void {
@@ -354,84 +412,170 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
     }
   }
 
-  validarTurnoPartido(): void {
-    // Validar turno de mañana
-    this.validarHorarioEntradaManana();
-    this.validarHorarioSalidaManana();
+  // ---- Turno partido: bloques dinámicos ----
 
-    // Validar turno de tarde
-    this.validarHorarioEntradaTarde();
-    this.validarHorarioSalidaTarde();
+  private bloqueVacio(): BloqueForm {
+    return {
+      horaEntrada: '',
+      horaSalida: '',
+      tomoAlmuerzo: false,
+      errorHoraEntrada: null,
+      errorHoraSalida: null,
+    };
+  }
 
-    // Validar que no se solapen los horarios
-    if (!this.errorHoraEntradaManana && !this.errorHoraSalidaManana &&
-        !this.errorHoraEntradaTarde && !this.errorHoraSalidaTarde) {
-      this.validarSolapamientoHorarios();
+  private crearBloquesVacios(): BloqueForm[] {
+    return [this.bloqueVacio(), this.bloqueVacio()];
+  }
+
+  private crearBloqueDesdeTurno(turno: Turno): BloqueForm {
+    return {
+      id: turno.id,
+      horaEntrada: turno.horaEntrada,
+      horaSalida: turno.horaSalida,
+      tomoAlmuerzo: !!turno.tomoAlmuerzo,
+      errorHoraEntrada: null,
+      errorHoraSalida: null,
+    };
+  }
+
+  puedeAgregarBloque(): boolean {
+    return this.bloques.length < this.MAX_BLOQUES;
+  }
+
+  puedeQuitarBloque(): boolean {
+    return this.bloques.length > this.MIN_BLOQUES;
+  }
+
+  agregarBloque(): void {
+    if (this.puedeAgregarBloque()) {
+      this.bloques.push(this.bloqueVacio());
     }
   }
 
-  validarHorarioEntradaManana(): void {
-    this.errorHoraEntradaManana = this.validarRangoHora(
-      this.turnoManana.horaEntrada, 5, 12,
-      'La hora de entrada de mañana es obligatoria.',
-      'La hora de entrada de mañana debe ser entre las 5:00 AM y las 12:00 PM.'
-    );
-  }
-
-  validarHorarioSalidaManana(): void {
-    this.errorHoraSalidaManana = this.validarRangoHora(
-      this.turnoManana.horaSalida, 8, 14,
-      'La hora de salida de mañana es obligatoria.',
-      'La hora de salida de mañana debe ser entre las 8:00 AM y las 2:00 PM.'
-    );
-  }
-
-  validarHorarioEntradaTarde(): void {
-    this.errorHoraEntradaTarde = this.validarRangoHora(
-      this.turnoTarde.horaEntrada, 13, 18,
-      'La hora de entrada de tarde es obligatoria.',
-      'La hora de entrada de tarde debe ser entre las 1:00 PM y las 6:00 PM.'
-    );
-  }
-
-  validarHorarioSalidaTarde(): void {
-    this.errorHoraSalidaTarde = this.validarRangoHora(
-      this.turnoTarde.horaSalida, 16, 22,
-      'La hora de salida de tarde es obligatoria.',
-      'La hora de salida de tarde debe ser entre las 4:00 PM y las 10:00 PM.'
-    );
-  }
-
-  validarSolapamientoHorarios(): void {
-    const salidaManana = this.formatearHora(this.turnoManana.horaSalida);
-    const entradaTarde = this.formatearHora(this.turnoTarde.horaEntrada);
-
-    if (salidaManana >= entradaTarde) {
-      this.errorHoraSalidaManana = 'La salida de mañana debe ser anterior a la entrada de tarde.';
-      this.errorHoraEntradaTarde = 'La entrada de tarde debe ser posterior a la salida de mañana.';
+  quitarBloque(index: number): void {
+    if (this.puedeQuitarBloque()) {
+      this.bloques.splice(index, 1);
+      this.validarBloques();
     }
+  }
+
+  onHoraEntradaBloqueChange(index: number, valor: string): void {
+    const bloque = this.bloques[index];
+    bloque.horaEntrada = valor;
+    bloque.tomoAlmuerzo = this.calcularAlmuerzoAutomatico(bloque.horaEntrada, bloque.horaSalida);
+    this.validarBloques();
+  }
+
+  onHoraSalidaBloqueChange(index: number, valor: string): void {
+    const bloque = this.bloques[index];
+    bloque.horaSalida = valor;
+    bloque.tomoAlmuerzo = this.calcularAlmuerzoAutomatico(bloque.horaEntrada, bloque.horaSalida);
+    this.validarBloques();
+  }
+
+  onTomoAlmuerzoBloqueChange(index: number, checked: boolean): void {
+    this.bloques[index].tomoAlmuerzo = checked;
+  }
+
+  // Regla automática de almuerzo (entrada antes de 12:01 y salida después de
+  // 14:00) — solo fija el valor por defecto del checkbox; el administrador
+  // lo puede togglear a mano después (ver Turno.calcularAlmuerzoPorDefecto
+  // en el backend, misma regla).
+  private calcularAlmuerzoAutomatico(horaEntrada: string | undefined, horaSalida: string | undefined): boolean {
+    if (!horaEntrada || !horaSalida) return false;
+    const entrada = this.formatearHora(horaEntrada);
+    const salida = this.formatearHora(horaSalida);
+    return entrada < '12:01' && salida > '14:00';
+  }
+
+  // Valida obligatoriedad + orden (entrada < salida) de cada bloque, y que
+  // ningún par de bloques se solape entre sí (no hay más "mañana"/"tarde"
+  // fijos: cualquier bloque puede cruzarse con cualquier otro).
+  validarBloques(): void {
+    this.bloques.forEach((bloque, index) => {
+      if (!bloque.horaEntrada) {
+        bloque.errorHoraEntrada = `La hora de entrada del bloque ${index + 1} es obligatoria.`;
+      } else {
+        bloque.errorHoraEntrada = null;
+      }
+
+      if (!bloque.horaSalida) {
+        bloque.errorHoraSalida = `La hora de salida del bloque ${index + 1} es obligatoria.`;
+      } else if (bloque.horaEntrada && this.formatearHora(bloque.horaEntrada) >= this.formatearHora(bloque.horaSalida)) {
+        bloque.errorHoraSalida = `La salida del bloque ${index + 1} debe ser posterior a su entrada.`;
+      } else {
+        bloque.errorHoraSalida = null;
+      }
+    });
+
+    this.validarSolapamientoBloques();
+  }
+
+  private validarSolapamientoBloques(): void {
+    for (let i = 0; i < this.bloques.length; i++) {
+      const a = this.bloques[i];
+      if (a.errorHoraEntrada || a.errorHoraSalida || !a.horaEntrada || !a.horaSalida) continue;
+
+      for (let j = i + 1; j < this.bloques.length; j++) {
+        const b = this.bloques[j];
+        if (b.errorHoraEntrada || b.errorHoraSalida || !b.horaEntrada || !b.horaSalida) continue;
+
+        const aEntrada = this.formatearHora(a.horaEntrada);
+        const aSalida = this.formatearHora(a.horaSalida);
+        const bEntrada = this.formatearHora(b.horaEntrada);
+        const bSalida = this.formatearHora(b.horaSalida);
+
+        const seSolapan = aEntrada < bSalida && bEntrada < aSalida;
+        if (seSolapan) {
+          a.errorHoraSalida = `El bloque ${i + 1} se solapa con el bloque ${j + 1}.`;
+          b.errorHoraEntrada = `El bloque ${j + 1} se solapa con el bloque ${i + 1}.`;
+        }
+      }
+    }
+  }
+
+  hayErroresEnBloques(): boolean {
+    return this.bloques.some((b) => !!b.errorHoraEntrada || !!b.errorHoraSalida);
+  }
+
+  trackByBloqueIndex(index: number): number {
+    return index;
   }
 
   seRealizaronCambios(): boolean {
-    if (!this.turnoOriginal) return true;
-
     if (this.esTurnoPartido) {
-      // Para turnos partidos, verificar que al menos uno de los campos esté lleno
-      return (
-        this.turnoManana.horaEntrada !== '' ||
-        this.turnoManana.horaSalida !== '' ||
-        this.turnoTarde.horaEntrada !== '' ||
-        this.turnoTarde.horaSalida !== '' ||
-        this.turnoActual.tiendaId !== this.turnoOriginal.tiendaId
-      );
-    } else {
-      return (
-        this.turnoActual.horaEntrada !== this.turnoOriginal.horaEntrada ||
-        this.turnoActual.horaSalida !== this.turnoOriginal.horaSalida ||
-        this.turnoActual.fecha !== this.turnoOriginal.fecha ||
-        this.turnoActual.tiendaId !== this.turnoOriginal.tiendaId
-      );
+      if (this.bloquesOriginales.length === 0) return true; // creación
+      return this.snapshotBloques(this.bloques) !== this.snapshotBloquesOriginales()
+        || this.turnoActual.tiendaId !== this.bloquesOriginales[0]?.tiendaId;
     }
+
+    if (!this.turnoOriginal) return true;
+    return (
+      this.turnoActual.horaEntrada !== this.turnoOriginal.horaEntrada ||
+      this.turnoActual.horaSalida !== this.turnoOriginal.horaSalida ||
+      this.turnoActual.fecha !== this.turnoOriginal.fecha ||
+      this.turnoActual.tiendaId !== this.turnoOriginal.tiendaId ||
+      !!this.turnoActual.tomoAlmuerzo !== !!this.turnoOriginal.tomoAlmuerzo
+    );
+  }
+
+  private snapshotBloques(bloques: { id?: number; horaEntrada: string; horaSalida: string; tomoAlmuerzo: boolean }[]): string {
+    return bloques
+      .map((b) => `${b.id ?? 'nuevo'}|${b.horaEntrada}|${b.horaSalida}|${b.tomoAlmuerzo}`)
+      .sort()
+      .join(';');
+  }
+
+  private snapshotBloquesOriginales(): string {
+    return this.snapshotBloques(
+      this.bloquesOriginales.map((t) => ({
+        id: t.id,
+        horaEntrada: t.horaEntrada,
+        horaSalida: t.horaSalida,
+        tomoAlmuerzo: !!t.tomoAlmuerzo,
+      }))
+    );
   }
 
   formatearHora(hora: string | undefined): string {
@@ -495,6 +639,7 @@ export class TurnoModalComponent implements OnInit, OnDestroy {
     this.turnoActual.horaSalida = plantilla.horaSalida;
     this.validarHorarioEntrada();
     this.validarHorarioSalida();
+    this.turnoActual.tomoAlmuerzo = this.calcularAlmuerzoAutomatico(this.turnoActual.horaEntrada, this.turnoActual.horaSalida);
   }
 
   // El chip se ve "seleccionado" si sus horarios coinciden con lo cargado

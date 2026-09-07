@@ -22,7 +22,7 @@ import {
 import { TiendaService, Tienda } from '../../services/tienda.service';
 
 // -------------- RxJS Imports --------------
-import { BehaviorSubject, combineLatest, map, Observable, of, Subject, takeUntil } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable, of, Subject, take, takeUntil } from 'rxjs';
 
 // -------------- Angular Modules Imports --------------
 import { CommonModule } from '@angular/common';
@@ -73,6 +73,10 @@ export default class TurnosComponent implements OnInit, OnDestroy {
 
   turnoOriginal: Turno | null = null; // Almacena los datos originales del turno
   turnoActual: Turno = crearTurnoVacio(); // Turno actual
+  // Todos los turnos (filas) del mismo colaborador+fecha que turnoActual —
+  // se lo pasamos al modal para que abra en modo turno partido si hay más
+  // de uno (ver TurnoModalComponent.inicializarFormulario).
+  turnosDelDiaActual: Turno[] = [];
 
   colaboradoresSeleccionadosSemana: number[] = []; // Filtro multi-select semanal
   selectedCompanyForMonthly: string = 'all';
@@ -271,7 +275,16 @@ export default class TurnosComponent implements OnInit, OnDestroy {
     this.resetearEstadoModal(); // Resetear estado del modal
     this.turnoOriginal = { ...turno, tiendaId: turno.tiendaId }; // Asegurar que se copie el tiendaId
     this.turnoActual = { ...turno, tiendaId: turno.tiendaId };
-    this.modalService.abrirModal(MODAL_OPEN_DELAY_MS);
+    // Buscar si hay más turnos ese mismo día para este colaborador (turno
+    // partido) antes de abrir el modal — así ya llega precargado con todos
+    // los bloques (TurnoModalComponent solo reinicializa el form cuando
+    // cambia mostrarModal, no cuando cambia turnosDelDiaActual solo).
+    this.calendario.turnos$.pipe(take(1), takeUntil(this.destroy$)).subscribe((turnos) => {
+      this.turnosDelDiaActual = (turnos || []).filter(
+        (t) => t.colaboradorId === turno.colaboradorId && t.fecha === turno.fecha
+      );
+      this.modalService.abrirModal(MODAL_OPEN_DELAY_MS);
+    });
   }
 
   cerrarModal(): void {
@@ -301,6 +314,7 @@ export default class TurnosComponent implements OnInit, OnDestroy {
   resetearEstadoModal(): void {
     this.turnoOriginal = null; // Resetear turno original
     this.turnoActual = crearTurnoVacio();
+    this.turnosDelDiaActual = [];
   }
 
   manejarTurnoGuardado(): void {

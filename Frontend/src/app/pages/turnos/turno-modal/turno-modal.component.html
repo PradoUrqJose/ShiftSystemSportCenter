@@ -16,10 +16,10 @@
       <!-- Encabezado -->
       <div class="text-center pb-6 border-b border-gray-100">
         <h3 class="text-2xl font-bold text-gray-800 mb-2">
-          {{ turnoActual.id ? 'Editar Turno' : 'Agregar Turno' }}
+          {{ estaEditandoTurnoExistente ? 'Editar Turno' : 'Agregar Turno' }}
         </h3>
         <p class="text-gray-500 text-sm">
-          {{ turnoActual.id ? 'Modifica los datos del turno seleccionado.' : 'Introduce datos para registrar un nuevo turno.' }}
+          {{ estaEditandoTurnoExistente ? 'Modifica los datos del turno seleccionado.' : 'Introduce datos para registrar un nuevo turno.' }}
         </p>
       </div>
       <!-- Formulario -->
@@ -28,24 +28,24 @@
         <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
           <label class="flex items-center space-x-2 cursor-pointer">
             <input type="radio" [(ngModel)]="esTurnoPartido" [value]="false" name="tipoTurno"
+              [disabled]="tipoTurnoDisabled"
               class="w-4 h-4 text-blue-600 focus:ring-blue-500" />
             <span class="text-sm font-medium text-gray-700">Turno Simple</span>
           </label>
           <label class="flex items-center space-x-2 relative group"
-            [class.cursor-not-allowed]="isTurnoPartidoDisabled"
-            [class.opacity-100]="isTurnoPartidoDisabled">
+            [class.cursor-not-allowed]="tipoTurnoDisabled">
             <input type="radio" [(ngModel)]="esTurnoPartido" [value]="true" name="tipoTurno"
-              [disabled]="isTurnoPartidoDisabled"
+              [disabled]="tipoTurnoDisabled"
               class="w-4 h-4 text-blue-600 focus:ring-blue-500" />
             <span class="text-sm font-medium text-gray-700">Turno Partido</span>
-            <!-- Tooltip para turno partido deshabilitado -->
-            @if (isTurnoPartidoDisabled) {
+            <!-- Tooltip: el tipo de turno queda fijo al editar uno existente -->
+            @if (tipoTurnoDisabled) {
               <div
                 class="absolute left-0 top-8 bg-gray-800 text-white text-xs rounded px-3 py-2 whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
                 style="transform: translateX(-50%);">
                 <div class="text-center">
-                  <div class="font-semibold mb-1">⚠️ Turno Partido No Disponible</div>
-                  <div class="text-xs">Para crear turno partido, elimina los turnos actuales primero</div>
+                  <div class="font-semibold mb-1">⚠️ Tipo de turno fijo</div>
+                  <div class="text-xs">Para cambiar entre turno simple y partido, elimina el turno y créalo de nuevo</div>
                 </div>
                 <div class="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
               </div>
@@ -100,65 +100,67 @@
                 }
               </div>
             </div>
+            <!-- Almuerzo: se marca solo si el horario cruza 12:01-14:00, pero
+            el administrador lo puede desactivar/activar a mano. -->
+            <label class="flex items-center space-x-2 cursor-pointer w-fit">
+              <input type="checkbox" [checked]="!!turnoActual.tomoAlmuerzo"
+                (change)="onTomoAlmuerzoChange($any($event.target).checked)"
+                class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+              <span class="text-sm font-medium text-gray-700">Tomó almuerzo (descuenta 45 min)</span>
+            </label>
           </div>
         }
         <!-- Turno Partido -->
         @if (esTurnoPartido) {
-          <div class="space-y-6">
-            <!-- Turno de Mañana -->
-            <div class="split-card--manana p-4 rounded-xl">
-              <h4 class="split-card-title text-lg font-semibold mb-4 flex items-center">
-                <i class="fa-solid fa-sun mr-2"></i>
-                Turno de Mañana
-              </h4>
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label for="horaEntradaManana" class="block text-sm font-medium text-gray-700 mb-2">Hora de Entrada</label>
-                  <app-time-picker id="horaEntradaManana" [value]="turnoManana.horaEntrada" (valueChange)="onHoraEntradaMananaChange($event)"></app-time-picker>
-                  @if (errorHoraEntradaManana) {
-                    <div class="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded-lg">
-                      {{ errorHoraEntradaManana }}
-                    </div>
+          <div class="space-y-4">
+            @for (bloque of bloques; track trackByBloqueIndex($index)) {
+              <div class="split-card--manana p-4 rounded-xl">
+                <div class="flex items-center justify-between mb-4">
+                  <h4 class="split-card-title text-lg font-semibold flex items-center">
+                    <i class="fa-solid fa-clock mr-2"></i>
+                    Bloque {{ $index + 1 }}
+                  </h4>
+                  @if (puedeQuitarBloque()) {
+                    <button type="button" (click)="quitarBloque($index)"
+                      class="text-gray-400 hover:text-red-600 transition" title="Quitar bloque">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
                   }
                 </div>
-                <div>
-                  <label for="horaSalidaManana" class="block text-sm font-medium text-gray-700 mb-2">Hora de Salida</label>
-                  <app-time-picker id="horaSalidaManana" [value]="turnoManana.horaSalida" (valueChange)="onHoraSalidaMananaChange($event)"></app-time-picker>
-                  @if (errorHoraSalidaManana) {
-                    <div class="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded-lg">
-                      {{ errorHoraSalidaManana }}
-                    </div>
-                  }
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Entrada</label>
+                    <app-time-picker [value]="bloque.horaEntrada" (valueChange)="onHoraEntradaBloqueChange($index, $event)"></app-time-picker>
+                    @if (bloque.errorHoraEntrada) {
+                      <div class="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded-lg">
+                        {{ bloque.errorHoraEntrada }}
+                      </div>
+                    }
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Salida</label>
+                    <app-time-picker [value]="bloque.horaSalida" (valueChange)="onHoraSalidaBloqueChange($index, $event)"></app-time-picker>
+                    @if (bloque.errorHoraSalida) {
+                      <div class="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded-lg">
+                        {{ bloque.errorHoraSalida }}
+                      </div>
+                    }
+                  </div>
                 </div>
+                <label class="flex items-center space-x-2 cursor-pointer w-fit mt-4">
+                  <input type="checkbox" [checked]="bloque.tomoAlmuerzo"
+                    (change)="onTomoAlmuerzoBloqueChange($index, $any($event.target).checked)"
+                    class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                  <span class="text-sm font-medium text-gray-700">Tomó almuerzo (descuenta 45 min)</span>
+                </label>
               </div>
-            </div>
-            <!-- Turno de Tarde -->
-            <div class="split-card--tarde p-4 rounded-xl">
-              <h4 class="split-card-title text-lg font-semibold mb-4 flex items-center">
-                <i class="fa-solid fa-moon mr-2"></i>
-                Turno de Tarde
-              </h4>
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label for="horaEntradaTarde" class="block text-sm font-medium text-gray-700 mb-2">Hora de Entrada</label>
-                  <app-time-picker id="horaEntradaTarde" [value]="turnoTarde.horaEntrada" (valueChange)="onHoraEntradaTardeChange($event)"></app-time-picker>
-                  @if (errorHoraEntradaTarde) {
-                    <div class="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded-lg">
-                      {{ errorHoraEntradaTarde }}
-                    </div>
-                  }
-                </div>
-                <div>
-                  <label for="horaSalidaTarde" class="block text-sm font-medium text-gray-700 mb-2">Hora de Salida</label>
-                  <app-time-picker id="horaSalidaTarde" [value]="turnoTarde.horaSalida" (valueChange)="onHoraSalidaTardeChange($event)"></app-time-picker>
-                  @if (errorHoraSalidaTarde) {
-                    <div class="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded-lg">
-                      {{ errorHoraSalidaTarde }}
-                    </div>
-                  }
-                </div>
-              </div>
-            </div>
+            }
+            @if (puedeAgregarBloque()) {
+              <button type="button" (click)="agregarBloque()"
+                class="w-full py-2 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 hover:border-blue-400 hover:text-blue-600 transition text-sm font-medium">
+                <i class="fa-solid fa-plus mr-1"></i> Agregar bloque
+              </button>
+            }
           </div>
         }
         <!-- Sección: Tienda -->
@@ -179,10 +181,10 @@
         <!-- Botones -->
         <div class="flex justify-between items-center mt-6">
           <app-button type="submit" [isLoading]="isSubmitting"
-            [disabled]="!!(!seRealizaronCambios() || errorHoraEntrada || errorHoraSalida || errorHoraEntradaManana || errorHoraSalidaManana || errorHoraEntradaTarde || errorHoraSalidaTarde)">
-            {{ turnoActual.id ? 'Actualizar Turno' : (esTurnoPartido ? 'Agregar Turno Partido' : 'Agregar Turno') }}
+            [disabled]="!!(!seRealizaronCambios() || errorHoraEntrada || errorHoraSalida || (esTurnoPartido && hayErroresEnBloques()))">
+            {{ estaEditandoTurnoExistente ? 'Actualizar Turno' : 'Agregar Turno' }}
           </app-button>
-          @if (turnoActual.id) {
+          @if (estaEditandoTurnoExistente) {
             <div>
               <button type="button" (click)="eliminarTurno()"
                 class="text-red-500 hover:text-red-700 transition transform hover:scale-110" title="Eliminar Turno">

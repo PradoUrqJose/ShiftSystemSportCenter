@@ -2,7 +2,7 @@ import { Feriado } from './feriado.service';
 // turno.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map, Observable, forkJoin } from 'rxjs';
+import { map, Observable, forkJoin, of } from 'rxjs';
 import { format } from 'date-fns';
 import { environment } from '../../environments/environment';
 import { PageResponse, PAGE_SIZE_ALL } from '../models/page-response.model';
@@ -21,6 +21,9 @@ export interface Turno {
   horasTrabajadas?: number;
   tiendaId?: number | null;
   nombreTienda?: string;
+  // Antes calculado en cada consulta a partir del horario (ventana
+  // 12:01-14:00); ahora es un valor persistido y editable por el
+  // administrador (ver Turno.java y TurnoRequestDTO en el backend).
   tomoAlmuerzo?: boolean;
   esFeriado?: boolean;
   horasTotalesSemana?: number;
@@ -58,20 +61,21 @@ export interface TurnoPayload {
   horaEntrada: string;
   horaSalida: string;
   tiendaId: number;
+  tomoAlmuerzo?: boolean;
 }
 
+// Un turno partido es N bloques horarios del mismo colaborador/tienda/fecha
+// (sin límite fijo de 2 — ver turno-modal.component.ts). Cada bloque se
+// crea/actualiza como una fila Turno independiente en el backend.
 export interface TurnoPartidoPayload {
   colaboradorId: number;
   fecha: string;
   tiendaId: number;
-  turnoManana: {
+  bloques: {
     horaEntrada: string;
     horaSalida: string;
-  };
-  turnoTarde: {
-    horaEntrada: string;
-    horaSalida: string;
-  };
+    tomoAlmuerzo?: boolean;
+  }[];
 }
 
 export interface ResumenMensual {
@@ -160,28 +164,34 @@ export class TurnoService {
   }
 
   addTurnoPartido(turnoPartido: TurnoPartidoPayload): Observable<any> {
-    // Crear dos turnos separados para el turno partido
-    const turnoManana: TurnoPayload = {
+    // Crear un turno (fila independiente) por cada bloque horario.
+    const altas: TurnoPayload[] = turnoPartido.bloques.map((bloque) => ({
       colaboradorId: turnoPartido.colaboradorId,
       fecha: turnoPartido.fecha,
-      horaEntrada: turnoPartido.turnoManana.horaEntrada,
-      horaSalida: turnoPartido.turnoManana.horaSalida,
       tiendaId: turnoPartido.tiendaId,
-    };
+      horaEntrada: bloque.horaEntrada,
+      horaSalida: bloque.horaSalida,
+      tomoAlmuerzo: bloque.tomoAlmuerzo,
+    }));
+    return this.guardarBloques({ altas, actualizaciones: [], eliminaciones: [] });
+  }
 
-    const turnoTarde: TurnoPayload = {
-      colaboradorId: turnoPartido.colaboradorId,
-      fecha: turnoPartido.fecha,
-      horaEntrada: turnoPartido.turnoTarde.horaEntrada,
-      horaSalida: turnoPartido.turnoTarde.horaSalida,
-      tiendaId: turnoPartido.tiendaId,
-    };
-
-    // Crear ambos turnos en paralelo usando forkJoin
-    return forkJoin({
-      turnoManana: this.addTurno(turnoManana),
-      turnoTarde: this.addTurno(turnoTarde)
-    });
+  // Guarda los bloques de un turno partido (creación o edición) como un
+  // solo lote: altas (bloques nuevos, sin id), actualizaciones (bloques que
+  // ya existían como fila Turno) y eliminaciones (turnos originales que el
+  // usuario quitó del formulario). El modal arma este diff comparando los
+  // bloques del form contra los turnos originales del día.
+  guardarBloques(bloques: {
+    altas: TurnoPayload[];
+    actualizaciones: { id: number; payload: TurnoPayload }[];
+    eliminaciones: number[];
+  }): Observable<any> {
+    const operaciones: Observable<any>[] = [
+      ...bloques.altas.map((payload) => this.addTurno(payload)),
+      ...bloques.actualizaciones.map((u) => this.updateTurno(u.id, u.payload)),
+      ...bloques.eliminaciones.map((id) => this.deleteTurno(id)),
+    ];
+    return operaciones.length ? forkJoin(operaciones) : of([]);
   }
 
   deleteTurno(id: number): Observable<void> {
