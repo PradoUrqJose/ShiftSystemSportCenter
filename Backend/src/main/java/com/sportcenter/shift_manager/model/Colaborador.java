@@ -63,4 +63,10 @@ public class Colaborador {
     @JoinColumn(name = "puesto_id")
     @JsonIgnoreProperties("colaboradores") // Si Puesto tiene relación inversa
     private Puesto puesto;
+
+    // Tienda que el modal de turno precarga al crear un turno nuevo para este
+    // colaborador (editable en cada turno). Opcional. Ver V9 migration.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tienda_predeterminada_id")
+    private Tienda tiendaPredeterminada;
 }

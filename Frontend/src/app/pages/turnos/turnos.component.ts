@@ -264,7 +264,10 @@ export default class TurnosComponent implements OnInit, OnDestroy {
             horaEntrada: '',
             horaSalida: '',
             horasTrabajadas: 0,
-            tiendaId: null,
+            // Precarga la tienda habitual del colaborador; el operador la
+            // puede cambiar en el modal. Solo aplica al crear — al editar
+            // (abrirModalEdicion) se respeta la tienda real del turno.
+            tiendaId: col.tiendaPredeterminadaId ?? null,
           };
         }
         this.modalService.abrirModal(MODAL_OPEN_DELAY_MS);

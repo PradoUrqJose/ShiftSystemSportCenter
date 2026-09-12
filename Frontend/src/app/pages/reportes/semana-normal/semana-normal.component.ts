@@ -157,7 +157,8 @@ export class SemanaNormalComponent implements OnInit, OnDestroy {
             horaEntrada: '',
             horaSalida: '',
             horasTrabajadas: 0,
-            tiendaId: null,
+            // Tienda habitual precargada, editable (ver turnos.component.ts)
+            tiendaId: col.tiendaPredeterminadaId ?? null,
           };
           this.modalService.abrirModal(MODAL_OPEN_DELAY_MS);
         }

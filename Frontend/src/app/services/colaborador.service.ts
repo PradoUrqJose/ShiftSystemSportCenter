@@ -18,6 +18,9 @@ export interface Colaborador {
   fechaNacimiento?: string; // Usamos string porque JSON serializa LocalDate como "YYYY-MM-DD"
   puestoId?: number;        // ID del puesto asignado
   puestoNombre?: string;    // Nombre del puesto
+  // Tienda que el modal de turno precarga al crear un turno nuevo (editable)
+  tiendaPredeterminadaId?: number | null;
+  tiendaPredeterminadaNombre?: string | null;
 }
 
 @Injectable({

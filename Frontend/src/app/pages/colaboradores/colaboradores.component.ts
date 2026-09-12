@@ -9,6 +9,7 @@ import { EmpresaService, Empresa } from '../../services/empresa.service';
 import { Observable, Subject, takeUntil } from 'rxjs';
 import { Router } from '@angular/router';
 import { Puesto, PuestoService } from '../../services/puesto.service';
+import { Tienda, TiendaService } from '../../services/tienda.service';
 import { ColaboradorFormComponent } from './colaborador-form/colaborador-form.component';
 import { MODAL_OPEN_DELAY_MS, MODAL_CLOSE_DELAY_MS } from '../../utils/modal-timing';
 import { TableShellComponent } from '../../components/ui/table-shell/table-shell.component';
@@ -43,6 +44,7 @@ export default class ColaboradoresComponent implements OnInit, OnDestroy {
   colaboradores: Colaborador[] = [];
   empresas: Empresa[] = [];
   puestos: Puesto[] = [];
+  tiendas: Tienda[] = [];
 
   colaboradoresHabilitados: Colaborador[] = [];
   colaboradoresDeshabilitados: Colaborador[] = [];
@@ -62,6 +64,7 @@ export default class ColaboradoresComponent implements OnInit, OnDestroy {
     private colaboradorService: ColaboradorService,
     private empresaService: EmpresaService,
     private puestoService: PuestoService,
+    private tiendaService: TiendaService,
     private modalService: ModalService,
     private router: Router
   ) {}
@@ -71,6 +74,7 @@ export default class ColaboradoresComponent implements OnInit, OnDestroy {
     this.isModalVisible$ = this.modalService.isModalVisible$;
     this.getEmpresasAndColaboradores();
     this.puestoService.getPuestos().pipe(takeUntil(this.destroy$)).subscribe(puestos => this.puestos = puestos);
+    this.tiendaService.getTiendas().pipe(takeUntil(this.destroy$)).subscribe(tiendas => this.tiendas = tiendas);
   }
 
   ngOnDestroy(): void {

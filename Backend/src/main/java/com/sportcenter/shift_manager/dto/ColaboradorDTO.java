@@ -43,4 +43,7 @@ public class ColaboradorDTO {
 
     private Long puestoId;
     private String puestoNombre;
+
+    private Long tiendaPredeterminadaId;
+    private String tiendaPredeterminadaNombre;
 }

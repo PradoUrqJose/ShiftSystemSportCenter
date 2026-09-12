@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Colaborador, ColaboradorService } from '../../../services/colaborador.service';
 import { Empresa } from '../../../services/empresa.service';
 import { Puesto } from '../../../services/puesto.service';
+import { Tienda } from '../../../services/tienda.service';
 import { Subject, takeUntil } from 'rxjs';
 
 // Formulario de alta/edición de colaborador, extraído de
@@ -24,6 +25,7 @@ export class ColaboradorFormComponent implements OnChanges, OnDestroy {
   @Input() isModalVisible: boolean = false;
   @Input() empresas: Empresa[] = [];
   @Input() puestos: Puesto[] = [];
+  @Input() tiendas: Tienda[] = [];
   @Input() colaboradorEditar: Colaborador | null = null;
 
   @Output() cerrarModalEvent = new EventEmitter<void>();
@@ -58,6 +60,7 @@ export class ColaboradorFormComponent implements OnChanges, OnDestroy {
       habilitado: [true],
       fechaNacimiento: [''],
       puestoId: [null],
+      tiendaPredeterminadaId: [null],
     });
   }
 
@@ -90,6 +93,7 @@ export class ColaboradorFormComponent implements OnChanges, OnDestroy {
         habilitado: this.colaboradorEditar.habilitado,
         fechaNacimiento: this.colaboradorEditar.fechaNacimiento,
         puestoId: this.colaboradorEditar.puestoId,
+        tiendaPredeterminadaId: this.colaboradorEditar.tiendaPredeterminadaId ?? null,
       });
       this.fotoPreview = this.colaboradorEditar.fotoUrl || 'assets/user-circle-svgrepo-com.svg';
     } else {
@@ -243,6 +247,10 @@ export class ColaboradorFormComponent implements OnChanges, OnDestroy {
 
   trackByPuestoId(_index: number, puesto: Puesto): number | undefined {
     return puesto.id;
+  }
+
+  trackByTiendaId(_index: number, tienda: Tienda): number | undefined {
+    return tienda.id;
   }
 
   trackByEmpresaId(_index: number, empresa: Empresa): number {

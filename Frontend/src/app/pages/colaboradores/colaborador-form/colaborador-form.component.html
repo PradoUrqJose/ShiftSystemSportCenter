@@ -104,6 +104,17 @@
                 class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 h-full" />
             </div>
           </div>
+          <!-- Tienda predeterminada: el modal de turno la precarga al crear un turno (se puede cambiar ahí) -->
+          <div class="col-span-3">
+            <label for="tiendaPredeterminadaId" class="block text-xs font-medium text-gray-500 mb-1">Tienda predeterminada</label>
+            <select id="tiendaPredeterminadaId" formControlName="tiendaPredeterminadaId"
+              class="p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400">
+              <option [ngValue]="null">Sin tienda predeterminada</option>
+              @for (tienda of tiendas; track trackByTiendaId($index, tienda)) {
+                <option [ngValue]="tienda.id">{{ tienda.nombre }}</option>
+              }
+            </select>
+          </div>
         </div>
         <!-- Línea divisora -->
         <hr class="border-gray-200 my-4">

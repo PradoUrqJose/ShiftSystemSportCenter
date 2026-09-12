@@ -5,9 +5,11 @@ import com.sportcenter.shift_manager.exception.ResourceNotFoundException;
 import com.sportcenter.shift_manager.model.Colaborador;
 import com.sportcenter.shift_manager.model.Empresa;
 import com.sportcenter.shift_manager.model.Puesto;
+import com.sportcenter.shift_manager.model.Tienda;
 import com.sportcenter.shift_manager.repository.ColaboradorRepository;
 import com.sportcenter.shift_manager.repository.EmpresaRepository;
 import com.sportcenter.shift_manager.repository.PuestoRepository;
+import com.sportcenter.shift_manager.repository.TiendaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -27,12 +29,14 @@ public class ColaboradorService {
     private final EmpresaRepository empresaRepository;
     private final CloudinaryService cloudinaryService;
     private final PuestoRepository puestoRepository; // Nuevo repositorio
+    private final TiendaRepository tiendaRepository;
 
-    public ColaboradorService(ColaboradorRepository colaboradorRepository, EmpresaRepository empresaRepository, CloudinaryService cloudinaryService, PuestoRepository puestoRepository) {
+    public ColaboradorService(ColaboradorRepository colaboradorRepository, EmpresaRepository empresaRepository, CloudinaryService cloudinaryService, PuestoRepository puestoRepository, TiendaRepository tiendaRepository) {
         this.colaboradorRepository = colaboradorRepository;
         this.empresaRepository = empresaRepository;
         this.cloudinaryService = cloudinaryService;
         this.puestoRepository = puestoRepository;
+        this.tiendaRepository = tiendaRepository;
     }
 
     // Guardar un nuevo colaborador
@@ -72,6 +76,8 @@ public class ColaboradorService {
             colaborador.setPuesto(puesto);
         }
 
+        colaborador.setTiendaPredeterminada(resolverTiendaPredeterminada(colaboradorDTO.getTiendaPredeterminadaId()));
+
         // Subir imagen a Cloudinary
         if (file != null && !file.isEmpty()) {
             validarImagen(file);
@@ -82,6 +88,12 @@ public class ColaboradorService {
         Colaborador guardado = colaboradorRepository.save(colaborador);
         log.info("Colaborador creado: id={}, dni={}, empresaId={}", guardado.getId(), guardado.getDni(), empresa.getId());
         return guardado;
+    }
+
+    private Tienda resolverTiendaPredeterminada(Long tiendaId) {
+        if (tiendaId == null) return null;
+        return tiendaRepository.findById(tiendaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tienda con ID " + tiendaId + " no encontrada"));
     }
 
     // Método para validar la imagen (sin cambios)
@@ -164,6 +176,9 @@ public class ColaboradorService {
             colaborador.setPuesto(null); // Permitir quitar el puesto si puestoId es null
         }
 
+        // null = quitar la tienda predeterminada (mismo criterio que puesto)
+        colaborador.setTiendaPredeterminada(resolverTiendaPredeterminada(colaboradorDTO.getTiendaPredeterminadaId()));
+
         // Manejo de imagen (si se proporciona)
         if (file != null && !file.isEmpty()) {
             validarImagen(file);
@@ -237,7 +252,9 @@ public class ColaboradorService {
                 colaborador.isHabilitado(),
                 colaborador.getFechaNacimiento(),
                 colaborador.getPuesto() != null ? colaborador.getPuesto().getId() : null,
-                colaborador.getPuesto() != null ? colaborador.getPuesto().getNombre() : null
+                colaborador.getPuesto() != null ? colaborador.getPuesto().getNombre() : null,
+                colaborador.getTiendaPredeterminada() != null ? colaborador.getTiendaPredeterminada().getId() : null,
+                colaborador.getTiendaPredeterminada() != null ? colaborador.getTiendaPredeterminada().getNombre() : null
         );
     }
 }
