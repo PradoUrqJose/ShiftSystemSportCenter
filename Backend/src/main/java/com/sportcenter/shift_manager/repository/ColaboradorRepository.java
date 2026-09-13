@@ -36,7 +36,14 @@ public interface ColaboradorRepository extends JpaRepository<Colaborador, Long> 
 
     long countByEmpresaId(Long empresaId);
 
-    Optional<Colaborador> findByEmail(String email);
-    Optional<Colaborador> findByDni(String dni);
-    Optional<Colaborador> findByNombreAndApellido(String nombre, String apellido);
+    // exists* en vez de find* devolviendo Optional: si la BD ya tiene filas
+    // repetidas (ej. dos colaboradores con el mismo nombre y apellido), un
+    // Optional<> revienta con IncorrectResultSizeDataAccessException (500).
+    // exists* solo pregunta "¿hay al menos uno?" y no depende de que sea único.
+    boolean existsByEmail(String email);
+    boolean existsByEmailAndIdNot(String email, Long id);
+    boolean existsByDni(String dni);
+    boolean existsByDniAndIdNot(String dni, Long id);
+    boolean existsByNombreAndApellido(String nombre, String apellido);
+    boolean existsByNombreAndApellidoAndIdNot(String nombre, String apellido, Long id);
 }

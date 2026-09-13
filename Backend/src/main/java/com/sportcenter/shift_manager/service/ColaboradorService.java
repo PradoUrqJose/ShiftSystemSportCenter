@@ -47,13 +47,13 @@ public class ColaboradorService {
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa con ID " + colaboradorDTO.getEmpresaId() + " no encontrada"));
 
         // Validar duplicados de email, DNI y Nombre + Apellido
-        if (colaboradorDTO.getEmail() != null && colaboradorRepository.findByEmail(colaboradorDTO.getEmail()).isPresent()) {
+        if (colaboradorDTO.getEmail() != null && colaboradorRepository.existsByEmail(colaboradorDTO.getEmail())) {
             throw new IllegalArgumentException("Ya existe un colaborador con el email: " + colaboradorDTO.getEmail());
         }
-        if (colaboradorRepository.findByDni(colaboradorDTO.getDni()).isPresent()) {
+        if (colaboradorRepository.existsByDni(colaboradorDTO.getDni())) {
             throw new IllegalArgumentException("Ya existe un colaborador con el DNI: " + colaboradorDTO.getDni());
         }
-        if (colaboradorRepository.findByNombreAndApellido(colaboradorDTO.getNombre(), colaboradorDTO.getApellido()).isPresent()) {
+        if (colaboradorRepository.existsByNombreAndApellido(colaboradorDTO.getNombre(), colaboradorDTO.getApellido())) {
             throw new IllegalArgumentException("Ya existe un colaborador con el nombre y apellido: "
                     + colaboradorDTO.getNombre() + " " + colaboradorDTO.getApellido());
         }
@@ -137,24 +137,19 @@ public class ColaboradorService {
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa con ID " + colaboradorDTO.getEmpresaId() + " no encontrada"));
 
         // Validar duplicados (excepto si es el mismo usuario)
-        colaboradorRepository.findByEmail(colaboradorDTO.getEmail())
-                .filter(c -> !c.getId().equals(id))
-                .ifPresent(c -> {
-                    throw new IllegalArgumentException("Ya existe un colaborador con el email: " + colaboradorDTO.getEmail());
-                });
+        // Email null = sin email: no se compara (varios colaboradores pueden no tenerlo)
+        if (colaboradorDTO.getEmail() != null && colaboradorRepository.existsByEmailAndIdNot(colaboradorDTO.getEmail(), id)) {
+            throw new IllegalArgumentException("Ya existe un colaborador con el email: " + colaboradorDTO.getEmail());
+        }
 
-        colaboradorRepository.findByDni(colaboradorDTO.getDni())
-                .filter(c -> !c.getId().equals(id))
-                .ifPresent(c -> {
-                    throw new IllegalArgumentException("Ya existe un colaborador con el DNI: " + colaboradorDTO.getDni());
-                });
+        if (colaboradorRepository.existsByDniAndIdNot(colaboradorDTO.getDni(), id)) {
+            throw new IllegalArgumentException("Ya existe un colaborador con el DNI: " + colaboradorDTO.getDni());
+        }
 
-        colaboradorRepository.findByNombreAndApellido(colaboradorDTO.getNombre(), colaboradorDTO.getApellido())
-                .filter(c -> !c.getId().equals(id))
-                .ifPresent(c -> {
-                    throw new IllegalArgumentException("Ya existe un colaborador con el nombre y apellido: "
-                            + colaboradorDTO.getNombre() + " " + colaboradorDTO.getApellido());
-                });
+        if (colaboradorRepository.existsByNombreAndApellidoAndIdNot(colaboradorDTO.getNombre(), colaboradorDTO.getApellido(), id)) {
+            throw new IllegalArgumentException("Ya existe un colaborador con el nombre y apellido: "
+                    + colaboradorDTO.getNombre() + " " + colaboradorDTO.getApellido());
+        }
 
         // Actualizar datos
         colaborador.setNombre(colaboradorDTO.getNombre());
