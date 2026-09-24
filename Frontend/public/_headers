@@ -1,0 +1,24 @@
+# Cloudflare Pages: headers de caché para el build de Angular.
+# Los archivos con hash en el nombre (main-XXXX.js, chunk-XXXX.js, ...) nunca
+# cambian de contenido — un deploy nuevo genera nombres nuevos — así que el
+# navegador puede guardarlos un año sin volver a preguntar. index.html NO va
+# acá: tiene que revalidarse siempre para que apunte a los chunks del último
+# deploy.
+/chunk-*
+  Cache-Control: public, max-age=31536000, immutable
+/main-*
+  Cache-Control: public, max-age=31536000, immutable
+/polyfills-*
+  Cache-Control: public, max-age=31536000, immutable
+/styles-*
+  Cache-Control: public, max-age=31536000, immutable
+/scripts-*
+  Cache-Control: public, max-age=31536000, immutable
+/media/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Assets sin hash (logo, favicon): un día, por si se reemplazan.
+/assets/*
+  Cache-Control: public, max-age=86400
+/favicon.ico
+  Cache-Control: public, max-age=86400

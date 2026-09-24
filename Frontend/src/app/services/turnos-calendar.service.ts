@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, forkJoin, Observable, of, Subject, Subscription, switchMap, takeUntil } from 'rxjs';
+import { BehaviorSubject, finalize, forkJoin, Observable, of, shareReplay, Subject, Subscription, switchMap, takeUntil } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { format, startOfMonth, subDays } from 'date-fns';
 import { CalendarioService, DiaSemana } from './calendario.service';
@@ -82,9 +82,7 @@ export class TurnosCalendarService implements OnDestroy {
         ) || semanas[0];
         this.diasSemana$.next(semanaSeleccionada);
 
-        this.turnosSubscription?.unsubscribe();
-        this.turnos$ = this.cargarTurnosDeSemana(semanaSeleccionada);
-        this.turnoStateService.setLoading(false);
+        this.mostrarSemana(semanaSeleccionada);
       },
       error: () => {
         this.turnos$ = of([]);
@@ -139,10 +137,33 @@ export class TurnosCalendarService implements OnDestroy {
   // Domingo) — reemplaza a pedirle al backend "la semana número N del mes"
   // (ver turno.service.ts). Reutilizado por cargarSemana, cambiarSemana y
   // manejarTurnoGuardado (llamado desde el componente).
+  // shareReplay: el template (`turnos$ | async`) y abrirModalEdicion
+  // (`take(1)` para buscar los bloques del día) comparten la misma respuesta
+  // — antes abrir el modal de edición volvía a pedir la semana entera.
   cargarTurnosDeSemana(semana: DiaSemana[]): Observable<Turno[]> {
     const inicio = semana[0].fecha;
     const fin = semana[semana.length - 1].fecha;
-    return this.turnoService.getTurnosPorRangoFecha(inicio, fin);
+    return this.turnoService.getTurnosPorRangoFecha(inicio, fin).pipe(shareReplay(1));
+  }
+
+  // Deja el skeleton puesto hasta que lleguen los turnos. Antes
+  // setLoading(false) se llamaba apenas se calculaban los 7 días (cálculo
+  // local, instantáneo) y la grilla aparecía vacía mientras el request
+  // seguía en vuelo. La suscripción de acá solo marca el fin de la carga; el
+  // template recibe la misma respuesta vía shareReplay, sin segundo request.
+  private mostrarSemana(semana: DiaSemana[], onCompletado?: () => void): void {
+    this.turnosSubscription?.unsubscribe();
+    this.turnoStateService.setLoading(true);
+    this.turnos$ = this.cargarTurnosDeSemana(semana);
+    this.turnosSubscription = this.turnos$
+      .pipe(
+        finalize(() => {
+          this.turnoStateService.setLoading(false);
+          onCompletado?.();
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({ error: () => {} }); // el error ya lo notifica errorInterceptor
   }
 
   cambiarMes(direccion: 'anterior' | 'siguiente'): void {
@@ -162,11 +183,9 @@ export class TurnosCalendarService implements OnDestroy {
     this.semanaService.cambiarSemana(direccion).pipe(takeUntil(this.destroy$)).subscribe({
       next: (nuevaSemana) => {
         this.diasSemana$.next(nuevaSemana);
-        this.turnos$ = this.cargarTurnosDeSemana(nuevaSemana);
+        this.mostrarSemana(nuevaSemana, onCompletado);
         this.actualizarNombreMes();
         this.actualizarMesAnio();
-        this.turnoStateService.setLoading(false);
-        onCompletado();
       },
       error: () => {
         this.turnoStateService.setLoading(false);

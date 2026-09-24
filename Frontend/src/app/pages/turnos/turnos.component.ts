@@ -22,7 +22,7 @@ import {
 import { TiendaService, Tienda } from '../../services/tienda.service';
 
 // -------------- RxJS Imports --------------
-import { BehaviorSubject, combineLatest, map, Observable, of, Subject, take, takeUntil } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable, of, shareReplay, Subject, take, takeUntil } from 'rxjs';
 
 // -------------- Angular Modules Imports --------------
 import { CommonModule } from '@angular/common';
@@ -105,8 +105,14 @@ export default class TurnosComponent implements OnInit, OnDestroy {
     private tiendaService: TiendaService,
     private cdr: ChangeDetectorRef
   ) {
-    this.colaboradores$ =
-      this.colaboradorService.getColaboradoresPorHabilitacion(true); // Obtener colaboradores
+    // shareReplay: el template usa `colaboradores$ | async` en 4 lugares
+    // (filter-bar x2, weekly-view, turnos masivos) y abrirModal se suscribe
+    // otra vez — sin esto cada uno era un GET /colaboradores/filtro propio.
+    // En prod, además de la latencia, Chrome serializa GETs idénticos a la
+    // misma URL (los "Stalled" de 0,5-1 s en DevTools).
+    this.colaboradores$ = this.colaboradorService
+      .getColaboradoresPorHabilitacion(true)
+      .pipe(shareReplay({ bufferSize: 1, refCount: true }));
     this.mostrarModal$ = this.modalService.mostrarModal$;
     this.isModalVisible$ = this.modalService.isModalVisible$;
     this.colaboradoresFiltrados$ = combineLatest([
@@ -172,7 +178,7 @@ export default class TurnosComponent implements OnInit, OnDestroy {
   }
 
   cargarTiendas(): void {
-    this.tiendas$ = this.tiendaService.getTiendas(); // Sin ordenamiento aquí
+    this.tiendas$ = this.tiendaService.getTiendas().pipe(shareReplay({ bufferSize: 1, refCount: true })); // Sin ordenamiento aquí
   }
 
   //! Métodos de navegación
